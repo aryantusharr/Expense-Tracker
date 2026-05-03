@@ -1,0 +1,106 @@
+.category-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.category-list-scroll-container {
+  max-height: 280px;
+  overflow-y: auto;
+  padding-right: var(--space-xs);
+  margin: 0 calc(var(--space-md) * -1);
+  padding: var(--space-sm) var(--space-md);
+  mask-image: linear-gradient(to bottom, 
+    transparent, 
+    black var(--space-md), 
+    black calc(100% - var(--space-md)), 
+    transparent
+  );
+  -webkit-mask-image: linear-gradient(to bottom, 
+    transparent, 
+    black var(--space-md), 
+    black calc(100% - var(--space-md)), 
+    transparent
+  );
+}
+
+/* Custom scrollbar for categories tile */
+.category-list-scroll-container::-webkit-scrollbar {
+  width: 4px;
+}
+
+.category-list-scroll-container::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: var(--radius-full);
+}
+
+.category-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md) var(--space-lg);
+  user-select: none;
+}
+
+.category-item:active {
+  cursor: grabbing;
+}
+
+.drag-handle {
+  color: var(--text-tertiary);
+  font-size: 1.1rem;
+  letter-spacing: 2px;
+  flex-shrink: 0;
+  cursor: grab;
+  touch-action: none;
+}
+
+.drag-hint {
+  font-size: var(--font-xs);
+  color: var(--text-tertiary);
+  margin-bottom: var(--space-md);
+  text-align: center;
+}
+
+.category-item-icon {
+  font-size: 1.4rem;
+}
+
+.category-item-name {
+  flex: 1;
+  font-weight: 500;
+  font-size: var(--font-base);
+}
+
+.category-actions {
+  display: flex;
+  gap: var(--space-xs);
+}
+
+.emoji-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: var(--space-sm);
+}
+
+.emoji-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  background: var(--bg-input);
+  border: 2px solid transparent;
+  transition: all var(--duration-fast);
+}
+
+.emoji-btn.active {
+  border-color: var(--accent);
+  background: rgba(108, 92, 231, 0.15);
+  transform: scale(1.1);
+}

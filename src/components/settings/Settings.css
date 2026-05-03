@@ -1,0 +1,63 @@
+.settings-section {
+  margin-bottom: var(--space-lg);
+  padding: var(--space-lg);
+}
+
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-md) 0;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.setting-row:last-of-type {
+  border-bottom: none;
+}
+
+.setting-label {
+  font-size: var(--font-base);
+  font-weight: 500;
+}
+
+.setting-value {
+  font-size: var(--font-base);
+  color: var(--text-secondary);
+}
+
+.setting-code {
+  font-family: 'Courier New', monospace;
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: var(--accent-light);
+}
+
+/* Toggle Switch */
+.toggle {
+  width: 50px;
+  height: 30px;
+  border-radius: var(--radius-full);
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  position: relative;
+  transition: all var(--duration-normal) var(--ease-out);
+  padding: 2px;
+}
+
+.toggle.active {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.toggle-knob {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-full);
+  background: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: transform var(--duration-normal) var(--ease-spring);
+}
+
+.toggle.active .toggle-knob {
+  transform: translateX(20px);
+}
