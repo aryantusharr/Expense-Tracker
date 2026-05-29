@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { subscribeToRoom } from '../services/roomService';
+import { subscribeToRoom, updateRoomData } from '../services/roomService';
 import { subscribeToExpenses } from '../services/expenseService';
 
 const RoomContext = createContext(null);
@@ -100,6 +100,7 @@ export function RoomProvider({ children }) {
     joinRoomSession,
     switchRoom,
     forgetRoom,
+    updateRoom: updateRoomData,
     savedRooms,
     users: room?.users || [],
     categories: room?.categories || [],

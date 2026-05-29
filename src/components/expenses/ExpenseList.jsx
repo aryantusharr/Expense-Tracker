@@ -32,16 +32,65 @@ export default function ExpenseList() {
     return expenses.filter(e => e.paidBy === filter);
   }, [expenses, filter]);
 
-  // Group by date
-  const grouped = useMemo(() => {
+  // Group by month and then by date
+  const monthlyGroups = useMemo(() => {
     const groups = {};
     filtered.forEach(e => {
-      const key = e.date || 'unknown';
-      if (!groups[key]) groups[key] = [];
-      groups[key].push(e);
+      const dateObj = new Date(e.date);
+      if (isNaN(dateObj.getTime())) return;
+
+      const monthKey = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}`;
+      const dayKey = e.date || 'unknown';
+      
+      if (!groups[monthKey]) {
+        groups[monthKey] = {
+          label: dateObj.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' }),
+          totalAmount: 0,
+          transactionCount: 0,
+          days: {}
+        };
+      }
+      
+      groups[monthKey].totalAmount += parseFloat(e.amount) || 0;
+      groups[monthKey].transactionCount += 1;
+      
+      if (!groups[monthKey].days[dayKey]) {
+        groups[monthKey].days[dayKey] = [];
+      }
+      groups[monthKey].days[dayKey].push(e);
     });
-    return Object.entries(groups).sort(([a], [b]) => new Date(b) - new Date(a));
+
+    // Convert to array and sort by YYYY-MM descending
+    const sortedMonths = Object.entries(groups).sort(([a], [b]) => b.localeCompare(a));
+    
+    // Sort days within each month descending
+    sortedMonths.forEach(([_, monthData]) => {
+      monthData.sortedDays = Object.entries(monthData.days).sort(([a], [b]) => new Date(b) - new Date(a));
+    });
+
+    return sortedMonths;
   }, [filtered]);
+
+  const [expandedMonths, setExpandedMonths] = useState(new Set());
+
+  // Automatically expand the latest month initially
+  useEffect(() => {
+    if (monthlyGroups.length > 0 && expandedMonths.size === 0) {
+      setExpandedMonths(new Set([monthlyGroups[0][0]]));
+    }
+  }, [monthlyGroups]);
+
+  const toggleMonth = (monthKey) => {
+    setExpandedMonths(prev => {
+      const next = new Set(prev);
+      if (next.has(monthKey)) {
+        next.delete(monthKey);
+      } else {
+        next.add(monthKey);
+      }
+      return next;
+    });
+  };
 
   const handleDelete = async (expenseId) => {
     try {
@@ -79,60 +128,106 @@ export default function ExpenseList() {
         </div>
 
         {/* Expense List */}
-        {grouped.length === 0 ? (
+        {monthlyGroups.length === 0 ? (
           <div className="empty-state">
             <div className="empty-state-icon">📝</div>
             <p className="empty-state-title">No expenses yet</p>
             <p className="empty-state-text">Start by adding your first shared expense</p>
           </div>
         ) : (
-          grouped.map(([date, items]) => (
-            <div key={date} style={{ marginBottom: 'var(--space-lg)' }}>
-              <p className="section-title">{formatDate(date)}</p>
-              <AnimatePresence mode="popLayout">
-                {items.map((expense) => {
-                  const payer = userMap[expense.paidBy];
-                  const cat = catMap[expense.categoryId] || { icon: '📦', name: 'Other' };
-                  return (
-                    <motion.div
-                      key={expense.id}
-                      layout
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.95, filter: 'blur(4px)' }}
-                      transition={{ 
-                        type: 'spring', 
-                        stiffness: 500, 
-                        damping: 40
-                      }}
+          monthlyGroups.map(([monthKey, monthData]) => {
+            const isExpanded = expandedMonths.has(monthKey);
+            return (
+              <div key={monthKey} className="month-group-container">
+                {/* Month Summary Card (Accordion Header) */}
+                <div 
+                  className={`month-summary-card ${isExpanded ? 'expanded' : ''}`}
+                  onClick={() => toggleMonth(monthKey)}
+                >
+                  <div className="month-summary-info">
+                    <h3 className="month-summary-title">{monthData.label}</h3>
+                    <p className="month-summary-subtitle">{monthData.transactionCount} transactions</p>
+                  </div>
+                  <div className="month-summary-right">
+                    <span className="month-summary-total">{formatCurrency(monthData.totalAmount)}</span>
+                    <motion.div 
+                      className="month-summary-chevron"
+                      animate={{ rotate: isExpanded ? 180 : 0 }}
+                      transition={{ duration: 0.3 }}
                     >
-                      <SwipeableItem
-                        onDelete={() => handleDeleteClick(expense)}
-                        onEdit={() => setEditModal(expense)}
-                      >
-                        <div className="expense-item">
-                          <div className="expense-icon">{cat.icon}</div>
-                          <div className="expense-info">
-                            <p className="expense-desc">{expense.description}</p>
-                            <p className="expense-meta">
-                              <span
-                                className="expense-payer-dot"
-                                style={{ background: payer?.color || '#888' }}
-                              />
-                              {payer?.name || 'Unknown'}
-                              <span>•</span>
-                              {expense.splitAmong?.length || 0} split
-                            </p>
-                          </div>
-                          <span className="expense-amount">{formatCurrency(expense.amount)}</span>
-                        </div>
-                      </SwipeableItem>
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
                     </motion.div>
-                  );
-                })}
-              </AnimatePresence>
-            </div>
-          ))
+                  </div>
+                </div>
+
+                {/* Collapsible Content */}
+                <AnimatePresence initial={false}>
+                  {isExpanded && (
+                    <motion.div
+                      key="content"
+                      initial="collapsed"
+                      animate="open"
+                      exit="collapsed"
+                      variants={{
+                        open: { opacity: 1, height: "auto" },
+                        collapsed: { opacity: 0, height: 0 }
+                      }}
+                      transition={{ duration: 0.3, ease: [0.04, 0.62, 0.23, 0.98] }}
+                      className="month-days-container"
+                    >
+                      {monthData.sortedDays.map(([date, items]) => (
+                        <div key={date} className="day-group">
+                          <p className="section-title day-section-title">{formatDate(date)}</p>
+                          <AnimatePresence mode="popLayout">
+                            {items.map((expense) => {
+                              const payer = userMap[expense.paidBy];
+                              const cat = catMap[expense.categoryId] || { icon: '📦', name: 'Other' };
+                              return (
+                                <motion.div
+                                  key={expense.id}
+                                  layout
+                                  initial={{ opacity: 0, scale: 0.95 }}
+                                  animate={{ opacity: 1, scale: 1 }}
+                                  exit={{ opacity: 0, scale: 0.95, filter: 'blur(4px)' }}
+                                  transition={{ 
+                                    type: 'spring', 
+                                    stiffness: 500, 
+                                    damping: 40
+                                  }}
+                                >
+                                  <SwipeableItem
+                                    onDelete={() => handleDeleteClick(expense)}
+                                    onEdit={() => setEditModal(expense)}
+                                  >
+                                    <div className="expense-item">
+                                      <div className="expense-icon">{cat.icon}</div>
+                                      <div className="expense-info">
+                                        <p className="expense-desc">{expense.description}</p>
+                                        <p className="expense-meta">
+                                          <span
+                                            className="expense-payer-dot"
+                                            style={{ background: payer?.color || '#888' }}
+                                          />
+                                          {payer?.name || 'Unknown'}
+                                          <span>•</span>
+                                          {expense.splitAmong?.length || 0} split
+                                        </p>
+                                      </div>
+                                      <span className="expense-amount">{formatCurrency(expense.amount)}</span>
+                                    </div>
+                                  </SwipeableItem>
+                                </motion.div>
+                              );
+                            })}
+                          </AnimatePresence>
+                        </div>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            );
+          })
         )}
       </div>
 

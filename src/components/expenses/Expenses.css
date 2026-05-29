@@ -164,6 +164,89 @@
   gap: 0;
 }
 
+/* Month Accordion Cards */
+.month-group-container {
+  margin-bottom: var(--space-xl);
+}
+
+.month-summary-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-lg);
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all var(--duration-fast);
+  box-shadow: var(--shadow-sm);
+  position: sticky;
+  top: 70px; /* Below header */
+  z-index: 10;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.month-summary-card:hover {
+  border-color: var(--border-light);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.month-summary-card.expanded {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 5%, var(--bg-card));
+}
+
+.month-summary-title {
+  font-size: var(--font-lg);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.month-summary-subtitle {
+  font-size: var(--font-sm);
+  color: var(--text-secondary);
+}
+
+.month-summary-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.month-summary-total {
+  font-size: var(--font-md);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.month-summary-chevron {
+  color: var(--text-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.month-summary-card.expanded .month-summary-chevron {
+  color: var(--accent);
+}
+
+.month-days-container {
+  overflow: hidden;
+}
+
+.day-group {
+  margin-top: var(--space-lg);
+  padding: 0 var(--space-sm);
+}
+
+.day-section-title {
+  margin-bottom: var(--space-md);
+  padding-left: var(--space-xs);
+}
+
 .expense-item {
   display: flex;
   align-items: center;

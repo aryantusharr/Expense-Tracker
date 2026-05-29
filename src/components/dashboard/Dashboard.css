@@ -109,11 +109,32 @@
   margin-bottom: var(--space-xl);
 }
 
-.balance-card {
-  text-align: center;
-  padding: var(--space-lg) var(--space-md);
+/* Balance Cards Flip 3D */
+.balance-card-container {
+  perspective: 1000px;
+  cursor: pointer;
+  height: 100%;
 }
-
+.balance-card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+.balance-card {
+  width: 100%;
+  padding: var(--space-md);
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+.balance-card-back {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+}
 .balance-avatar {
   width: 40px;
   height: 40px;
@@ -126,7 +147,6 @@
   margin: 0 auto var(--space-sm);
   font-size: var(--font-base);
 }
-
 .balance-name {
   font-size: var(--font-sm);
   font-weight: 600;
@@ -135,22 +155,73 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-
 .balance-amount {
   font-size: var(--font-lg);
   font-weight: 800;
   margin-bottom: var(--space-sm);
 }
-
 .balance-amount.positive { color: var(--success); }
 .balance-amount.negative { color: var(--danger); }
 
-.balance-detail {
+.balance-detail-enhanced {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-md);
+  width: 100%;
+  background: var(--bg-input);
+  padding: var(--space-sm);
+  border-radius: var(--radius-sm);
+  margin-top: var(--space-xs);
+}
+.balance-stat {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  align-items: center;
+}
+.stat-label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  font-weight: 700;
+}
+.stat-val {
+  font-size: var(--font-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.stat-divider {
+  width: 1px;
+  height: 24px;
+  background: var(--border-color);
+}
+.last-transaction {
+  margin-top: var(--space-md);
   font-size: var(--font-xs);
   color: var(--text-secondary);
+  background: var(--bg-glass);
+  padding: var(--space-sm);
+  border-radius: var(--radius-sm);
+  text-align: center;
+  line-height: 1.3;
+}
+.last-amount {
+  color: var(--accent-light);
+  font-weight: 600;
+}
+.back-title {
+  font-size: var(--font-sm);
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: var(--space-md);
+}
+.back-hint {
+  font-size: 0.65rem;
+  color: var(--text-tertiary);
+  margin-top: var(--space-lg);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 /* Settlements */

@@ -6,6 +6,7 @@ import Modal from '../common/Modal';
 import { useRoomContext } from '../../context/RoomContext';
 import { useTheme } from '../../context/ThemeContext';
 import { generateExpenseReport } from '../../utils/pdfExport';
+import { exportToExcel, exportToExcelMonthly } from '../../utils/excelExport';
 import { calculateBalances } from '../../utils/splitCalculator';
 import { getRoomShareUrl, copyToClipboard } from '../../utils/helpers';
 import { QRCodeSVG } from 'qrcode.react';
@@ -22,6 +23,11 @@ export default function SettingsPage() {
   const [copied, setCopied] = useState(false);
   const [showBudgetModal, setShowBudgetModal] = useState(false);
   const [budgetInput, setBudgetInput] = useState('');
+
+  const [showExportScope, setShowExportScope] = useState(false);
+  const [showFormatPicker, setShowFormatPicker] = useState(false);
+  const [exportMode, setExportMode] = useState('all'); // 'all' or 'monthly'
+  const [selectedMonth, setSelectedMonth] = useState(null);
 
   const isPersonal = room?.isPersonal === true;
 
@@ -40,19 +46,47 @@ export default function SettingsPage() {
       .sort((a, b) => b.year - a.year || b.month - a.month);
   }, [expenses]);
 
-  const handleExportFull = () => {
+  const handleExportFullPdf = () => {
     const balances = calculateBalances(expenses, users);
     generateExpenseReport(expenses, users, balances, room?.name || 'Room', categories);
+    setShowFormatPicker(false);
   };
 
-  const handleExportMonth = (monthObj) => {
+  const handleExportFullExcel = () => {
+    exportToExcel(expenses, categories, room?.name || 'SplitEase');
+    setShowFormatPicker(false);
+  };
+
+  const handleExportMonthPdf = (monthObj) => {
     const filtered = expenses.filter(e => {
       const d = new Date(e.date);
       return d.getMonth() === monthObj.month && d.getFullYear() === monthObj.year;
     });
     const balances = calculateBalances(filtered, users);
     generateExpenseReport(filtered, users, balances, room?.name || 'Room', categories, monthObj);
+    setShowFormatPicker(false);
+  };
+
+  const handleExportMonthExcel = (monthObj) => {
+    exportToExcelMonthly(expenses, categories, room?.name || 'SplitEase', monthObj);
+    setShowFormatPicker(false);
+  };
+
+  const openFormatPickerForMode = (mode, monthObj = null) => {
+    setExportMode(mode);
+    setSelectedMonth(monthObj);
+    setShowExportScope(false);
+    if (mode === 'monthly' && !monthObj) {
+      setTimeout(() => setShowMonthPicker(true), 200);
+    } else {
+      setTimeout(() => setShowFormatPicker(true), 200);
+    }
+  };
+
+  const handleMonthSelect = (m) => {
     setShowMonthPicker(false);
+    setSelectedMonth(m);
+    setTimeout(() => setShowFormatPicker(true), 200);
   };
 
   const handleCopy = async () => {
@@ -141,14 +175,9 @@ export default function SettingsPage() {
           transition={{ delay: 0.2 }}
         >
           <h3 className="section-title">Export</h3>
-          <div className="flex-col gap-sm">
-            <button className="btn btn-secondary btn-full" onClick={handleExportFull}>
-              📄 Download Full Report (PDF)
-            </button>
-            <button className="btn btn-secondary btn-full" onClick={() => setShowMonthPicker(true)}>
-              📅 Export by Month
-            </button>
-          </div>
+          <button className="export-btn" onClick={() => setShowExportScope(true)}>
+            📤 Export Data
+          </button>
         </motion.div>
 
         {/* Categories */}
@@ -188,6 +217,46 @@ export default function SettingsPage() {
           </div>
         </Modal>
 
+        {/* Export Scope Modal */}
+        <Modal isOpen={showExportScope} onClose={() => setShowExportScope(false)} title="Export Scope">
+          <div className="flex-col gap-sm">
+            <div className="export-option-card" onClick={() => openFormatPickerForMode('all')}>
+              <div className="export-option-icon">📋</div>
+              <div className="export-option-text">
+                <div className="export-option-title">All Transactions</div>
+                <div className="export-option-subtitle">Export your entire transaction history</div>
+              </div>
+            </div>
+            <div className="export-option-card" onClick={() => openFormatPickerForMode('monthly')}>
+              <div className="export-option-icon">📅</div>
+              <div className="export-option-text">
+                <div className="export-option-title">Monthly Report</div>
+                <div className="export-option-subtitle">Export a specific month's data</div>
+              </div>
+            </div>
+          </div>
+        </Modal>
+
+        {/* Format Picker Modal */}
+        <Modal isOpen={showFormatPicker} onClose={() => setShowFormatPicker(false)} title="Choose Format">
+          <div className="flex-col gap-sm">
+            <div className="export-option-card" onClick={exportMode === 'all' ? handleExportFullPdf : () => handleExportMonthPdf(selectedMonth)}>
+              <div className="export-option-icon">📄</div>
+              <div className="export-option-text">
+                <div className="export-option-title">PDF Document</div>
+                <div className="export-option-subtitle">Best for printing and sharing</div>
+              </div>
+            </div>
+            <div className="export-option-card" onClick={exportMode === 'all' ? handleExportFullExcel : () => handleExportMonthExcel(selectedMonth)}>
+              <div className="export-option-icon">📊</div>
+              <div className="export-option-text">
+                <div className="export-option-title">Excel (.xlsx)</div>
+                <div className="export-option-subtitle">Best for analysis and editing</div>
+              </div>
+            </div>
+          </div>
+        </Modal>
+
         {/* Month Picker Modal */}
         <Modal isOpen={showMonthPicker} onClose={() => setShowMonthPicker(false)} title="Select Month">
           <div className="month-picker-list">
@@ -201,7 +270,7 @@ export default function SettingsPage() {
                   key={`${m.year}-${m.month}`}
                   className="btn btn-secondary btn-full"
                   style={{ marginBottom: 'var(--space-sm)' }}
-                  onClick={() => handleExportMonth(m)}
+                  onClick={() => handleMonthSelect(m)}
                 >
                   📄 {m.label}
                 </button>

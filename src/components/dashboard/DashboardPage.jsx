@@ -5,7 +5,7 @@ import CountUp from '../common/CountUp';
 import { useRoomContext } from '../../context/RoomContext';
 import { calculateBalances, getTotalExpenses, getMonthlyTotals, getExpensesByCategory } from '../../utils/splitCalculator';
 import { calculateSettlements, isAllSettled } from '../../utils/settlementEngine';
-import { formatCurrency } from '../../utils/helpers';
+import { formatCurrency, formatDate } from '../../utils/helpers';
 import ExpenseChart from './ExpenseChart';
 import SettlementList from './SettlementList';
 import './Dashboard.css';
@@ -137,14 +137,12 @@ export default function DashboardPage() {
                 <motion.div
                   className="budget-gauge-fill"
                   initial={{ width: 0 }}
-                  animate={{ width: `${Math.min((currentMonthTotal / budget) * 100, 100)}%` }}
+                  animate={{ width: `${Math.max(Math.min((currentMonthTotal / budget) * 100, 100), 0.1)}%` }}
                   transition={{ duration: 1, ease: 'easeOut' }}
                   style={{
-                    background: currentMonthTotal > budget
-                      ? 'linear-gradient(90deg, #ff6b6b, #ee5a5a)'
-                      : currentMonthTotal > budget * 0.8
-                        ? 'linear-gradient(90deg, #feca57, #f0b723)'
-                        : 'linear-gradient(90deg, #00cec9, #00b894)'
+                    background: 'linear-gradient(90deg, #00cec9 0%, #00cec9 50%, #feca57 65%, #ff9f43 85%, #ff6b6b 100%)',
+                    backgroundSize: `${10000 / Math.max(Math.min((currentMonthTotal / budget) * 100, 100), 0.1)}% 100%`,
+                    backgroundPosition: 'left center'
                   }}
                 />
               </div>
@@ -160,13 +158,13 @@ export default function DashboardPage() {
 
           <div className="month-stats">
             <div className="month-stat">
-              <span className="month-stat-label">{currentMonthLabel}</span>
-              <span className="month-stat-value">{formatCurrency(currentMonthTotal)}</span>
+              <span className="month-stat-label">{prevMonthLabel}</span>
+              <span className="month-stat-value">{formatCurrency(prevMonthTotal)}</span>
             </div>
             <div className="month-stat-divider" />
             <div className="month-stat">
-              <span className="month-stat-label">{prevMonthLabel}</span>
-              <span className="month-stat-value">{formatCurrency(prevMonthTotal)}</span>
+              <span className="month-stat-label">{currentMonthLabel}</span>
+              <span className="month-stat-value">{formatCurrency(currentMonthTotal)}</span>
             </div>
           </div>
         </motion.div>
@@ -176,31 +174,16 @@ export default function DashboardPage() {
         <motion.div custom={1} initial="hidden" animate="visible" variants={cardVariants}>
           <h3 className="section-title">Balances</h3>
           <div className="balance-grid">
-            {Object.values(balances).map((b, i) => {
-              const isPositive = b.balance >= 0;
-              const absBalance = Math.abs(b.balance);
-              return (
-                <motion.div
-                  key={b.userId}
-                  className="card balance-card"
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.2 + i * 0.08 }}
-                >
-                  <div className="balance-avatar" style={{ background: b.color }}>
-                    {b.name[0]}
-                  </div>
-                  <p className="balance-name">{b.name}</p>
-                  <p className={`balance-amount ${isPositive ? 'positive' : 'negative'}`}>
-                    {isPositive ? '+' : '−'}₹{absBalance.toLocaleString('en-IN')}
-                  </p>
-                  <div className="balance-detail">
-                    <span>Paid: {formatCurrency(b.paid)}</span>
-                    <span>Share: {formatCurrency(b.owed)}</span>
-                  </div>
-                </motion.div>
-              );
-            })}
+            {Object.values(balances).map((b, i) => (
+              <motion.div
+                key={b.userId}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.2 + i * 0.08 }}
+              >
+                <FlipBalanceCard b={b} expenses={expenses} />
+              </motion.div>
+            ))}
           </div>
         </motion.div>
         )}
@@ -362,5 +345,96 @@ export default function DashboardPage() {
         )}
       </div>
     </>
+  );
+}
+
+function FlipBalanceCard({ b, expenses }) {
+  const [isFlipped, setIsFlipped] = useState(false);
+
+  const isPositive = b.balance >= 0;
+  const absBalance = Math.abs(b.balance);
+
+  // Find last transaction
+  const userExpenses = expenses.filter(e => e.paidBy === b.userId);
+  const lastExp = userExpenses.sort((x, y) => new Date(y.date) - new Date(x.date))[0];
+
+  // Calculate current month balance
+  const now = new Date();
+  const cm = now.getMonth();
+  const cy = now.getFullYear();
+  let cmPaid = 0, cmOwed = 0;
+
+  expenses.forEach(e => {
+    const d = new Date(e.date);
+    if (d.getMonth() === cm && d.getFullYear() === cy) {
+      const amount = parseFloat(e.amount) || 0;
+      if (e.paidBy === b.userId) cmPaid += amount;
+      const splitAmong = e.splitAmong || [];
+      if (splitAmong.includes(b.userId)) {
+        cmOwed += amount / splitAmong.length;
+      }
+    }
+  });
+  const cmBalance = Math.round(cmPaid - cmOwed);
+  const cmAbsBalance = Math.abs(cmBalance);
+  const cmPositive = cmBalance >= 0;
+
+  return (
+    <div className="balance-card-container" onClick={() => setIsFlipped(!isFlipped)}>
+      <motion.div
+        className="balance-card-inner"
+        initial={false}
+        animate={{ rotateY: isFlipped ? 180 : 0 }}
+        transition={{ duration: 0.6, type: 'spring', stiffness: 260, damping: 20 }}
+        style={{ transformStyle: 'preserve-3d' }}
+      >
+        {/* Front */}
+        <div className="card balance-card balance-card-front" style={{ backfaceVisibility: 'hidden' }}>
+          <div className="balance-avatar" style={{ background: b.color }}>
+            {b.name[0]}
+          </div>
+          <p className="balance-name">{b.name}</p>
+          <p className={`balance-amount ${isPositive ? 'positive' : 'negative'}`}>
+            {isPositive ? '+' : '−'}₹{absBalance.toLocaleString('en-IN')}
+          </p>
+          <div className="balance-detail-enhanced">
+            <div className="balance-stat">
+              <span className="stat-label">Paid</span>
+              <span className="stat-val">{formatCurrency(b.paid)}</span>
+            </div>
+            <div className="stat-divider" />
+            <div className="balance-stat">
+              <span className="stat-label">Share</span>
+              <span className="stat-val">{formatCurrency(b.owed)}</span>
+            </div>
+          </div>
+          {lastExp && (
+            <div className="last-transaction">
+              Last: Paid <span className="last-amount">{formatCurrency(lastExp.amount)}</span> for {lastExp.description || 'Other'} on {new Date(lastExp.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+            </div>
+          )}
+        </div>
+
+        {/* Back */}
+        <div className="card balance-card balance-card-back" style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}>
+          <h4 className="back-title">Current Month</h4>
+          <p className={`balance-amount ${cmPositive ? 'positive' : 'negative'}`}>
+            {cmPositive ? '+' : '−'}₹{cmAbsBalance.toLocaleString('en-IN')}
+          </p>
+          <div className="balance-detail-enhanced">
+            <div className="balance-stat">
+              <span className="stat-label">Paid</span>
+              <span className="stat-val">{formatCurrency(cmPaid)}</span>
+            </div>
+            <div className="stat-divider" />
+            <div className="balance-stat">
+              <span className="stat-label">Share</span>
+              <span className="stat-val">{formatCurrency(cmOwed)}</span>
+            </div>
+          </div>
+          <p className="back-hint">Tap to flip back</p>
+        </div>
+      </motion.div>
+    </div>
   );
 }

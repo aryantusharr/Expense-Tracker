@@ -169,6 +169,14 @@ export async function updateCategories(roomCode, categories) {
 }
 
 /**
+ * Update room metadata (like budget)
+ */
+export async function updateRoomData(roomCode, updates) {
+  const roomRef = doc(db, 'rooms', roomCode);
+  await updateDoc(roomRef, updates);
+}
+
+/**
  * Permanently delete a room and all its expenses from Firestore
  */
 export async function deleteRoom(roomCode) {

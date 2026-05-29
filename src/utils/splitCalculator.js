@@ -55,12 +55,41 @@ export function calculateBalances(expenses, users) {
     });
   });
 
-  // Calculate net balance
-  Object.keys(balances).forEach(userId => {
-    const b = balances[userId];
+  // We use the Largest Remainder Method to round the balances to integers 
+  // while ensuring the sum of all balances is exactly 0.
+  const netBalances = Object.values(balances);
+  let sumRounded = 0;
+
+  netBalances.forEach(b => {
+    b.balance = b.paid - b.owed;
+    b.roundedBalance = Math.round(b.balance);
+    b.error = b.balance - b.roundedBalance; // How much we "lost" by rounding
+    sumRounded += b.roundedBalance;
+  });
+
+  // If sumRounded is not 0, we need to adjust
+  if (sumRounded !== 0) {
+    // Sort by largest error (meaning they were rounded down the most)
+    netBalances.sort((a, b) => b.error - a.error);
+    
+    let diff = -sumRounded; // What we need to add to the sum to make it 0
+    let i = 0;
+    while (diff !== 0) {
+      const step = diff > 0 ? 1 : -1;
+      // If diff > 0, add 1 to those with largest positive error
+      // If diff < 0, subtract 1 from those with largest negative error (smallest positive)
+      const index = diff > 0 ? i : (netBalances.length - 1 - i);
+      netBalances[index].roundedBalance += step;
+      diff -= step;
+      i = (i + 1) % netBalances.length;
+    }
+  }
+
+  // Finalize
+  netBalances.forEach(b => {
+    b.balance = b.roundedBalance; // Now guaranteed to sum to 0
     b.paid = Math.round(b.paid);
-    b.owed = Math.round(b.owed);
-    b.balance = Math.round(b.paid - b.owed);
+    b.owed = b.paid - b.balance; // Make sure paid, owed, balance are consistent integers
   });
 
   return balances;

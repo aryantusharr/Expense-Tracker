@@ -1,10 +1,12 @@
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Tooltip, Legend } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
+import { useTheme } from '../../context/ThemeContext';
 import './Dashboard.css';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
 
 export default function ExpenseChart({ monthlyTotals }) {
+  const { theme } = useTheme();
   // Only show months with data
   const filtered = monthlyTotals.filter(m => m.total > 0);
   if (filtered.length === 0) return null;
@@ -29,14 +31,20 @@ export default function ExpenseChart({ monthlyTotals }) {
     }],
   };
 
+  const textColorSecondary = theme === 'dark' ? 'rgba(245, 245, 247, 0.6)' : 'rgba(28, 28, 30, 0.55)';
+  const textColorTertiary = theme === 'dark' ? 'rgba(245, 245, 247, 0.35)' : 'rgba(28, 28, 30, 0.3)';
+  const borderLight = theme === 'dark' ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.04)';
+  const tooltipBg = theme === 'dark' ? 'rgba(30, 30, 50, 0.95)' : 'rgba(255, 255, 255, 0.95)';
+  const tooltipTitle = theme === 'dark' ? '#f5f5f7' : '#1c1c1e';
+
   const options = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
       legend: { display: false },
       tooltip: {
-        backgroundColor: 'rgba(30, 30, 50, 0.95)',
-        titleColor: '#f5f5f7',
+        backgroundColor: tooltipBg,
+        titleColor: tooltipTitle,
         bodyColor: '#a29bfe',
         padding: 14,
         cornerRadius: 10,
@@ -53,15 +61,15 @@ export default function ExpenseChart({ monthlyTotals }) {
       x: {
         grid: { display: false },
         ticks: {
-          color: 'var(--text-secondary)',
+          color: textColorSecondary,
           font: { size: 12, weight: 600, family: 'Inter' },
         },
         border: { display: false },
       },
       y: {
-        grid: { color: 'var(--border-light)', drawBorder: false },
+        grid: { color: borderLight, drawBorder: false },
         ticks: {
-          color: 'var(--text-tertiary)',
+          color: textColorTertiary,
           font: { size: 10, family: 'Inter' },
           // Clean y-axis
           maxTicksLimit: 3,
