@@ -21,7 +21,11 @@ export default function LandingPage() {
     if (!deleteTarget) return;
     setDeleting(true);
     try {
-      await deleteRoom(deleteTarget.code);
+      // Fire-and-forget deletion from cloud
+      deleteRoom(deleteTarget.code).catch(err => {
+        console.error('Failed to delete room from cloud in background:', err);
+      });
+      // Instantly remove room locally from user's view
       forgetRoom(deleteTarget.code);
     } catch (err) {
       alert('Failed to delete: ' + err.message);
@@ -42,7 +46,7 @@ export default function LandingPage() {
         className="setup-container"
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
+        transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
       >
         <div className="setup-logo">
           <motion.div
@@ -58,7 +62,7 @@ export default function LandingPage() {
           className="setup-title"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
+          transition={{ duration: 0.2, delay: 0.05 }}
         >
           Split<span className="text-accent">Ease</span>
         </motion.h1>
@@ -67,7 +71,7 @@ export default function LandingPage() {
           className="setup-subtitle"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
+          transition={{ duration: 0.2, delay: 0.08 }}
         >
           Track expenses — solo or with roommates.
         </motion.p>
@@ -78,7 +82,7 @@ export default function LandingPage() {
             className="saved-rooms"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.35 }}
+            transition={{ duration: 0.2, delay: 0.1 }}
           >
             <p className="section-title" style={{ textAlign: 'left' }}>Your Rooms</p>
             <div className="saved-rooms-list">
@@ -90,7 +94,7 @@ export default function LandingPage() {
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: 20 }}
-                    transition={{ delay: i * 0.05 }}
+                    transition={{ duration: 0.15, delay: i * 0.02 }}
                   >
                     <button className="saved-room-main" onClick={() => handleOpenRoom(r.code)}>
                       <div className="saved-room-icon">
@@ -125,7 +129,7 @@ export default function LandingPage() {
           className="setup-actions"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
+          transition={{ duration: 0.2, delay: 0.12 }}
         >
           <button
             className="btn btn-primary btn-full"
@@ -158,7 +162,7 @@ export default function LandingPage() {
           className="setup-footer"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.7 }}
+          transition={{ duration: 0.2, delay: 0.15 }}
         >
           Share expenses • Real-time sync • Smart settlements
         </motion.p>

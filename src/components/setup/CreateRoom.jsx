@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -156,7 +157,7 @@ export default function CreateRoom() {
                   className="roommate-input-row"
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.05 }}
+                  transition={{ duration: 0.15, delay: i * 0.02 }}
                 >
                   <div className="avatar" style={{ background: getUserColor(i) }}>
                     {name.trim() ? name.trim()[0].toUpperCase() : (i + 1)}

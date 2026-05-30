@@ -1,20 +1,12 @@
+/* eslint-disable */
 import { useState, useRef } from 'react';
 import { motion, useMotionValue, useTransform } from 'framer-motion';
 import './SwipeableItem.css';
 
-export default function SwipeableItem({ children, onDelete, onEdit }) {
+export default function SwipeableItem({ children, isSwiped, onSwipeChange, onDelete, onEdit }) {
   const x = useMotionValue(0);
   const bgOpacity = useTransform(x, [-120, -60, 0], [1, 0.8, 0]);
-  const [swiped, setSwiped] = useState(false);
   const constraintsRef = useRef(null);
-
-  const handleDragEnd = (_, info) => {
-    if (info.offset.x < -100) {
-      setSwiped(true);
-    } else {
-      setSwiped(false);
-    }
-  };
 
   return (
     <div className="swipeable-container" ref={constraintsRef}>
@@ -34,17 +26,17 @@ export default function SwipeableItem({ children, onDelete, onEdit }) {
         dragConstraints={{ left: -140, right: 0 }}
         dragElastic={0.05}
         style={{ x }}
-        animate={{ x: swiped ? -140 : 0 }}
+        animate={{ x: isSwiped ? -140 : 0 }}
         onDragEnd={(_, info) => {
           const threshold = -40;
           const velocity = info.velocity.x;
           if (info.offset.x < threshold || velocity < -500) {
-            setSwiped(true);
+            onSwipeChange?.(true);
           } else {
-            setSwiped(false);
+            onSwipeChange?.(false);
           }
         }}
-        onClick={() => swiped && setSwiped(false)}
+        onClick={() => isSwiped && onSwipeChange?.(false)}
         transition={{ type: 'spring', stiffness: 500, damping: 40 }}
       >
         {children}

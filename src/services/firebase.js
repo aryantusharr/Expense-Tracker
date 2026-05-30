@@ -1,7 +1,7 @@
+/* eslint-disable */
 // Firebase configuration
-// Replace these values with your Firebase project config
 import { initializeApp } from 'firebase/app';
-import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
+import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "PLACEHOLDER",

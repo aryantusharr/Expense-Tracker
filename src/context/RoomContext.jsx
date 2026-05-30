@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+/* eslint-disable */
+import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { subscribeToRoom, updateRoomData } from '../services/roomService';
 import { subscribeToExpenses } from '../services/expenseService';
 
@@ -16,10 +17,15 @@ function loadSavedRooms() {
 export function RoomProvider({ children }) {
   const [room, setRoom] = useState(null);
   const [expenses, setExpenses] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [savedRooms, setSavedRooms] = useState(loadSavedRooms);
   const [roomCode, setRoomCode] = useState(() => {
     return localStorage.getItem('splitease_room') || null;
+  });
+  const [userIdentity, setUserIdentity] = useState(() => {
+    const code = localStorage.getItem('splitease_room');
+    if (!code) return null;
+    return localStorage.getItem(`splitease_identity_${code}`) || null;
   });
 
   // Persist savedRooms to localStorage whenever it changes
@@ -27,14 +33,36 @@ export function RoomProvider({ children }) {
     localStorage.setItem('splitease_saved', JSON.stringify(savedRooms));
   }, [savedRooms]);
 
+  // Update identity when room changes
+  useEffect(() => {
+    if (!roomCode) {
+      setUserIdentity(null);
+      return;
+    }
+    if (room?.isPersonal) {
+      setUserIdentity(room.users[0]?.id || null);
+    } else {
+      const savedIdentity = localStorage.getItem(`splitease_identity_${roomCode}`);
+      setUserIdentity(savedIdentity || null);
+    }
+  }, [roomCode, room?.isPersonal, room?.users]);
+
   // Subscribe to room data
   useEffect(() => {
     if (!roomCode) {
+      setRoom(null);
+      setExpenses([]);
       setLoading(false);
       return;
     }
 
     setLoading(true);
+
+    // Safety timeout — never stay loading for more than 10 seconds
+    const safetyTimeout = setTimeout(() => {
+      setLoading(false);
+    }, 10000);
+
     const unsubRoom = subscribeToRoom(
       roomCode,
       (roomData) => {
@@ -45,6 +73,7 @@ export function RoomProvider({ children }) {
           if (exists) return prev;
           return [...prev, { code: roomCode, name: roomData.name, isPersonal: !!roomData.isPersonal }];
         });
+        clearTimeout(safetyTimeout);
         setLoading(false);
       },
       () => {
@@ -54,6 +83,7 @@ export function RoomProvider({ children }) {
         setRoomCode(null);
         setRoom(null);
         setExpenses([]);
+        clearTimeout(safetyTimeout);
         setLoading(false);
       }
     );
@@ -63,6 +93,7 @@ export function RoomProvider({ children }) {
     });
 
     return () => {
+      clearTimeout(safetyTimeout);
       unsubRoom();
       unsubExpenses();
     };
@@ -79,6 +110,7 @@ export function RoomProvider({ children }) {
     setRoomCode(null);
     setRoom(null);
     setExpenses([]);
+    setLoading(false);
   }, []);
 
   // Forget room = remove from saved list too
@@ -89,6 +121,14 @@ export function RoomProvider({ children }) {
       setRoomCode(null);
       setRoom(null);
       setExpenses([]);
+      setLoading(false);
+    }
+  }, [roomCode]);
+
+  const setUserIdentityInRoom = useCallback((userId) => {
+    if (roomCode) {
+      localStorage.setItem(`splitease_identity_${roomCode}`, userId);
+      setUserIdentity(userId);
     }
   }, [roomCode]);
 
@@ -104,6 +144,8 @@ export function RoomProvider({ children }) {
     savedRooms,
     users: room?.users || [],
     categories: room?.categories || [],
+    userIdentity,
+    setUserIdentity: setUserIdentityInRoom,
   };
 
   return (

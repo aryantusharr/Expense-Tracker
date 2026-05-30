@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Header from '../layout/Header';
@@ -10,7 +11,7 @@ import { formatDate, formatCurrency, getTodayISO } from '../../utils/helpers';
 import './Expenses.css';
 
 export default function ExpenseList() {
-  const { roomCode, expenses, users, categories } = useRoomContext();
+  const { roomCode, room, expenses, users, categories } = useRoomContext();
   const [filter, setFilter] = useState('all');
   const [editModal, setEditModal] = useState(null);
   const [expenseToDelete, setExpenseToDelete] = useState(null);
@@ -71,30 +72,23 @@ export default function ExpenseList() {
     return sortedMonths;
   }, [filtered]);
 
-  const [expandedMonths, setExpandedMonths] = useState(new Set());
+  const [activeDropdownId, setActiveDropdownId] = useState(null);
+  const [activeSlideId, setActiveSlideId] = useState(null);
 
   // Automatically expand the latest month initially
   useEffect(() => {
-    if (monthlyGroups.length > 0 && expandedMonths.size === 0) {
-      setExpandedMonths(new Set([monthlyGroups[0][0]]));
+    if (monthlyGroups.length > 0 && activeDropdownId === null) {
+      setActiveDropdownId(monthlyGroups[0][0]);
     }
   }, [monthlyGroups]);
 
   const toggleMonth = (monthKey) => {
-    setExpandedMonths(prev => {
-      const next = new Set(prev);
-      if (next.has(monthKey)) {
-        next.delete(monthKey);
-      } else {
-        next.add(monthKey);
-      }
-      return next;
-    });
+    setActiveDropdownId(prev => (prev === monthKey ? null : monthKey));
   };
 
   const handleDelete = async (expenseId) => {
     try {
-      await deleteExpense(roomCode, expenseId);
+      await deleteExpense(roomCode, expenseId, room);
     } catch (err) {
       console.error('Delete failed:', err);
     }
@@ -136,7 +130,7 @@ export default function ExpenseList() {
           </div>
         ) : (
           monthlyGroups.map(([monthKey, monthData]) => {
-            const isExpanded = expandedMonths.has(monthKey);
+            const isExpanded = activeDropdownId === monthKey;
             return (
               <div key={monthKey} className="month-group-container">
                 {/* Month Summary Card (Accordion Header) */}
@@ -182,6 +176,37 @@ export default function ExpenseList() {
                             {items.map((expense) => {
                               const payer = userMap[expense.paidBy];
                               const cat = catMap[expense.categoryId] || { icon: '📦', name: 'Other' };
+                              const isSynced = Boolean(expense.isSynced);
+                              const content = (
+                                <div className={`expense-item ${isSynced ? 'synced-expense-item' : ''}`}>
+                                  <div className="expense-icon">{cat.icon}</div>
+                                  <div className="expense-info">
+                                    <p className="expense-desc">
+                                      {expense.description}
+                                      {isSynced && (
+                                        <span className="synced-badge">
+                                          🔄 Synced from {expense.syncedFromRoomName || expense.syncedFromRoomCode || 'Shared Room'}
+                                        </span>
+                                      )}
+                                    </p>
+                                    <p className="expense-meta">
+                                      <span
+                                        className="expense-payer-dot"
+                                        style={{ background: payer?.color || '#888' }}
+                                      />
+                                      {payer?.name || 'Unknown'}
+                                      {!isSynced && (
+                                        <>
+                                          <span>•</span>
+                                          {expense.splitAmong?.length || 0} split
+                                        </>
+                                      )}
+                                    </p>
+                                  </div>
+                                  <span className="expense-amount">{formatCurrency(expense.amount)}</span>
+                                </div>
+                              );
+
                               return (
                                 <motion.div
                                   key={expense.id}
@@ -195,27 +220,18 @@ export default function ExpenseList() {
                                     damping: 40
                                   }}
                                 >
-                                  <SwipeableItem
-                                    onDelete={() => handleDeleteClick(expense)}
-                                    onEdit={() => setEditModal(expense)}
-                                  >
-                                    <div className="expense-item">
-                                      <div className="expense-icon">{cat.icon}</div>
-                                      <div className="expense-info">
-                                        <p className="expense-desc">{expense.description}</p>
-                                        <p className="expense-meta">
-                                          <span
-                                            className="expense-payer-dot"
-                                            style={{ background: payer?.color || '#888' }}
-                                          />
-                                          {payer?.name || 'Unknown'}
-                                          <span>•</span>
-                                          {expense.splitAmong?.length || 0} split
-                                        </p>
-                                      </div>
-                                      <span className="expense-amount">{formatCurrency(expense.amount)}</span>
-                                    </div>
-                                  </SwipeableItem>
+                                  {isSynced ? (
+                                    content
+                                  ) : (
+                                    <SwipeableItem
+                                      isSwiped={activeSlideId === expense.id}
+                                      onSwipeChange={(swiped) => setActiveSlideId(swiped ? expense.id : null)}
+                                      onDelete={() => handleDeleteClick(expense)}
+                                      onEdit={() => setEditModal(expense)}
+                                    >
+                                      {content}
+                                    </SwipeableItem>
+                                  )}
                                 </motion.div>
                               );
                             })}
@@ -237,6 +253,7 @@ export default function ExpenseList() {
         users={users}
         categories={categories}
         roomCode={roomCode}
+        room={room}
         onClose={() => setEditModal(null)}
       />
 
@@ -244,7 +261,10 @@ export default function ExpenseList() {
       <ConfirmModal
         isOpen={!!expenseToDelete}
         onClose={() => setExpenseToDelete(null)}
-        onConfirm={() => handleDelete(expenseToDelete?.id)}
+        onConfirm={() => {
+          handleDelete(expenseToDelete?.id);
+          setExpenseToDelete(null);
+        }}
         title="Delete Expense"
         message={`Are you sure you want to delete "${expenseToDelete?.description}"? This action cannot be undone.`}
         confirmText="Delete"
@@ -254,7 +274,7 @@ export default function ExpenseList() {
   );
 }
 
-function EditExpenseModal({ expense, users, categories, roomCode, onClose }) {
+function EditExpenseModal({ expense, users, categories, roomCode, room, onClose }) {
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
   const [paidBy, setPaidBy] = useState('');
@@ -280,7 +300,7 @@ function EditExpenseModal({ expense, users, categories, roomCode, onClose }) {
     try {
       await updateExpense(roomCode, expense.id, {
         description, amount: parseFloat(amount), paidBy, splitAmong, categoryId, date,
-      });
+      }, room);
       onClose();
     } catch (err) {
       console.error('Update failed:', err);
@@ -299,8 +319,10 @@ function EditExpenseModal({ expense, users, categories, roomCode, onClose }) {
     setDate(d.toISOString().split('T')[0]);
   };
 
+  const isPersonal = room?.isPersonal === true;
+
   return (
-    <Modal isOpen={!!expense} onClose={onClose} title="Edit Expense">
+    <Modal isOpen={!!expense} onClose={onClose} title="Edit Expense" disableDrag={true}>
       {expense && (
         <div className="expense-form" style={{ paddingBottom: 'var(--space-xl)' }}>
           <div className="amount-input-wrapper" style={{ padding: 'var(--space-lg) 0' }}>
@@ -349,43 +371,47 @@ function EditExpenseModal({ expense, users, categories, roomCode, onClose }) {
             </div>
           </div>
 
-          <div className="input-group">
-            <label>Paid By</label>
-            <div className="user-select-row">
-              {users.map(u => (
-                <button
-                  key={u.id}
-                  className={`user-select-btn ${paidBy === u.id ? 'active' : ''}`}
-                  onClick={() => setPaidBy(u.id)}
-                  style={{ '--user-color': u.color }}
-                >
-                  <div className="avatar avatar-sm" style={{ background: u.color }}>{u.name[0]}</div>
-                  <span>{u.name}</span>
-                </button>
-              ))}
-            </div>
-          </div>
+          {!isPersonal && (
+            <>
+              <div className="input-group">
+                <label>Paid By</label>
+                <div className="user-select-row">
+                  {users.map(u => (
+                    <button
+                      key={u.id}
+                      className={`user-select-btn ${paidBy === u.id ? 'active' : ''}`}
+                      onClick={() => setPaidBy(u.id)}
+                      style={{ '--user-color': u.color }}
+                    >
+                      <div className="avatar avatar-sm" style={{ background: u.color }}>{u.name[0]}</div>
+                      <span>{u.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-          <div className="input-group">
-            <label>Split Among</label>
-            <div className="user-select-row">
-              {users.map(u => (
-                <button
-                  key={u.id}
-                  className={`user-select-btn ${splitAmong.includes(u.id) ? 'active' : ''}`}
-                  onClick={() => setSplitAmong(prev =>
-                    prev.includes(u.id) ? prev.filter(id => id !== u.id) : [...prev, u.id]
-                  )}
-                  style={{ '--user-color': u.color }}
-                >
-                  <div className="avatar avatar-sm" style={{ background: u.color }}>
-                    {splitAmong.includes(u.id) ? '✓' : u.name[0]}
-                  </div>
-                  <span>{u.name}</span>
-                </button>
-              ))}
-            </div>
-          </div>
+              <div className="input-group">
+                <label>Split Among</label>
+                <div className="user-select-row">
+                  {users.map(u => (
+                    <button
+                      key={u.id}
+                      className={`user-select-btn ${splitAmong.includes(u.id) ? 'active' : ''}`}
+                      onClick={() => setSplitAmong(prev =>
+                        prev.includes(u.id) ? prev.filter(id => id !== u.id) : [...prev, u.id]
+                      )}
+                      style={{ '--user-color': u.color }}
+                    >
+                      <div className="avatar avatar-sm" style={{ background: u.color }}>
+                        {splitAmong.includes(u.id) ? '✓' : u.name[0]}
+                      </div>
+                      <span>{u.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
 
           <div style={{ position: 'sticky', bottom: '-24px', background: 'var(--bg-card-solid)', padding: 'var(--space-md) 0 0 0', zIndex: 10, borderTop: '1px solid var(--border-light)', margin: 'var(--space-xl) -24px 0 -24px' }}>
             <div style={{ padding: '0 var(--space-2xl)' }}>

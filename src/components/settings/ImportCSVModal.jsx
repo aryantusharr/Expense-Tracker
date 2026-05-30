@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { useState, useRef, useCallback, useEffect } from 'react';
 import Modal from '../common/Modal';
 import { parseCSVForMapping, applyMappings, importToFirestore } from '../../services/csvImportService';

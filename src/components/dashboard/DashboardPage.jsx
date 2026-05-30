@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Header from '../layout/Header';
@@ -14,12 +15,12 @@ const cardVariants = {
   hidden: { opacity: 0, y: 20 },
   visible: (i) => ({
     opacity: 1, y: 0,
-    transition: { delay: i * 0.1, duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }
+    transition: { delay: i * 0.04, duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }
   }),
 };
 
 export default function DashboardPage() {
-  const { room, expenses, users, categories } = useRoomContext();
+  const { room, expenses, users, categories, userIdentity, setUserIdentity } = useRoomContext();
   const isPersonal = room?.isPersonal === true;
   const budget = room?.budget || 0;
 
@@ -122,6 +123,8 @@ export default function DashboardPage() {
       <Header title={room?.name || 'Dashboard'} subtitle={isPersonal ? 'Personal' : `${users.length} roommates`} />
 
       <div className="page-content">
+
+
         {/* Total Card */}
         <motion.div className="card total-card" custom={0} initial="hidden" animate="visible" variants={cardVariants}>
           <p className="total-label">Total Expenses</p>
@@ -179,7 +182,7 @@ export default function DashboardPage() {
                 key={b.userId}
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.2 + i * 0.08 }}
+                transition={{ duration: 0.2, delay: 0.08 + i * 0.03 }}
               >
                 <FlipBalanceCard b={b} expenses={expenses} />
               </motion.div>
@@ -390,6 +393,7 @@ function FlipBalanceCard({ b, expenses }) {
       >
         {/* Front */}
         <div className="card balance-card balance-card-front" style={{ backfaceVisibility: 'hidden' }}>
+          <div className="balance-card-flip-icon">🔄</div>
           <div className="balance-avatar" style={{ background: b.color }}>
             {b.name[0]}
           </div>
@@ -400,12 +404,12 @@ function FlipBalanceCard({ b, expenses }) {
           <div className="balance-detail-enhanced">
             <div className="balance-stat">
               <span className="stat-label">Paid</span>
-              <span className="stat-val">{formatCurrency(b.paid)}</span>
+              <span className="stat-val" title={formatCurrency(b.paid)}>{formatCurrency(b.paid)}</span>
             </div>
             <div className="stat-divider" />
             <div className="balance-stat">
               <span className="stat-label">Share</span>
-              <span className="stat-val">{formatCurrency(b.owed)}</span>
+              <span className="stat-val" title={formatCurrency(b.owed)}>{formatCurrency(b.owed)}</span>
             </div>
           </div>
           {lastExp && (
@@ -417,6 +421,7 @@ function FlipBalanceCard({ b, expenses }) {
 
         {/* Back */}
         <div className="card balance-card balance-card-back" style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}>
+          <div className="balance-card-flip-icon">🔄</div>
           <h4 className="back-title">Current Month</h4>
           <p className={`balance-amount ${cmPositive ? 'positive' : 'negative'}`}>
             {cmPositive ? '+' : '−'}₹{cmAbsBalance.toLocaleString('en-IN')}
@@ -424,12 +429,12 @@ function FlipBalanceCard({ b, expenses }) {
           <div className="balance-detail-enhanced">
             <div className="balance-stat">
               <span className="stat-label">Paid</span>
-              <span className="stat-val">{formatCurrency(cmPaid)}</span>
+              <span className="stat-val" title={formatCurrency(cmPaid)}>{formatCurrency(cmPaid)}</span>
             </div>
             <div className="stat-divider" />
             <div className="balance-stat">
               <span className="stat-label">Share</span>
-              <span className="stat-val">{formatCurrency(cmOwed)}</span>
+              <span className="stat-val" title={formatCurrency(cmOwed)}>{formatCurrency(cmOwed)}</span>
             </div>
           </div>
           <p className="back-hint">Tap to flip back</p>

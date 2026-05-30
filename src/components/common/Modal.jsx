@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
 
-export default function Modal({ isOpen, onClose, title, children }) {
+export default function Modal({ isOpen, onClose, title, children, disableDrag = false }) {
   return (
     <AnimatePresence>
       {isOpen && (
@@ -18,11 +18,11 @@ export default function Modal({ isOpen, onClose, title, children }) {
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-            drag="y"
+            drag={disableDrag ? false : "y"}
             dragConstraints={{ top: 0 }}
             dragElastic={0.2}
             onDragEnd={(_, info) => {
-              if (info.offset.y > 150 || info.velocity.y > 600) {
+              if (!disableDrag && (info.offset.y > 150 || info.velocity.y > 600)) {
                 onClose();
               }
             }}

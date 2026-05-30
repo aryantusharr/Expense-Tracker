@@ -1,7 +1,7 @@
 import Modal from './Modal';
 import '../expenses/Expenses.css'; // For button styles
 
-export default function ConfirmModal({ isOpen, onClose, onConfirm, title, message, confirmText = "Confirm", isDanger = true }) {
+export default function ConfirmModal({ isOpen, onClose, onConfirm, title, message, confirmText = "Confirm", cancelText = "Cancel", isDanger = true }) {
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={title}>
       <div style={{ textAlign: 'center', paddingBottom: 'var(--space-lg)' }}>
@@ -10,15 +10,12 @@ export default function ConfirmModal({ isOpen, onClose, onConfirm, title, messag
         </p>
         <div style={{ display: 'flex', gap: 'var(--space-md)' }}>
           <button className="btn btn-secondary" style={{ flex: 1 }} onClick={onClose}>
-            Cancel
+            {cancelText}
           </button>
           <button 
             className={`btn ${isDanger ? 'btn-danger' : 'btn-primary'}`} 
             style={{ flex: 1 }} 
-            onClick={() => {
-              onConfirm();
-              onClose();
-            }}
+            onClick={onConfirm}
           >
             {confirmText}
           </button>
