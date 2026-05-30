@@ -1,4 +1,3 @@
-/* eslint-disable */
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { subscribeToRoom, updateRoomData } from '../services/roomService';
 import { subscribeToExpenses } from '../services/expenseService';

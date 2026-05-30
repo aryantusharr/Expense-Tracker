@@ -66,7 +66,7 @@ export function exportToExcel(expenses, categories = [], roomName = 'SplitEase')
     // Trigger browser download
     XLSX.writeFile(workbook, filename);
   } catch (err) {
-    console.error('Excel export failed:', err);
+    // Silent error
     alert('Failed to export Excel: ' + err.message);
   }
 }
@@ -140,7 +140,7 @@ export function exportToExcelMonthly(expenses, categories = [], roomName = 'Spli
     // Trigger browser download
     XLSX.writeFile(workbook, filename);
   } catch (err) {
-    console.error('Excel export failed:', err);
+    // Silent error
     alert('Failed to export Excel: ' + err.message);
   }
 }

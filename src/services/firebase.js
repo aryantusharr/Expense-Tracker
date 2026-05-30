@@ -1,4 +1,3 @@
-/* eslint-disable */
 // Firebase configuration
 import { initializeApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';

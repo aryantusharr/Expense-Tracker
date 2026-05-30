@@ -23,7 +23,7 @@ export default function LandingPage() {
     try {
       // Fire-and-forget deletion from cloud
       deleteRoom(deleteTarget.code).catch(err => {
-        console.error('Failed to delete room from cloud in background:', err);
+      // Silent error
       });
       // Instantly remove room locally from user's view
       forgetRoom(deleteTarget.code);

@@ -1,5 +1,4 @@
-/* eslint-disable */
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import Modal from '../common/Modal';
 import { parseCSVForMapping, applyMappings, importToFirestore } from '../../services/csvImportService';
 import { useRoomContext } from '../../context/RoomContext';
@@ -51,7 +50,7 @@ export default function ImportCSVModal({ isOpen, onClose }) {
         if (saved.categoryMap) setCategoryMap(saved.categoryMap);
         if (saved.peopleMap) setPeopleMap(saved.peopleMap);
         if (saved.splitMap) setSplitMap(saved.splitMap);
-      } catch (e) { console.error('Failed to load mappings', e); }
+      } catch (e) { /* ignore */ }
     }
   }, [isOpen, roomCode]);
 
