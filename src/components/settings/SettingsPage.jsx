@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import Header from '../layout/Header';
 import CategoryManager from '../categories/CategoryManager';
 import Modal from '../common/Modal';
+import ImportCSVModal from './ImportCSVModal';
 import { useRoomContext } from '../../context/RoomContext';
 import { useTheme } from '../../context/ThemeContext';
 import { generateExpenseReport } from '../../utils/pdfExport';
@@ -28,6 +29,15 @@ export default function SettingsPage() {
   const [showFormatPicker, setShowFormatPicker] = useState(false);
   const [exportMode, setExportMode] = useState('all'); // 'all' or 'monthly'
   const [selectedMonth, setSelectedMonth] = useState(null);
+  const [showImportModal, setShowImportModal] = useState(false);
+
+  // Import history from localStorage
+  const importHistory = useMemo(() => {
+    try {
+      const hist = JSON.parse(localStorage.getItem('csv-import-history') || '[]');
+      return hist[0] || null; // most recent
+    } catch { return null; }
+  }, [showImportModal]); // re-read when modal closes
 
   const isPersonal = room?.isPersonal === true;
 
@@ -167,17 +177,29 @@ export default function SettingsPage() {
           </div>
         </motion.div>
 
-        {/* Export */}
+        {/* Data Management */}
         <motion.div
           className="card settings-section"
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
         >
-          <h3 className="section-title">Export</h3>
+          <h3 className="section-title">Data Management</h3>
           <button className="export-btn" onClick={() => setShowExportScope(true)}>
             📤 Export Data
           </button>
+          <div className="data-mgmt-divider" />
+          <button className="import-btn" onClick={() => setShowImportModal(true)}>
+            📥 Import CSV
+          </button>
+          {importHistory && (
+            <div className="import-history">
+              <span className="import-history-icon">✅</span>
+              <span className="import-history-text">
+                Last import: <strong>{importHistory.count} expenses</strong> · {new Date(importHistory.timestamp).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+              </span>
+            </div>
+          )}
         </motion.div>
 
         {/* Categories */}
@@ -297,6 +319,12 @@ export default function SettingsPage() {
             </button>
           </div>
         </Modal>
+
+        {/* Import CSV Modal */}
+        <ImportCSVModal
+          isOpen={showImportModal}
+          onClose={() => setShowImportModal(false)}
+        />
       </div>
     </>
   );

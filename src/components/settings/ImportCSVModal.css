@@ -1,0 +1,481 @@
+/* ========== Import CSV Modal ========== */
+
+.import-step-indicator {
+  font-size: var(--font-xs);
+  color: var(--accent-light);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: var(--space-md);
+  text-align: center;
+}
+
+/* ── Prereq State ───────────────────────────── */
+.import-prereq {
+  padding: var(--space-md) 0;
+}
+
+.import-prereq-alert {
+  background: var(--warning-bg);
+  border: 1px solid rgba(254, 202, 87, 0.3);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
+.import-prereq-alert strong {
+  display: block;
+  color: var(--warning);
+  font-size: var(--font-md);
+  margin-bottom: var(--space-sm);
+}
+
+.import-prereq-alert p {
+  font-size: var(--font-sm);
+  color: var(--text-primary);
+  margin-bottom: var(--space-sm);
+}
+
+.import-prereq-list {
+  list-style-type: disc;
+  padding-left: var(--space-xl);
+  margin-bottom: var(--space-sm);
+}
+
+.import-prereq-list li {
+  font-size: var(--font-sm);
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.import-prereq-sub {
+  font-size: var(--font-xs);
+  color: var(--text-secondary);
+}
+
+.import-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  cursor: pointer;
+  padding: var(--space-sm);
+  border-radius: var(--radius-sm);
+  transition: background var(--duration-fast);
+}
+
+.import-checkbox-label:hover {
+  background: var(--bg-input);
+}
+
+.import-checkbox-label input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.import-checkbox-label span {
+  font-size: var(--font-base);
+  font-weight: 500;
+}
+
+/* ── Upload Zone ────────────────────────────── */
+.import-upload-zone {
+  border: 2px dashed var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3xl) var(--space-xl);
+  text-align: center;
+  cursor: pointer;
+  transition: all var(--duration-normal) var(--ease-out);
+  background: var(--bg-input);
+  position: relative;
+}
+
+.import-upload-zone:hover,
+.import-upload-zone.drag-over {
+  border-color: var(--accent-light);
+  background: rgba(108, 92, 231, 0.06);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(108, 92, 231, 0.12);
+}
+
+.import-upload-zone input[type="file"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.upload-icon {
+  font-size: 2.5rem;
+  margin-bottom: var(--space-md);
+  display: block;
+}
+
+.upload-label {
+  font-size: var(--font-base);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--space-xs);
+}
+
+.upload-hint {
+  font-size: var(--font-xs);
+  color: var(--text-secondary);
+}
+
+.import-error-msg {
+  margin-top: var(--space-md);
+  color: var(--danger);
+  font-size: var(--font-sm);
+  text-align: center;
+  background: var(--danger-bg);
+  padding: var(--space-sm);
+  border-radius: var(--radius-sm);
+}
+
+/* ── Mapping Steps ──────────────────────────── */
+.mapping-step {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.mapping-header {
+  margin-bottom: var(--space-sm);
+}
+
+.mapping-header h4 {
+  font-size: var(--font-lg);
+  margin-bottom: var(--space-xs);
+}
+
+.mapping-header p {
+  font-size: var(--font-sm);
+  color: var(--text-secondary);
+}
+
+.reset-map-btn {
+  margin-top: var(--space-sm);
+}
+
+.mapping-list {
+  max-height: 300px;
+  overflow-y: auto;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  background: var(--bg-input);
+  padding: var(--space-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.mapping-empty {
+  font-size: var(--font-sm);
+  color: var(--text-secondary);
+  text-align: center;
+  padding: var(--space-lg);
+}
+
+.mapping-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  background: var(--bg-card);
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+}
+
+.mapping-row.unmapped {
+  border-color: rgba(255, 107, 107, 0.3);
+  background: rgba(255, 107, 107, 0.05);
+}
+
+.mapping-row-col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  background: var(--bg-card);
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+}
+
+.mapping-row-col.unmapped {
+  border-color: rgba(255, 107, 107, 0.3);
+  background: rgba(255, 107, 107, 0.05);
+}
+
+.mapping-csv-val {
+  font-weight: 600;
+  font-size: var(--font-sm);
+  min-width: 120px;
+  word-break: break-all;
+}
+
+.mapping-arrow {
+  color: var(--text-tertiary);
+}
+
+.mapping-select {
+  flex: 1;
+  padding: var(--space-xs) var(--space-sm);
+  min-width: 0;
+}
+
+.mapping-checkboxes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+}
+
+.mapping-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  cursor: pointer;
+  font-size: var(--font-sm);
+}
+
+.mapping-checkbox-label input {
+  accent-color: var(--accent);
+}
+
+.mapping-warning {
+  color: var(--danger);
+  font-size: var(--font-sm);
+  font-weight: 500;
+  text-align: center;
+  background: var(--danger-bg);
+  padding: var(--space-sm);
+  border-radius: var(--radius-sm);
+}
+
+
+/* ── Stats Row ──────────────────────────────── */
+.import-stats {
+  display: flex;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
+.import-stat-badge {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  font-size: var(--font-sm);
+  font-weight: 600;
+  text-align: center;
+}
+
+.import-stat-badge.parsed {
+  background: var(--success-bg);
+  color: var(--success);
+}
+
+.import-stat-badge.skipped {
+  background: var(--warning-bg);
+  color: var(--warning);
+}
+
+.import-stat-badge.neutral {
+  background: var(--bg-input);
+  color: var(--text-secondary);
+}
+
+.import-stat-badge .stat-num {
+  font-size: var(--font-lg);
+  font-weight: 700;
+}
+
+/* ── Preview Table ──────────────────────────── */
+.import-preview-wrap {
+  max-height: 240px;
+  overflow-y: auto;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  margin-bottom: var(--space-lg);
+}
+
+.import-preview-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-xs);
+  min-width: 520px;
+}
+
+.import-preview-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.import-preview-table th {
+  background: var(--bg-elevated);
+  padding: var(--space-sm) var(--space-md);
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--border-color);
+  white-space: nowrap;
+}
+
+.import-preview-table td {
+  padding: var(--space-sm) var(--space-md);
+  border-bottom: 1px solid var(--border-light);
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.import-preview-table tbody tr:hover {
+  background: var(--bg-glass);
+}
+
+.import-preview-table .amount-cell {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent-light);
+}
+
+/* ── Progress Bar ───────────────────────────── */
+.import-progress-section {
+  text-align: center;
+  padding: var(--space-xl) 0;
+}
+
+.import-progress-track {
+  height: 8px;
+  background: var(--bg-input);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  margin: var(--space-lg) 0;
+}
+
+.import-progress-fill {
+  height: 100%;
+  background: var(--accent-gradient);
+  border-radius: var(--radius-full);
+  transition: width 0.3s var(--ease-out);
+  position: relative;
+}
+
+.import-progress-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+  animation: progressShimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes progressShimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.import-progress-text {
+  font-size: var(--font-sm);
+  color: var(--text-secondary);
+  margin-top: var(--space-sm);
+}
+
+.import-progress-percent {
+  font-size: var(--font-2xl);
+  font-weight: 700;
+  color: var(--accent-light);
+  margin-bottom: var(--space-sm);
+}
+
+/* ── Success State ──────────────────────────── */
+.import-success {
+  text-align: center;
+  padding: var(--space-xl) 0;
+}
+
+.import-success-icon {
+  font-size: 3.5rem;
+  margin-bottom: var(--space-lg);
+  display: block;
+  animation: successPop 0.4s var(--ease-spring);
+}
+
+@keyframes successPop {
+  0% { transform: scale(0); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.import-success-title {
+  font-size: var(--font-lg);
+  font-weight: 700;
+  margin-bottom: var(--space-sm);
+}
+
+.import-success-count {
+  font-size: var(--font-3xl);
+  font-weight: 800;
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: var(--space-xs);
+}
+
+.import-success-sub {
+  font-size: var(--font-sm);
+  color: var(--text-secondary);
+}
+
+/* ── Error Log ──────────────────────────────── */
+.import-errors {
+  margin-top: var(--space-lg);
+}
+
+.import-errors-title {
+  font-size: var(--font-sm);
+  font-weight: 600;
+  color: var(--danger);
+  margin-bottom: var(--space-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.import-error-list {
+  max-height: 120px;
+  overflow-y: auto;
+  border-radius: var(--radius-sm);
+  background: var(--danger-bg);
+  padding: var(--space-md);
+}
+
+.import-error-item {
+  font-size: var(--font-xs);
+  color: var(--danger);
+  padding: var(--space-xs) 0;
+  border-bottom: 1px solid rgba(255, 107, 107, 0.1);
+}
+
+.import-error-item:last-child {
+  border-bottom: none;
+}
+
+/* ── Action Buttons ─────────────────────────── */
+.import-actions {
+  display: flex;
+  gap: var(--space-md);
+  margin-top: var(--space-lg);
+}
+
+.import-actions .btn {
+  flex: 1;
+}
