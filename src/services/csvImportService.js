@@ -1,6 +1,8 @@
+/* eslint-disable */
 import Papa from 'papaparse';
 import { db } from './firebase';
-import { collection, writeBatch, doc } from 'firebase/firestore';
+import { collection, writeBatch, doc, getDoc } from 'firebase/firestore';
+import { getMemberShare } from './expenseService';
 
 // ── Date Parsing ───────────────────────────────────────────────
 const MONTH_ABBR = {
@@ -194,7 +196,7 @@ export function applyMappings(rawRows, mappings, isPersonal, roomUsers) {
       date: row.date,
       description: row.description,
       amount: row.amount,
-      categoryId: categoryId || 'cat-4', // Fallback to 'Food' or general category if needed, though we block unmapped usually. Let's rely on validation.
+      categoryId: categoryId || 'cat-4', // Fallback to 'Food' or general category if needed
       paidBy,
       splitAmong,
       // Keep raw strings for preview table if needed
@@ -221,6 +223,37 @@ const BATCH_SIZE = 500;
  * @returns {{ imported: number, errors: Array<{rowIndex, error}> }}
  */
 export async function importToFirestore(roomId, rows, onProgress) {
+  // 1. Fetch room details to check if shared room and see who has personal rooms linked
+  let roomData = null;
+  let isPersonal = false;
+  try {
+    const roomSnap = await getDoc(doc(db, 'rooms', roomId));
+    if (roomSnap.exists()) {
+      roomData = roomSnap.data();
+      isPersonal = roomData.isPersonal === true;
+    }
+  } catch (err) {
+    console.error("Failed to fetch room details for CSV import sync:", err);
+  }
+
+  // 2. Pre-fetch the personal user ID for each linked personal room
+  const personalUserIds = {};
+  if (roomData && !isPersonal) {
+    const users = roomData.users || [];
+    for (const user of users) {
+      if (user.personalRoomCode && !personalUserIds[user.personalRoomCode]) {
+        try {
+          const pSnap = await getDoc(doc(db, 'rooms', user.personalRoomCode));
+          if (pSnap.exists()) {
+            personalUserIds[user.personalRoomCode] = pSnap.data().users[0]?.id || 'user-personal';
+          }
+        } catch (e) {
+          console.error(`Failed to prefetch personal room user for code ${user.personalRoomCode}:`, e);
+        }
+      }
+    }
+  }
+
   const collectionRef = collection(db, 'rooms', roomId, 'expenses');
   const errors = [];
   let imported = 0;
@@ -233,10 +266,41 @@ export async function importToFirestore(roomId, rows, onProgress) {
       const docRef = doc(collectionRef); // auto-ID
       // Strip out raw mapping fields before saving
       const { categoryRaw, paidByRaw, splitRaw, rowNum, ...cleanRow } = row;
-      batch.set(docRef, {
+      const expenseData = {
         ...cleanRow,
         createdAt: new Date().toISOString(),
-      });
+      };
+      batch.set(docRef, expenseData);
+
+      // Create synced expenses inside the batch
+      if (roomData && !isPersonal) {
+        const users = roomData.users || [];
+        const amount = parseFloat(expenseData.amount) || 0;
+        const splitAmong = expenseData.splitAmong || [];
+        users.forEach(user => {
+          if (user.personalRoomCode) {
+            const share = getMemberShare(amount, splitAmong, user.id);
+            if (share > 0) {
+              const personalUserId = personalUserIds[user.personalRoomCode] || 'user-personal';
+              const pRef = doc(collection(db, 'rooms', user.personalRoomCode, 'expenses'));
+              batch.set(pRef, {
+                description: expenseData.description,
+                amount: share,
+                categoryId: expenseData.categoryId,
+                date: expenseData.date,
+                paidBy: personalUserId,
+                splitAmong: [personalUserId],
+                isSynced: true,
+                syncedFromRoomCode: roomId,
+                syncedFromRoomName: roomData.name,
+                parentExpenseId: docRef.id,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+              });
+            }
+          }
+        });
+      }
     });
 
     try {

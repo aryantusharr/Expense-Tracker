@@ -78,7 +78,7 @@ export default function JoinRoom() {
         className="setup-container"
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
+        transition={{ duration: 0.25 }}
       >
         <h1 className="setup-title">Join Room</h1>
         <p className="setup-subtitle">Enter the 6-character room code shared by your roommate</p>
@@ -97,7 +97,7 @@ export default function JoinRoom() {
               onKeyDown={(e) => handleKeyDown(i, e)}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.05 }}
+              transition={{ duration: 0.15, delay: i * 0.02 }}
               id={`code-input-${i}`}
             />
           ))}

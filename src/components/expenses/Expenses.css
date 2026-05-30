@@ -10,7 +10,7 @@
   align-items: center;
   justify-content: center;
   gap: var(--space-lg);
-  padding: var(--space-2xl) 0;
+  padding: var(--space-sm) 0;
 }
 
 .amount-center {
@@ -255,6 +255,25 @@
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
+}
+
+.synced-expense-item {
+  background: color-mix(in srgb, var(--accent) 3%, var(--bg-card));
+  opacity: 0.9;
+}
+
+.synced-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 8px;
+  padding: 2px 6px;
+  background: rgba(108, 92, 231, 0.15);
+  color: var(--accent);
+  border-radius: var(--radius-sm);
+  font-size: 0.65rem;
+  font-weight: 600;
+  vertical-align: middle;
 }
 
 .expense-icon {

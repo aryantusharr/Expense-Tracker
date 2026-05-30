@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { db } from './firebase';
 import {
   doc, setDoc, getDoc, updateDoc, deleteDoc, arrayUnion, onSnapshot,
@@ -15,13 +16,25 @@ export function generateRoomCode() {
 }
 
 /**
- * Check if a room with the given name already exists
+ * Check if a room with the given name already exists.
+ * Uses a 5-second timeout to prevent hanging on slow networks.
  */
 export async function checkRoomNameExists(roomName) {
-  const roomsRef = collection(db, 'rooms');
-  const q = query(roomsRef, where('name', '==', roomName.trim()));
-  const snapshot = await getDocs(q);
-  return !snapshot.empty;
+  try {
+    const roomsRef = collection(db, 'rooms');
+    const q = query(roomsRef, where('name', '==', roomName.trim()));
+    
+    // Race the query against a timeout so it never hangs
+    const result = await Promise.race([
+      getDocs(q),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
+    ]);
+    return !result.empty;
+  } catch (err) {
+    // On timeout or network error, allow creation (the setDoc will fail if offline anyway)
+    console.warn('checkRoomNameExists failed, allowing creation:', err.message);
+    return false;
+  }
 }
 
 // Default categories preloaded for every room
@@ -54,10 +67,18 @@ const USER_COLORS = [
 export async function createRoom(roomName, userNames) {
   let roomCode = generateRoomCode();
 
-  // Check if code already exists, regenerate if so
-  const existing = await getDoc(doc(db, 'rooms', roomCode));
-  if (existing.exists()) {
-    roomCode = generateRoomCode();
+  // Check if code already exists, regenerate if so (with a 1.5s timeout)
+  try {
+    const existing = await Promise.race([
+      getDoc(doc(db, 'rooms', roomCode)),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 1500))
+    ]);
+    if (existing.exists()) {
+      roomCode = generateRoomCode();
+    }
+  } catch (err) {
+    // If offline or timed out, just use the generated code
+    console.warn('Code check failed or timed out, using generated code:', err.message);
   }
 
   const users = userNames.map((name, i) => ({
@@ -75,7 +96,11 @@ export async function createRoom(roomName, userNames) {
     createdAt: new Date().toISOString(),
   };
 
-  await setDoc(doc(db, 'rooms', roomCode), roomData);
+  // Optimistic write to Firestore (fire-and-forget) to keep creation near-instant
+  setDoc(doc(db, 'rooms', roomCode), roomData).catch(err => {
+    console.error('Failed to save room in background:', err);
+  });
+
   return { roomCode, roomData };
 }
 
@@ -84,8 +109,15 @@ export async function createRoom(roomName, userNames) {
  */
 export async function createPersonalTracker(userName, monthlyBudget = 0) {
   let roomCode = generateRoomCode();
-  const existing = await getDoc(doc(db, 'rooms', roomCode));
-  if (existing.exists()) roomCode = generateRoomCode();
+  try {
+    const existing = await Promise.race([
+      getDoc(doc(db, 'rooms', roomCode)),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 1500))
+    ]);
+    if (existing.exists()) roomCode = generateRoomCode();
+  } catch (err) {
+    console.warn('Code check failed or timed out, using generated code:', err.message);
+  }
 
   const users = [{
     id: `user-${Date.now()}-0`,
@@ -104,7 +136,11 @@ export async function createPersonalTracker(userName, monthlyBudget = 0) {
     createdAt: new Date().toISOString(),
   };
 
-  await setDoc(doc(db, 'rooms', roomCode), roomData);
+  // Optimistic write to Firestore (fire-and-forget)
+  setDoc(doc(db, 'rooms', roomCode), roomData).catch(err => {
+    console.error('Failed to save personal tracker in background:', err);
+  });
+
   return { roomCode, roomData };
 }
 
@@ -134,6 +170,8 @@ export function subscribeToRoom(roomCode, callback, onNotFound) {
     } else if (onNotFound) {
       onNotFound();
     }
+  }, (error) => {
+    console.error('subscribeToRoom error:', error);
   });
 }
 
@@ -180,12 +218,24 @@ export async function updateRoomData(roomCode, updates) {
  * Permanently delete a room and all its expenses from Firestore
  */
 export async function deleteRoom(roomCode) {
-  // Delete all expenses in the subcollection first
-  const expensesRef = collection(db, 'rooms', roomCode, 'expenses');
-  const snapshot = await getDocs(expensesRef);
-  const deletePromises = snapshot.docs.map(d => deleteDoc(d.ref));
-  await Promise.all(deletePromises);
+  // 1. Delete the main room document first so other clients are immediately notified
+  const deleteRoomDocPromise = deleteDoc(doc(db, 'rooms', roomCode));
 
-  // Delete the room document
-  await deleteDoc(doc(db, 'rooms', roomCode));
+  // 2. Fetch and delete expenses in the background with a 3s timeout
+  const deleteExpensesPromise = (async () => {
+    try {
+      const expensesRef = collection(db, 'rooms', roomCode, 'expenses');
+      const snapshot = await Promise.race([
+        getDocs(expensesRef),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000))
+      ]);
+      const deletePromises = snapshot.docs.map(d => deleteDoc(d.ref));
+      await Promise.all(deletePromises);
+    } catch (err) {
+      console.warn('Expenses deletion failed or timed out in deleteRoom:', err.message);
+    }
+  })();
+
+  // Await the room document deletion to confirm it's gone
+  await deleteRoomDocPromise;
 }

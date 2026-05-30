@@ -65,7 +65,7 @@ export default function AddExpense() {
         splitAmong,
         categoryId,
         date,
-      });
+      }, room);
       setSuccess(true);
       setDescription('');
       setAmount('');
