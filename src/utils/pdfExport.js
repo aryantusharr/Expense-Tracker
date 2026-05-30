@@ -227,7 +227,7 @@ export function generateExpenseReport(expenses, users, balances, roomName, categ
     const filename = `SplitEase_Report_${new Date().toISOString().split('T')[0]}.pdf`;
     doc.save(filename);
   } catch (err) {
-    console.error('PDF generation failed:', err);
+    // Silent error
     alert('Failed to generate PDF: ' + err.message);
   }
 }

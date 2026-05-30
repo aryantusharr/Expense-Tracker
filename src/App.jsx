@@ -1,4 +1,3 @@
-/* eslint-disable */
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { useRoomContext } from './context/RoomContext';

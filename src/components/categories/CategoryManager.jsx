@@ -1,4 +1,3 @@
-/* eslint-disable */
 import { useState } from 'react';
 import { motion, AnimatePresence, Reorder, useDragControls } from 'framer-motion';
 import { useRoomContext } from '../../context/RoomContext';

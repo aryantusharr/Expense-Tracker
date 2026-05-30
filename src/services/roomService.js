@@ -1,4 +1,4 @@
-/* eslint-disable */
+
 import { db } from './firebase';
 import {
   doc, setDoc, getDoc, updateDoc, deleteDoc, arrayUnion, onSnapshot,
@@ -32,7 +32,7 @@ export async function checkRoomNameExists(roomName) {
     return !result.empty;
   } catch (err) {
     // On timeout or network error, allow creation (the setDoc will fail if offline anyway)
-    console.warn('checkRoomNameExists failed, allowing creation:', err.message);
+    // Fallback on error
     return false;
   }
 }
@@ -78,7 +78,7 @@ export async function createRoom(roomName, userNames) {
     }
   } catch (err) {
     // If offline or timed out, just use the generated code
-    console.warn('Code check failed or timed out, using generated code:', err.message);
+    // Fallback on error
   }
 
   const users = userNames.map((name, i) => ({
@@ -97,9 +97,7 @@ export async function createRoom(roomName, userNames) {
   };
 
   // Optimistic write to Firestore (fire-and-forget) to keep creation near-instant
-  setDoc(doc(db, 'rooms', roomCode), roomData).catch(err => {
-    console.error('Failed to save room in background:', err);
-  });
+  setDoc(doc(db, 'rooms', roomCode), roomData).catch((err) => { /* silent fire-and-forget */ });
 
   return { roomCode, roomData };
 }
@@ -116,7 +114,7 @@ export async function createPersonalTracker(userName, monthlyBudget = 0) {
     ]);
     if (existing.exists()) roomCode = generateRoomCode();
   } catch (err) {
-    console.warn('Code check failed or timed out, using generated code:', err.message);
+    // Fallback on error
   }
 
   const users = [{
@@ -137,9 +135,7 @@ export async function createPersonalTracker(userName, monthlyBudget = 0) {
   };
 
   // Optimistic write to Firestore (fire-and-forget)
-  setDoc(doc(db, 'rooms', roomCode), roomData).catch(err => {
-    console.error('Failed to save personal tracker in background:', err);
-  });
+  setDoc(doc(db, 'rooms', roomCode), roomData).catch((err) => { /* silent fire-and-forget */ });
 
   return { roomCode, roomData };
 }
@@ -170,9 +166,7 @@ export function subscribeToRoom(roomCode, callback, onNotFound) {
     } else if (onNotFound) {
       onNotFound();
     }
-  }, (error) => {
-    console.error('subscribeToRoom error:', error);
-  });
+  }, (error) => { /* Silent error */ });
 }
 
 /**
@@ -232,7 +226,7 @@ export async function deleteRoom(roomCode) {
       const deletePromises = snapshot.docs.map(d => deleteDoc(d.ref));
       await Promise.all(deletePromises);
     } catch (err) {
-      console.warn('Expenses deletion failed or timed out in deleteRoom:', err.message);
+      // Silent error
     }
   })();
 

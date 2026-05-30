@@ -1,4 +1,3 @@
-/* eslint-disable */
 import Papa from 'papaparse';
 import { db } from './firebase';
 import { collection, writeBatch, doc, getDoc } from 'firebase/firestore';
@@ -233,7 +232,7 @@ export async function importToFirestore(roomId, rows, onProgress) {
       isPersonal = roomData.isPersonal === true;
     }
   } catch (err) {
-    console.error("Failed to fetch room details for CSV import sync:", err);
+    // Silent error
   }
 
   // 2. Pre-fetch the personal user ID for each linked personal room
@@ -248,7 +247,7 @@ export async function importToFirestore(roomId, rows, onProgress) {
             personalUserIds[user.personalRoomCode] = pSnap.data().users[0]?.id || 'user-personal';
           }
         } catch (e) {
-          console.error(`Failed to prefetch personal room user for code ${user.personalRoomCode}:`, e);
+          // Silent error
         }
       }
     }

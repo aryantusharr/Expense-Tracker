@@ -1,4 +1,3 @@
-/* eslint-disable */
 import { useState, useRef } from 'react';
 import { motion, useMotionValue, useTransform } from 'framer-motion';
 import './SwipeableItem.css';

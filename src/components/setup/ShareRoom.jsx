@@ -71,10 +71,10 @@ export default function ShareRoom() {
 
       // 3. Sync existing shared expenses to the personal room in the background
       syncExistingSharedExpenses(code, room?.name || 'Shared Room', selectedPersonalRoom, selectedUser).catch(err => {
-        console.error('Background sync of existing expenses failed:', err);
+        // Silent error
       });
     } catch (err) {
-      console.error('Failed to configure sync in ShareRoom:', err);
+      // Silent error
     }
     
     setShowWarning(false);
