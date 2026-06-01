@@ -16,7 +16,9 @@ function loadSavedRooms() {
 export function RoomProvider({ children }) {
   const [room, setRoom] = useState(null);
   const [expenses, setExpenses] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(() => {
+    return !!localStorage.getItem('splitease_room');
+  });
   const [savedRooms, setSavedRooms] = useState(loadSavedRooms);
   const [roomCode, setRoomCode] = useState(() => {
     return localStorage.getItem('splitease_room') || null;
@@ -69,8 +71,14 @@ export function RoomProvider({ children }) {
         // Auto-save to room list
         setSavedRooms(prev => {
           const exists = prev.find(r => r.code === roomCode);
-          if (exists) return prev;
-          return [...prev, { code: roomCode, name: roomData.name, isPersonal: !!roomData.isPersonal }];
+          const memberCount = roomData.users?.length || 1;
+          if (exists) {
+            if (exists.name !== roomData.name || exists.memberCount !== memberCount) {
+              return prev.map(r => r.code === roomCode ? { ...r, name: roomData.name, memberCount } : r);
+            }
+            return prev;
+          }
+          return [...prev, { code: roomCode, name: roomData.name, isPersonal: !!roomData.isPersonal, memberCount }];
         });
         clearTimeout(safetyTimeout);
         setLoading(false);

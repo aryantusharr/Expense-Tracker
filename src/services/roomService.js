@@ -30,7 +30,7 @@ export async function checkRoomNameExists(roomName) {
       new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
     ]);
     return !result.empty;
-  } catch (err) {
+  } catch {
     // On timeout or network error, allow creation (the setDoc will fail if offline anyway)
     // Fallback on error
     return false;
@@ -76,7 +76,7 @@ export async function createRoom(roomName, userNames) {
     if (existing.exists()) {
       roomCode = generateRoomCode();
     }
-  } catch (err) {
+  } catch {
     // If offline or timed out, just use the generated code
     // Fallback on error
   }
@@ -96,8 +96,7 @@ export async function createRoom(roomName, userNames) {
     createdAt: new Date().toISOString(),
   };
 
-  // Optimistic write to Firestore (fire-and-forget) to keep creation near-instant
-  setDoc(doc(db, 'rooms', roomCode), roomData).catch((err) => { /* silent fire-and-forget */ });
+  await setDoc(doc(db, 'rooms', roomCode), roomData);
 
   return { roomCode, roomData };
 }
@@ -113,7 +112,7 @@ export async function createPersonalTracker(userName, monthlyBudget = 0) {
       new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 1500))
     ]);
     if (existing.exists()) roomCode = generateRoomCode();
-  } catch (err) {
+  } catch {
     // Fallback on error
   }
 
@@ -134,8 +133,7 @@ export async function createPersonalTracker(userName, monthlyBudget = 0) {
     createdAt: new Date().toISOString(),
   };
 
-  // Optimistic write to Firestore (fire-and-forget)
-  setDoc(doc(db, 'rooms', roomCode), roomData).catch((err) => { /* silent fire-and-forget */ });
+  await setDoc(doc(db, 'rooms', roomCode), roomData);
 
   return { roomCode, roomData };
 }
@@ -166,7 +164,7 @@ export function subscribeToRoom(roomCode, callback, onNotFound) {
     } else if (onNotFound) {
       onNotFound();
     }
-  }, (error) => { /* Silent error */ });
+  }, () => { /* Silent error */ });
 }
 
 /**
@@ -216,7 +214,7 @@ export async function deleteRoom(roomCode) {
   const deleteRoomDocPromise = deleteDoc(doc(db, 'rooms', roomCode));
 
   // 2. Fetch and delete expenses in the background with a 3s timeout
-  const deleteExpensesPromise = (async () => {
+  (async () => {
     try {
       const expensesRef = collection(db, 'rooms', roomCode, 'expenses');
       const snapshot = await Promise.race([
@@ -225,7 +223,7 @@ export async function deleteRoom(roomCode) {
       ]);
       const deletePromises = snapshot.docs.map(d => deleteDoc(d.ref));
       await Promise.all(deletePromises);
-    } catch (err) {
+    } catch {
       // Silent error
     }
   })();

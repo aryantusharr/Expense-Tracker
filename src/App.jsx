@@ -11,6 +11,9 @@ import DashboardPage from './components/dashboard/DashboardPage';
 import AddExpense from './components/expenses/AddExpense';
 import ExpenseList from './components/expenses/ExpenseList';
 import SettingsPage from './components/settings/SettingsPage';
+import ReviewPage from './components/expenses/ReviewPage';
+import FloatingBanner from './components/layout/FloatingBanner';
+import { useClipboardIngestion } from './hooks/useClipboardIngestion';
 
 import { useEffect } from 'react';
 
@@ -58,24 +61,70 @@ function AppRoutes() {
           <Route path="/add" element={inRoom ? <AddExpense /> : <Navigate to="/" replace />} />
           <Route path="/history" element={inRoom ? <ExpenseList /> : <Navigate to="/" replace />} />
           <Route path="/settings" element={inRoom ? <SettingsPage /> : <Navigate to="/" replace />} />
+          <Route path="/review" element={inRoom ? <ReviewPage /> : <Navigate to="/" replace />} />
 
           {/* Catch-all */}
           <Route path="*" element={<Navigate to={inRoom ? '/dashboard' : '/'} replace />} />
         </Routes>
       </AnimatePresence>
 
-
-      {inRoom && <ShowNavGuard />}
+      <ShowNavGuard />
     </div>
   );
 }
 
 function ShowNavGuard() {
   const location = useLocation();
+  const { roomCode } = useRoomContext();
   const hideOn = ['/share', '/create', '/join', '/personal'];
-  const shouldHide = hideOn.some(p => location.pathname.startsWith(p));
+  // Guard 1: not inside a room yet
+  if (!roomCode) return null;
+  // Guard 2: setup/landing routes
+  const shouldHide = hideOn.some(p => location.pathname.startsWith(p)) || location.pathname === '/';
   if (shouldHide) return null;
-  return <BottomNav />;
+  return <IngestionManager />;
+}
+
+function IngestionManager() {
+  const { pendingCount, ingestionError, ingestionSuccess, clearIngestionError, clearIngestionSuccess } = useClipboardIngestion();
+
+  return (
+    <>
+      {ingestionError && (
+        <div className="ingestion-banner">
+          <div className="ingestion-banner-content">
+            <span className="ingestion-banner-icon">⚠️</span>
+            <span>{ingestionError}</span>
+          </div>
+          <button 
+            className="ingestion-banner-close" 
+            onClick={clearIngestionError} 
+            aria-label="Close notification"
+          >
+            &times;
+          </button>
+        </div>
+      )}
+      {ingestionSuccess && (
+        <div className="ingestion-banner" style={{ background: 'rgba(0, 206, 201, 0.15)', color: 'var(--success)', borderColor: 'rgba(0, 206, 201, 0.25)' }}>
+          <div className="ingestion-banner-content">
+            <span className="ingestion-banner-icon">✅</span>
+            <span>{ingestionSuccess}</span>
+          </div>
+          <button 
+            className="ingestion-banner-close" 
+            style={{ color: 'var(--success)' }}
+            onClick={clearIngestionSuccess} 
+            aria-label="Close notification"
+          >
+            &times;
+          </button>
+        </div>
+      )}
+      <FloatingBanner pendingCount={pendingCount} />
+      <BottomNav pendingCount={pendingCount} />
+    </>
+  );
 }
 
 /**
