@@ -83,6 +83,9 @@ export function useClipboardIngestion() {
 
     const handleFocus = async () => {
       // Route gate: only run inside room routes
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      if (isIOS) return; // Silent focus disabled on iOS
+
       const hideOn = ['/share', '/create', '/join', '/personal'];
       const pathname = window.location.pathname;
       if (hideOn.some(p => pathname.startsWith(p)) || pathname === '/') {
@@ -188,11 +191,64 @@ export function useClipboardIngestion() {
     };
   }, [refreshCount, showError, showSuccess, checkFirestoreDuplicate]);
 
+  const manualProcessClipboard = useCallback(async () => {
+    try {
+      if (!navigator.clipboard || !navigator.clipboard.readText) {
+        return 'ERROR';
+      }
+
+      const rawText = await navigator.clipboard.readText();
+      if (!rawText || !rawText.trim()) {
+        return 'EMPTY';
+      }
+
+      sessionStorage.setItem('lastProcessedClipboard', rawText);
+
+      const result = parseSMS(rawText);
+
+      if (result.error) {
+        if (result.error === 'INCOME') {
+          showError(result.message);
+          return 'INCOME_ERROR';
+        }
+        return 'UNRECOGNIZED';
+      }
+
+      const duplicateExist = await isDuplicate(result);
+      if (duplicateExist) {
+        showError('This transaction has already been captured.');
+        return 'DUPLICATE';
+      }
+
+      const firestoreDupe = await checkFirestoreDuplicate(result);
+
+      await addPendingTransaction(result);
+      if (firestoreDupe) {
+        showError('⚠️ A similar expense already exists in your records.');
+      } else {
+        showSuccess(`₹${result.amount} captured`);
+      }
+
+      try {
+        await navigator.clipboard.writeText('');
+      } catch {
+        // fail silently
+      }
+
+      await refreshCount();
+      return 'SUCCESS';
+
+    } catch (err) {
+      return 'ERROR';
+    }
+  }, [checkFirestoreDuplicate, refreshCount, showError, showSuccess]);
+
   return {
     pendingCount,
     ingestionError,
     ingestionSuccess,
     clearIngestionError,
-    clearIngestionSuccess
+    clearIngestionSuccess,
+    manualProcessClipboard
   };
 }

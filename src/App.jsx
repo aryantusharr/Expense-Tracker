@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useRoomContext } from './context/RoomContext';
 import BottomNav from './components/layout/BottomNav';
 import LandingPage from './components/setup/LandingPage';
@@ -15,7 +15,7 @@ import ReviewPage from './components/expenses/ReviewPage';
 import FloatingBanner from './components/layout/FloatingBanner';
 import { useClipboardIngestion } from './hooks/useClipboardIngestion';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -85,8 +85,81 @@ function ShowNavGuard() {
   return <IngestionManager />;
 }
 
+function FloatingClipboardButton({ manualProcessClipboard }) {
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const [iconState, setIconState] = useState('IDLE');
+
+  if (!isIOS) return null;
+
+  const handleTap = async () => {
+    if (iconState !== 'IDLE') return;
+    const status = await manualProcessClipboard();
+
+    if (status === 'SUCCESS') setIconState('SUCCESS');
+    else if (status === 'INCOME_ERROR') setIconState('INCOME_ERROR');
+    else setIconState('UNRECOGNIZED');
+
+    setTimeout(() => {
+      setIconState('IDLE');
+    }, 2000);
+  };
+
+  const getIcon = () => {
+    switch (iconState) {
+      case 'SUCCESS': return '✅';
+      case 'INCOME_ERROR': return '⚠️';
+      case 'UNRECOGNIZED': return <span style={{ color: '#ff4d4f' }}>✗</span>;
+      default: return '📋';
+    }
+  };
+
+  const getAnimation = () => {
+    if (iconState === 'IDLE') return { scale: 1, rotate: 0, x: 0 };
+    if (iconState === 'SUCCESS') {
+      return {
+        scale: [1, 1.2, 1.1],
+        rotate: [0, -10, 10, -10, 10, 0],
+        transition: { duration: 0.5 }
+      };
+    }
+    return {
+      x: [0, -6, 6, -6, 6, 0],
+      transition: { duration: 0.4 }
+    };
+  };
+
+  return (
+    <motion.button
+      onClick={handleTap}
+      whileTap={{ scale: 0.9 }}
+      animate={getAnimation()}
+      style={{
+        position: 'fixed',
+        bottom: '120px',
+        right: '20px',
+        width: '50px',
+        height: '50px',
+        borderRadius: '25px',
+        background: 'rgba(255, 255, 255, 0.1)',
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)',
+        border: '1px solid rgba(255, 255, 255, 0.2)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: '24px',
+        color: 'white',
+        zIndex: 50,
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)'
+      }}
+    >
+      {getIcon()}
+    </motion.button>
+  );
+}
+
 function IngestionManager() {
-  const { pendingCount, ingestionError, ingestionSuccess, clearIngestionError, clearIngestionSuccess } = useClipboardIngestion();
+  const { pendingCount, ingestionError, ingestionSuccess, clearIngestionError, clearIngestionSuccess, manualProcessClipboard } = useClipboardIngestion();
 
   return (
     <>
@@ -96,9 +169,9 @@ function IngestionManager() {
             <span className="ingestion-banner-icon">⚠️</span>
             <span>{ingestionError}</span>
           </div>
-          <button 
-            className="ingestion-banner-close" 
-            onClick={clearIngestionError} 
+          <button
+            className="ingestion-banner-close"
+            onClick={clearIngestionError}
             aria-label="Close notification"
           >
             &times;
@@ -111,10 +184,10 @@ function IngestionManager() {
             <span className="ingestion-banner-icon">✅</span>
             <span>{ingestionSuccess}</span>
           </div>
-          <button 
-            className="ingestion-banner-close" 
+          <button
+            className="ingestion-banner-close"
             style={{ color: 'var(--success)' }}
-            onClick={clearIngestionSuccess} 
+            onClick={clearIngestionSuccess}
             aria-label="Close notification"
           >
             &times;
@@ -123,6 +196,7 @@ function IngestionManager() {
       )}
       <FloatingBanner pendingCount={pendingCount} />
       <BottomNav pendingCount={pendingCount} />
+      <FloatingClipboardButton manualProcessClipboard={manualProcessClipboard} />
     </>
   );
 }
@@ -133,7 +207,7 @@ function IngestionManager() {
  */
 function JoinFromLink() {
   const { joinRoomSession, roomCode } = useRoomContext();
-// eslint-disable-next-line no-unused-vars
+  // eslint-disable-next-line no-unused-vars
   const params = new URL(window.location.href);
   const code = window.location.pathname.split('/join/')[1]?.toUpperCase();
 
