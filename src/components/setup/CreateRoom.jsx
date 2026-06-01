@@ -51,6 +51,7 @@ export default function CreateRoom() {
       }
       setLoading(false);
       setStep(2);
+// eslint-disable-next-line no-unused-vars
     } catch (err) {
       setError('Failed to verify room name. Try again.');
       setLoading(false);

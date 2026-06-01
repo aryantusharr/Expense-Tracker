@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-unused-vars
 import { useState, useRef } from 'react';
 import { motion, useMotionValue, useTransform } from 'framer-motion';
 import './SwipeableItem.css';

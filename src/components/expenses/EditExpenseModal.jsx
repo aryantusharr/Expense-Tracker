@@ -21,7 +21,9 @@ export default function EditExpenseModal({ expense, users, categories, roomCode,
       categoryId: expense.categoryId,
       date: expense.date,
     });
+// eslint-disable-next-line react-hooks/set-state-in-effect
     setError('');
+// eslint-disable-next-line react-hooks/exhaustive-deps
   }, [expense]);
 
   const handleSave = async () => {

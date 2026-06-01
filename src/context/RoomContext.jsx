@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-unused-vars
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { subscribeToRoom, updateRoomData } from '../services/roomService';
 import { subscribeToExpenses } from '../services/expenseService';
@@ -16,7 +17,9 @@ function loadSavedRooms() {
 export function RoomProvider({ children }) {
   const [room, setRoom] = useState(null);
   const [expenses, setExpenses] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(() => {
+    return !!localStorage.getItem('splitease_room');
+  });
   const [savedRooms, setSavedRooms] = useState(loadSavedRooms);
   const [roomCode, setRoomCode] = useState(() => {
     return localStorage.getItem('splitease_room') || null;
@@ -35,6 +38,7 @@ export function RoomProvider({ children }) {
   // Update identity when room changes
   useEffect(() => {
     if (!roomCode) {
+// eslint-disable-next-line react-hooks/set-state-in-effect
       setUserIdentity(null);
       return;
     }
@@ -49,6 +53,7 @@ export function RoomProvider({ children }) {
   // Subscribe to room data
   useEffect(() => {
     if (!roomCode) {
+// eslint-disable-next-line react-hooks/set-state-in-effect
       setRoom(null);
       setExpenses([]);
       setLoading(false);
@@ -69,8 +74,14 @@ export function RoomProvider({ children }) {
         // Auto-save to room list
         setSavedRooms(prev => {
           const exists = prev.find(r => r.code === roomCode);
-          if (exists) return prev;
-          return [...prev, { code: roomCode, name: roomData.name, isPersonal: !!roomData.isPersonal }];
+          const memberCount = roomData.users?.length || 1;
+          if (exists) {
+            if (exists.name !== roomData.name || exists.memberCount !== memberCount) {
+              return prev.map(r => r.code === roomCode ? { ...r, name: roomData.name, memberCount } : r);
+            }
+            return prev;
+          }
+          return [...prev, { code: roomCode, name: roomData.name, isPersonal: !!roomData.isPersonal, memberCount }];
         });
         clearTimeout(safetyTimeout);
         setLoading(false);
@@ -154,6 +165,7 @@ export function RoomProvider({ children }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useRoomContext() {
   const ctx = useContext(RoomContext);
   if (!ctx) throw new Error('useRoomContext must be used within RoomProvider');

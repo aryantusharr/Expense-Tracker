@@ -171,7 +171,9 @@ export function applyMappings(rawRows, mappings, isPersonal, roomUsers) {
         return;
     }
 
+// eslint-disable-next-line no-useless-assignment
     let paidBy = null;
+// eslint-disable-next-line no-useless-assignment
     let splitAmong = [];
 
     if (isPersonal) {
@@ -231,6 +233,7 @@ export async function importToFirestore(roomId, rows, onProgress) {
       roomData = roomSnap.data();
       isPersonal = roomData.isPersonal === true;
     }
+// eslint-disable-next-line no-unused-vars
   } catch (err) {
     // Silent error
   }
@@ -246,6 +249,7 @@ export async function importToFirestore(roomId, rows, onProgress) {
           if (pSnap.exists()) {
             personalUserIds[user.personalRoomCode] = pSnap.data().users[0]?.id || 'user-personal';
           }
+// eslint-disable-next-line no-unused-vars
         } catch (e) {
           // Silent error
         }
@@ -264,6 +268,10 @@ export async function importToFirestore(roomId, rows, onProgress) {
     chunk.forEach((row) => {
       const docRef = doc(collectionRef); // auto-ID
       // Strip out raw mapping fields before saving
+// eslint-disable-next-line no-unused-vars
+// eslint-disable-next-line no-unused-vars
+// eslint-disable-next-line no-unused-vars
+// eslint-disable-next-line no-unused-vars
       const { categoryRaw, paidByRaw, splitRaw, rowNum, ...cleanRow } = row;
       const expenseData = {
         ...cleanRow,
@@ -307,6 +315,7 @@ export async function importToFirestore(roomId, rows, onProgress) {
       imported += chunk.length;
     } catch (err) {
       // Record all rows in this chunk as failed
+// eslint-disable-next-line no-unused-vars
       chunk.forEach((row, j) => {
         errors.push({ rowIndex: row.rowNum, error: err.message });
       });

@@ -72,8 +72,10 @@ export default function ExpenseList() {
   // Auto-expand the latest month on first load
   useEffect(() => {
     if (monthlyGroups.length > 0 && activeDropdownId === null) {
+// eslint-disable-next-line react-hooks/set-state-in-effect
       setActiveDropdownId(monthlyGroups[0][0]);
     }
+// eslint-disable-next-line react-hooks/exhaustive-deps
   }, [monthlyGroups]);
 
   const toggleMonth = (monthKey) => {

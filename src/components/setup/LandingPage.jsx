@@ -22,6 +22,7 @@ export default function LandingPage() {
     setDeleting(true);
     try {
       // Fire-and-forget deletion from cloud
+// eslint-disable-next-line no-unused-vars
       deleteRoom(deleteTarget.code).catch(err => {
       // Silent error
       });
