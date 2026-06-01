@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-unused-vars
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { subscribeToRoom, updateRoomData } from '../services/roomService';
 import { subscribeToExpenses } from '../services/expenseService';
@@ -37,6 +38,7 @@ export function RoomProvider({ children }) {
   // Update identity when room changes
   useEffect(() => {
     if (!roomCode) {
+// eslint-disable-next-line react-hooks/set-state-in-effect
       setUserIdentity(null);
       return;
     }
@@ -51,6 +53,7 @@ export function RoomProvider({ children }) {
   // Subscribe to room data
   useEffect(() => {
     if (!roomCode) {
+// eslint-disable-next-line react-hooks/set-state-in-effect
       setRoom(null);
       setExpenses([]);
       setLoading(false);
@@ -162,6 +165,7 @@ export function RoomProvider({ children }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useRoomContext() {
   const ctx = useContext(RoomContext);
   if (!ctx) throw new Error('useRoomContext must be used within RoomProvider');

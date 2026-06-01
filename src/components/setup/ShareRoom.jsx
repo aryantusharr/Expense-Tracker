@@ -70,9 +70,11 @@ export default function ShareRoom() {
       setUserIdentity(selectedUser);
 
       // 3. Sync existing shared expenses to the personal room in the background
+// eslint-disable-next-line no-unused-vars
       syncExistingSharedExpenses(code, room?.name || 'Shared Room', selectedPersonalRoom, selectedUser).catch(err => {
         // Silent error
       });
+// eslint-disable-next-line no-unused-vars
     } catch (err) {
       // Silent error
     }

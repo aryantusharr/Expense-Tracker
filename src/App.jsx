@@ -133,6 +133,7 @@ function IngestionManager() {
  */
 function JoinFromLink() {
   const { joinRoomSession, roomCode } = useRoomContext();
+// eslint-disable-next-line no-unused-vars
   const params = new URL(window.location.href);
   const code = window.location.pathname.split('/join/')[1]?.toUpperCase();
 

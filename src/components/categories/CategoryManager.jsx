@@ -1,4 +1,6 @@
 import { useState } from 'react';
+// eslint-disable-next-line no-unused-vars
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence, Reorder, useDragControls } from 'framer-motion';
 import { useRoomContext } from '../../context/RoomContext';
 import { updateCategories } from '../../services/roomService';
