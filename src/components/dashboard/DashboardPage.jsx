@@ -21,7 +21,7 @@ const cardVariants = {
 };
 
 export default function DashboardPage() {
-  const { room, expenses, users, categories } = useRoomContext();
+  const { room, expenses, users, categories, userIdentity, setUserIdentity } = useRoomContext();
   const isPersonal = room?.isPersonal === true;
   const budget = room?.budget || 0;
 
@@ -40,6 +40,61 @@ export default function DashboardPage() {
       <Header title={room?.name || 'Dashboard'} subtitle={isPersonal ? 'Personal' : `${users.length} roommates`} />
 
       <div className="page-content">
+        {/* Minimal inline identity selector prompt for shared room when no identity is set */}
+        {!isPersonal && !userIdentity && users.length > 0 && (
+          <motion.div 
+            className="card identity-prompt-card"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            style={{
+              background: 'linear-gradient(135deg, rgba(108, 92, 231, 0.15), rgba(162, 155, 254, 0.05))',
+              borderColor: 'rgba(108, 92, 231, 0.3)',
+              marginBottom: 'var(--space-lg)',
+              padding: 'var(--space-md) var(--space-lg)',
+              borderRadius: 'var(--radius-md)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 'var(--space-sm)'
+            }}
+          >
+            <span style={{ fontSize: 'var(--font-sm)', fontWeight: 600, color: 'var(--text-primary)' }}>
+              👋 Who are you? Select your member profile:
+            </span>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-sm)' }}>
+              {users.map(u => (
+                <button
+                  key={u.id}
+                  onClick={() => setUserIdentity(u.id)}
+                  className="chip clickable"
+                  style={{
+                    borderColor: u.color || 'var(--border-color)',
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    color: 'var(--text-primary)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 'var(--space-xs)',
+                    padding: '6px 12px',
+                    fontSize: 'var(--font-xs)',
+                    borderRadius: 'var(--radius-full)',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = u.color ? `${u.color}22` : 'rgba(255, 255, 255, 0.1)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+                  }}
+                >
+                  <span className="avatar-sm" style={{ background: u.color || 'var(--accent)', width: '18px', height: '18px', fontSize: '9px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold' }}>
+                    {u.name.charAt(0).toUpperCase()}
+                  </span>
+                  <span>{u.name}</span>
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        )}
 
         {/* Total Card */}
         <motion.div className="card total-card" custom={0} initial="hidden" animate="visible" variants={cardVariants}>

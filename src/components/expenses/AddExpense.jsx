@@ -10,9 +10,9 @@ import { validateExpense } from '../../utils/expenseFormHelpers';
 import './Expenses.css';
 
 export default function AddExpense() {
-  const { roomCode, room, users, categories } = useRoomContext();
+  const { roomCode, room, users, categories, userIdentity } = useRoomContext();
   const isPersonal = room?.isPersonal === true;
-  const { form, setField, resetForm, toggleSplit, selectAll, perPerson, allGradient } = useExpenseForm({}, users);
+  const { form, setField, resetForm, toggleSplit, selectAll, perPerson, allGradient } = useExpenseForm({}, users, userIdentity);
   const { showSuccess, triggerSuccess } = useSuccessState();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');

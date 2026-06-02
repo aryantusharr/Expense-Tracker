@@ -15,10 +15,10 @@ const DEFAULT_VALUES = {
  * @param {Object} initialValues - Override defaults (e.g. when editing)
  * @param {Array} users - Room members for deriving splitAmong default
  */
-export function useExpenseForm(initialValues = {}, users = []) {
+export function useExpenseForm(initialValues = {}, users = [], defaultPayerId = null) {
   const [description, setDescription] = useState(initialValues.description ?? DEFAULT_VALUES.description);
   const [amount, setAmount] = useState(initialValues.amount !== undefined ? String(initialValues.amount) : DEFAULT_VALUES.amount);
-  const [paidBy, setPaidBy] = useState(initialValues.paidBy ?? users[0]?.id ?? DEFAULT_VALUES.paidBy);
+  const [paidBy, setPaidBy] = useState(initialValues.paidBy ?? defaultPayerId ?? users[0]?.id ?? DEFAULT_VALUES.paidBy);
   const [splitAmong, setSplitAmong] = useState(initialValues.splitAmong ?? users.map(u => u.id));
   const [categoryId, setCategoryId] = useState(initialValues.categoryId ?? DEFAULT_VALUES.categoryId);
   const [date, setDate] = useState(initialValues.date ?? DEFAULT_VALUES.date);
@@ -35,7 +35,7 @@ export function useExpenseForm(initialValues = {}, users = []) {
   const resetForm = () => {
     setDescription('');
     setAmount('');
-    setPaidBy(users[0]?.id ?? '');
+    setPaidBy(defaultPayerId ?? users[0]?.id ?? '');
     setSplitAmong(users.map(u => u.id));
     setCategoryId('cat-1');
     setDate(getTodayISO());

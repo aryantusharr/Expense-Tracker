@@ -41,31 +41,19 @@ function NavIcon({ name, isActive }) {
         <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1.08-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1.08 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.26.604.852.997 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
       </svg>
     ),
-    inbox: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
-        <polyline points="22 12 16 12 14 15 10 15 8 12 2 12" />
-        <path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" />
-      </svg>
-    ),
   };
 
   return icons[name] || null;
 }
 
-export default function BottomNav({ pendingCount = 0 }) {
+export default function BottomNav() {
   const location = useLocation();
   const navigate = useNavigate();
-
-  // Dynamically compute tabs
-  const activeTabs = [...baseTabs];
-  if (pendingCount > 0) {
-    activeTabs.splice(2, 0, { path: '/review', label: 'Inbox', icon: 'inbox' });
-  }
 
   return (
     <nav className="bottom-nav">
       <div className="bottom-nav-inner">
-        {activeTabs.map((tab) => {
+        {baseTabs.map((tab) => {
           const isActive = location.pathname === tab.path;
           return (
             <button
@@ -91,9 +79,6 @@ export default function BottomNav({ pendingCount = 0 }) {
                 style={{ position: 'relative' }}
               >
                 <NavIcon name={tab.icon} isActive={isActive} />
-                {tab.path === '/review' && pendingCount > 0 && (
-                  <span className="inbox-badge-bounce">{pendingCount}</span>
-                )}
               </motion.span>
               <span className="nav-label">{tab.label}</span>
             </button>
