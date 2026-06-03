@@ -951,7 +951,7 @@ export default function AddExpense() {
                   className="amount-input"
                   type="text"
                   inputMode="decimal"
-                  placeholder="₹xx + ₹x"
+                  placeholder="250+150"
                   value={totalAmount}
                   onChange={(e) => setTotalAmount(e.target.value)}
                   onBlur={() => handleMathBlurOrEnter(totalAmount, setTotalAmount)}

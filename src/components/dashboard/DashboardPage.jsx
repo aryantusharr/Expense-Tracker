@@ -53,7 +53,7 @@ export default function DashboardPage() {
       <div className="page-content">
         {/* Minimal inline identity selector prompt for shared room when no identity is set */}
         {!isPersonal && !userIdentity && users.length > 0 && (
-          <motion.div 
+          <motion.div
             className="card identity-prompt-card"
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -200,29 +200,29 @@ export default function DashboardPage() {
 
         {/* Balance Cards — hidden in personal mode */}
         {!isPersonal && (
-        <motion.div custom={1} initial="hidden" animate="visible" variants={cardVariants}>
-          <h3 className="section-title">Balances</h3>
-          <div className="balance-grid">
-            {Object.values(balances).map((b, i) => (
-              <motion.div
-                key={b.userId}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.2, delay: 0.08 + i * 0.03 }}
-              >
-                <FlipBalanceCard b={b} expenses={expenses} />
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
+          <motion.div custom={1} initial="hidden" animate="visible" variants={cardVariants}>
+            <h3 className="section-title">Balances</h3>
+            <div className="balance-grid">
+              {Object.values(balances).map((b, i) => (
+                <motion.div
+                  key={b.userId}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.2, delay: 0.08 + i * 0.03 }}
+                >
+                  <FlipBalanceCard b={b} expenses={expenses} />
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
         )}
 
         {/* Settlements — hidden in personal mode */}
         {!isPersonal && (
-        <motion.div custom={2} initial="hidden" animate="visible" variants={cardVariants}>
-          <h3 className="section-title">Settlements</h3>
-          <SettlementList settlements={settlements} allSettled={allSettled} />
-        </motion.div>
+          <motion.div custom={2} initial="hidden" animate="visible" variants={cardVariants}>
+            <h3 className="section-title">Settlements</h3>
+            <SettlementList settlements={settlements} allSettled={allSettled} />
+          </motion.div>
         )}
 
         {/* Monthly Overview Chart */}
@@ -243,9 +243,9 @@ export default function DashboardPage() {
               </span>
               <AnimatePresence>
                 {showMatrixTooltip && (
-                  <motion.div 
-                    initial={{ opacity: 0, y: 5 }} 
-                    animate={{ opacity: 1, y: 0 }} 
+                  <motion.div
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 5 }}
                     style={{
                       position: 'absolute',
