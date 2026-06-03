@@ -35,6 +35,17 @@ export default function DashboardPage() {
   const { currentMonthTotal, prevMonthTotal, currentMonthLabel, prevMonthLabel } = useMonthTotals(expenses);
   const pivotData = usePivotTable(expenses, categories);
 
+  const today = new Date();
+  const todayStr = today.toISOString().split('T')[0];
+  const dayOfMonth = today.getDate();
+  const todayTotal = expenses
+    .filter(e => e.date === todayStr)
+    .reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
+
+  const daysElapsed = today.getDate();
+  const avgPerDayVal = daysElapsed > 0 ? Math.round(currentMonthTotal / daysElapsed) : 0;
+  const avgPerDayFormatted = `Avg · ₹${avgPerDayVal.toLocaleString('en-IN')}/day`;
+
   return (
     <>
       <Header title={room?.name || 'Dashboard'} subtitle={isPersonal ? 'Personal' : `${users.length} roommates`} />
@@ -102,7 +113,27 @@ export default function DashboardPage() {
           <h2 className="total-amount">
             <CountUp value={total} prefix="₹" />
           </h2>
-          <p className="total-count">{expenses.length} expense{expenses.length !== 1 ? 's' : ''}</p>
+          {isPersonal ? (
+            <p className="total-count">{expenses.length} expense{expenses.length !== 1 ? 's' : ''}</p>
+          ) : (
+            <div style={{ display: 'flex', justifyContent: 'center', marginTop: 'var(--space-xs)' }}>
+              <span style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                padding: '4px 12px',
+                borderRadius: 'var(--radius-full)',
+                background: 'rgba(255, 255, 255, 0.06)',
+                border: '1px solid var(--border-color)',
+                fontSize: 'var(--font-xs)',
+                color: 'var(--text-secondary)',
+                fontWeight: 500
+              }}>
+                {todayTotal === 0
+                  ? 'No expenses today'
+                  : `Day ${dayOfMonth} · ${formatCurrency(todayTotal)} today`}
+              </span>
+            </div>
+          )}
 
           {/* Budget gauge for personal mode */}
           {isPersonal && budget > 0 && (
@@ -130,6 +161,27 @@ export default function DashboardPage() {
             </div>
           )}
 
+          {/* Day chip for Personal Room */}
+          {isPersonal && (
+            <div style={{ display: 'flex', justifyContent: 'center', marginTop: 'var(--space-md)' }}>
+              <span style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                padding: '4px 12px',
+                borderRadius: 'var(--radius-full)',
+                background: 'rgba(255, 255, 255, 0.06)',
+                border: '1px solid var(--border-color)',
+                fontSize: 'var(--font-xs)',
+                color: 'var(--text-secondary)',
+                fontWeight: 500
+              }}>
+                {todayTotal === 0
+                  ? 'No expenses today'
+                  : `Day ${dayOfMonth} · ${formatCurrency(todayTotal)} today`}
+              </span>
+            </div>
+          )}
+
           <div className="month-stats">
             <div className="month-stat">
               <span className="month-stat-label">{prevMonthLabel}</span>
@@ -138,7 +190,10 @@ export default function DashboardPage() {
             <div className="month-stat-divider" />
             <div className="month-stat">
               <span className="month-stat-label">{currentMonthLabel}</span>
-              <span className="month-stat-value">{formatCurrency(currentMonthTotal)}</span>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
+                <span className="month-stat-value">{formatCurrency(currentMonthTotal)}</span>
+                <span style={{ fontSize: '0.65rem', opacity: 0.55, whiteSpace: 'nowrap' }}>{avgPerDayFormatted}</span>
+              </div>
             </div>
           </div>
         </motion.div>

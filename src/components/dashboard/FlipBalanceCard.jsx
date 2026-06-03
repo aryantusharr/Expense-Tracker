@@ -45,7 +45,6 @@ export default function FlipBalanceCard({ b, expenses }) {
       >
         {/* Front */}
         <div className="card balance-card balance-card-front" style={{ backfaceVisibility: 'hidden' }}>
-          <div className="balance-card-flip-icon">🔄</div>
           <div className="balance-avatar" style={{ background: b.color }}>
             {b.name[0]}
           </div>
@@ -73,8 +72,7 @@ export default function FlipBalanceCard({ b, expenses }) {
 
         {/* Back */}
         <div className="card balance-card balance-card-back" style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}>
-          <div className="balance-card-flip-icon">🔄</div>
-          <h4 className="back-title">Current Month</h4>
+          <h4 className="back-title">This Month</h4>
           <p className={`balance-amount ${cmPositive ? 'positive' : 'negative'}`}>
             {cmPositive ? '+' : '−'}₹{cmAbsBalance.toLocaleString('en-IN')}
           </p>

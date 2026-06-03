@@ -11,6 +11,7 @@ import './Expenses.css';
 
 export default function ExpenseList() {
   const { roomCode, room, expenses, users, categories } = useRoomContext();
+  const isPersonal = room?.isPersonal === true;
   const [filter, setFilter] = useState('all');
   const [editModal, setEditModal] = useState(null);
   const [expenseToDelete, setExpenseToDelete] = useState(null);
@@ -90,13 +91,15 @@ export default function ExpenseList() {
     <>
       <Header title="History" subtitle={`${filtered.length} expenses`} />
       <div className="page-content">
-        {/* Filter chips */}
-        <div className="filter-row">
-          <button className={`chip ${filter === 'all' ? 'active' : ''}`} onClick={() => setFilter('all')}>All</button>
-          {users.map(u => (
-            <button key={u.id} className={`chip ${filter === u.id ? 'active' : ''}`} onClick={() => setFilter(u.id)}>{u.name}</button>
-          ))}
-        </div>
+        {/* Filter chips — only in shared rooms */}
+        {!isPersonal && (
+          <div className="filter-row">
+            <button className={`chip ${filter === 'all' ? 'active' : ''}`} onClick={() => setFilter('all')}>All</button>
+            {users.map(u => (
+              <button key={u.id} className={`chip ${filter === u.id ? 'active' : ''}`} onClick={() => setFilter(u.id)}>{u.name}</button>
+            ))}
+          </div>
+        )}
 
         {/* Expense list */}
         {monthlyGroups.length === 0 ? (
@@ -155,12 +158,16 @@ export default function ExpenseList() {
                                       )}
                                     </p>
                                     <p className="expense-meta">
-                                      <span className="expense-payer-dot" style={{ background: payer?.color || '#888' }} />
-                                      {payer?.name || 'Unknown'}
-                                      {!isSynced && (
+                                      {!isPersonal && (
                                         <>
-                                          <span>•</span>
-                                          {expense.splitAmong?.length || 0} split
+                                          <span className="expense-payer-dot" style={{ background: payer?.color || '#888' }} />
+                                          {payer?.name || 'Unknown'}
+                                          {!isSynced && (
+                                            <>
+                                              <span>•</span>
+                                              {expense.splitAmong?.length || 0} split
+                                            </>
+                                          )}
                                         </>
                                       )}
                                     </p>

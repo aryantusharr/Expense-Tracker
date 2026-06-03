@@ -112,6 +112,23 @@
   --shadow-glow: 0 0 20px rgba(108, 92, 231, 0.15);
 }
 
+/* ========== Jitter / Shake — validation feedback ========== */
+@keyframes jitter {
+  0%   { transform: translateX(0); }
+  15%  { transform: translateX(-5px); }
+  30%  { transform: translateX(5px); }
+  45%  { transform: translateX(-5px); }
+  60%  { transform: translateX(5px); }
+  75%  { transform: translateX(-3px); }
+  90%  { transform: translateX(3px); }
+  100% { transform: translateX(0); }
+}
+.jitter {
+  animation: jitter 0.35s ease-in-out;
+  border-color: var(--danger) !important;
+  outline: 1px solid var(--danger) !important;
+}
+
 /* ========== Reset & Base ========== */
 *, *::before, *::after {
   margin: 0;

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Header from '../layout/Header';
 import { useRoomContext } from '../../context/RoomContext';
@@ -9,6 +9,7 @@ import { validateExpense, adjustDate } from '../../utils/expenseFormHelpers';
 import CountUp from '../common/CountUp';
 import { getLastUsedMode, setLastUsedMode, getLastUsedDefaults, setLastUsedDefaults } from '../../utils/lastUsedDefaults';
 import { getRecentDescriptions, addRecentDescription } from '../../utils/recentDescriptions';
+import { detectRecurringExpenses } from '../../utils/recurringExpenses';
 import './Expenses.css';
 
 // Hinglish keyword category mapping
@@ -17,29 +18,29 @@ const HINGLISH_MAP = {
   sabzi: 'Groceries', pyaaz: 'Groceries', aata: 'Groceries', dal: 'Groceries', chawal: 'Groceries',
   zepto: 'Groceries', blinkit: 'Groceries', bigbasket: 'Groceries', kirana: 'Groceries', doodh: 'Groceries',
   anda: 'Groceries', bread: 'Groceries',
-  
+
   // Food & Dining
   biryani: 'Food & Dining', pizza: 'Food & Dining', burger: 'Food & Dining', zomato: 'Food & Dining', swiggy: 'Food & Dining',
   chai: 'Food & Dining', dhaba: 'Food & Dining', restaurant: 'Food & Dining', khana: 'Food & Dining', lunch: 'Food & Dining',
   dinner: 'Food & Dining', breakfast: 'Food & Dining', maggi: 'Food & Dining', noodles: 'Food & Dining', dominos: 'Food & Dining',
-  
+
   // Transportation
   petrol: 'Transportation', diesel: 'Transportation', uber: 'Transportation', ola: 'Transportation', rapido: 'Transportation',
   auto: 'Transportation', rickshaw: 'Transportation', metro: 'Transportation', cab: 'Transportation', fuel: 'Transportation',
   toll: 'Transportation',
-  
+
   // Entertainment
   netflix: 'Entertainment', spotify: 'Entertainment', prime: 'Entertainment', movie: 'Entertainment', ticket: 'Entertainment',
   cinema: 'Entertainment', hotstar: 'Entertainment', youtube: 'Entertainment',
-  
+
   // Utilities
   rent: 'Utilities', bijli: 'Utilities', electricity: 'Utilities', water: 'Utilities', internet: 'Utilities',
   mobile: 'Utilities', recharge: 'Utilities', wifi: 'Utilities', broadband: 'Utilities',
-  
+
   // Smoking/Cigarettes
   cig: 'Smoking/Cigarettes', cigs: 'Smoking/Cigarettes', cigarette: 'Smoking/Cigarettes', cigarettes: 'Smoking/Cigarettes', sutta: 'Smoking/Cigarettes',
   bidi: 'Smoking/Cigarettes', hookah: 'Smoking/Cigarettes',
-  
+
   // Alcohol
   beer: 'Alcohol', wine: 'Alcohol', whiskey: 'Alcohol', vodka: 'Alcohol', rum: 'Alcohol',
   daaru: 'Alcohol', drinks: 'Alcohol', alcohol: 'Alcohol', breezer: 'Alcohol'
@@ -55,17 +56,17 @@ const HINGLISH_MAP = {
 function findMatchingCategory(targetName, categories) {
   if (!categories || categories.length === 0) return null;
   const targetLower = targetName.toLowerCase();
-  
+
   // 1. Exact match (case-insensitive)
   let matched = categories.find(c => c.name.toLowerCase() === targetLower);
   if (matched) return matched;
-  
+
   // 2. Partial match (case-insensitive)
   matched = categories.find(c => {
     const nameLower = c.name.toLowerCase();
     return nameLower.includes(targetLower) || targetLower.includes(nameLower);
   });
-  
+
   return matched || null;
 }
 
@@ -81,7 +82,7 @@ function getSortedCategories(categories, expenses) {
 
   // Sort expenses by date descending to get recent entries
   const sortedExpenses = [...expenses].sort((a, b) => new Date(b.date) - new Date(a.date));
-  
+
   // Recent: categories used in the last 5 entries (up to 5 unique)
   const recentIds = [];
   for (const exp of sortedExpenses) {
@@ -152,6 +153,8 @@ export default function AddExpense() {
   const { roomCode, room, expenses, users, categories, userIdentity } = useRoomContext();
   const isPersonal = room?.isPersonal === true;
 
+  const amountInputRef = useRef(null);
+
   // Mode Toggle State
   const [mode, setMode] = useState(() => getLastUsedMode(roomCode));
 
@@ -174,6 +177,24 @@ export default function AddExpense() {
   const { showSuccess, triggerSuccess } = useSuccessState();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [toastMessage, setToastMessage] = useState('');
+
+  // Auto-dismiss toast
+  useEffect(() => {
+    if (!toastMessage) return;
+    const t = setTimeout(() => setToastMessage(''), 3000);
+    return () => clearTimeout(t);
+  }, [toastMessage]);
+
+  // Helper: apply jitter to a DOM element by id or selector
+  const jitterEl = (selector) => {
+    const el = document.querySelector(selector);
+    if (!el) return;
+    el.classList.remove('jitter');
+    void el.offsetWidth; // force reflow so animation restarts
+    el.classList.add('jitter');
+    setTimeout(() => el.classList.remove('jitter'), 400);
+  };
 
   // Split Transaction Mode States
   const [totalAmount, setTotalAmount] = useState('');
@@ -222,9 +243,40 @@ export default function AddExpense() {
     );
   }, [recentDescs, form.description]);
 
+  // Recurring Expenses detection
+  const recurringExpensesList = useMemo(() => detectRecurringExpenses(expenses), [expenses]);
+  const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
+
+  const handleRecurringChipTap = (chip) => {
+    if (mode !== 'quick') {
+      handleModeChange('quick');
+    }
+
+    setField.description(chip.description);
+    setField.categoryId(chip.categoryId);
+    setField.amount(String(chip.lastAmount));
+    setField.date(todayStr);
+
+    if (!isPersonal) {
+      if (chip.lastPaidBy) {
+        setField.paidBy(chip.lastPaidBy);
+      }
+      if (chip.lastSplitAmong && chip.lastSplitAmong.length > 0) {
+        setField.splitAmong(chip.lastSplitAmong);
+      }
+    }
+
+    setTimeout(() => {
+      if (amountInputRef.current) {
+        amountInputRef.current.focus();
+        amountInputRef.current.select();
+      }
+    }, 100);
+  };
+
   // Split mode math calculations
   const sumOfRows = rows.reduce((sum, r) => sum + (parseFloat(r.amount) || 0), 0);
-  const remaining = parseFloat(( (parseFloat(totalAmount) || 0) - sumOfRows ).toFixed(2));
+  const remaining = parseFloat(((parseFloat(totalAmount) || 0) - sumOfRows).toFixed(2));
   const isRemainingZero = Math.abs(remaining) < 0.01;
 
   // Math expression evaluation handlers
@@ -252,7 +304,7 @@ export default function AddExpense() {
   // Description input handler: triggers Hinglish keyword mapping
   const handleDescriptionChange = (val) => {
     setField.description(val);
-    
+
     const lowerVal = val.toLowerCase();
     for (const [keyword, categoryName] of Object.entries(HINGLISH_MAP)) {
       if (lowerVal.includes(keyword)) {
@@ -268,7 +320,7 @@ export default function AddExpense() {
   // Select a recent description chip
   const handleChipTap = (desc) => {
     setField.description(desc);
-    
+
     // Check Hinglish mapping for selected chip
     const lowerDesc = desc.toLowerCase();
     for (const [keyword, categoryName] of Object.entries(HINGLISH_MAP)) {
@@ -326,6 +378,21 @@ export default function AddExpense() {
   const handleQuickSubmit = async (e) => {
     e.preventDefault();
 
+    // Collect missing mandatory fields
+    const missing = [];
+    if (!form.amount || parseFloat(form.amount) <= 0) missing.push('Amount');
+    if (!form.description || form.description.trim() === '') missing.push('Description');
+    if (!form.categoryId) missing.push('Category');
+
+    if (missing.length > 0) {
+      setToastMessage(`Missing: ${missing.join(', ')}`);
+      if (missing.includes('Amount')) jitterEl('#input-amount');
+      if (missing.includes('Description')) jitterEl('#input-description');
+      if (missing.includes('Category')) jitterEl('.category-scroll-strip');
+      return;
+    }
+
+    // Extra shared-room validations
     const validationError = validateExpense(form, isPersonal);
     if (validationError) { setError(validationError); return; }
 
@@ -333,7 +400,7 @@ export default function AddExpense() {
     setError('');
     try {
       await addExpense(roomCode, {
-        description: form.description.trim() || 'Untitled',
+        description: form.description.trim(),
         amount: parseFloat(form.amount),
         paidBy: isPersonal ? (users[0]?.id || '') : form.paidBy,
         splitAmong: isPersonal ? [users[0]?.id || ''] : form.splitAmong,
@@ -341,14 +408,12 @@ export default function AddExpense() {
         date: form.date,
       }, room);
 
-      // Save defaults to localStorage
       setLastUsedDefaults(roomCode, {
         categoryId: form.categoryId,
         paidBy: isPersonal ? null : form.paidBy,
         splitAmong: isPersonal ? null : form.splitAmong,
       });
 
-      // Save to recent descriptions
       addRecentDescription(roomCode, form.description);
 
       triggerSuccess();
@@ -364,34 +429,26 @@ export default function AddExpense() {
   const handleSplitSubmit = async (e) => {
     e.preventDefault();
 
+    const missing = [];
     if (!totalAmount || parseFloat(totalAmount) <= 0) {
-      setError('Total UPI amount must be greater than 0');
-      return;
+      missing.push('Total Amount');
+      jitterEl('#input-total-amount');
     }
-    if (!isPersonal && !globalPaidBy) {
-      setError('Please select who paid');
-      return;
-    }
-    if (rows.length === 0) {
-      setError('Please add at least one item');
-      return;
-    }
-    if (!isRemainingZero) {
-      setError(`Remaining amount to split must be exactly ₹0 (currently ₹${remaining})`);
-      return;
-    }
+    if (!isPersonal && !globalPaidBy) missing.push('Paid By');
+    if (rows.length === 0) missing.push('At least one item');
+    if (!isRemainingZero) missing.push(`Remaining ₹${remaining} must be ₹0`);
 
-    // Row-level validations
-    for (let i = 0; i < rows.length; i++) {
-      const row = rows[i];
-      if (!row.amount || parseFloat(row.amount) <= 0) {
-        setError(`Item amount must be greater than 0 (Check item ${rows.length - i})`);
-        return;
-      }
-      if (!isPersonal && (!row.splitAmong || row.splitAmong.length === 0)) {
-        setError(`Item must have at least one roommate selected (Check item ${rows.length - i})`);
-        return;
-      }
+    // Row-level mandatory checks
+    rows.forEach((row, i) => {
+      if (!row.description || row.description.trim() === '') missing.push(`Item ${i + 1} Description`);
+      if (!row.amount || parseFloat(row.amount) <= 0) missing.push(`Item ${i + 1} Amount`);
+      if (!isPersonal && (!row.splitAmong || row.splitAmong.length === 0))
+        missing.push(`Item ${i + 1} Split Among`);
+    });
+
+    if (missing.length > 0) {
+      setToastMessage(`Missing: ${missing.join(', ')}`);
+      return;
     }
 
     setLoading(true);
@@ -432,7 +489,7 @@ export default function AddExpense() {
       }
 
       triggerSuccess();
-      
+
       // Reset Split form values
       setTotalAmount('');
       const defaultCatId = lastRow?.categoryId || defaults.categoryId || categories[0]?.id || 'cat-1';
@@ -456,11 +513,48 @@ export default function AddExpense() {
 
   const currentActiveCategory = sortedCategories.find(c => c.id === form.categoryId);
 
+  // Quick-form: button disabled when mandatory fields empty
+  const quickFormIncomplete =
+    !form.amount ||
+    parseFloat(form.amount) <= 0 ||
+    !form.description?.trim() ||
+    !form.categoryId;
+
   return (
     <>
+      {/* Validation toast */}
+      <AnimatePresence>
+        {toastMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.2 }}
+            style={{
+              position: 'fixed',
+              top: 'calc(var(--safe-area-top) + var(--header-height) + 8px)',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              zIndex: 210,
+              width: 'calc(100% - 32px)',
+              maxWidth: '380px',
+            }}
+          >
+            <div className="toast" style={{
+              background: 'rgba(255,107,107,0.15)',
+              borderColor: 'rgba(255,107,107,0.4)',
+              color: 'var(--danger)',
+            }}>
+              <span>⚠️</span>
+              <span>{toastMessage}</span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <Header title="Add Expense" />
       <div className="page-content">
-        
+
         {/* Mode Toggle at top */}
         <div className="mode-toggle-container" style={{
           display: 'flex',
@@ -512,6 +606,47 @@ export default function AddExpense() {
           </button>
         </div>
 
+        {/* Recurring Expense Chips */}
+        {recurringExpensesList.length > 0 && (
+          <div className="recurring-chips-container" style={{
+            display: 'flex',
+            gap: 'var(--space-sm)',
+            overflowX: 'auto',
+            paddingBottom: '12px',
+            marginBottom: 'var(--space-lg)',
+            scrollbarWidth: 'none',
+            WebkitOverflowScrolling: 'touch',
+            borderBottom: '1px solid var(--border-light)'
+          }}>
+            {recurringExpensesList.map((chip, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => handleRecurringChipTap(chip)}
+                className="chip clickable"
+                style={{
+                  whiteSpace: 'nowrap',
+                  background: 'rgba(108, 92, 231, 0.08)',
+                  borderColor: 'rgba(108, 92, 231, 0.25)',
+                  color: 'var(--accent-light)',
+                  padding: '6px 12px',
+                  borderRadius: 'var(--radius-full)',
+                  fontSize: 'var(--font-xs)',
+                  fontWeight: 600,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  cursor: 'pointer'
+                }}
+              >
+                <span>{chip.description}</span>
+                <span style={{ opacity: 0.5 }}>·</span>
+                <span>₹{chip.lastAmount}</span>
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* Quick Expense Form */}
         {mode === 'quick' && (
           <motion.form
@@ -540,6 +675,7 @@ export default function AddExpense() {
               <div className="amount-center">
                 <span className="currency-symbol">₹</span>
                 <input
+                  ref={amountInputRef}
                   className="amount-input"
                   type="text"
                   inputMode="decimal"
@@ -573,8 +709,8 @@ export default function AddExpense() {
 
             {/* Description with filtered chip list */}
             <div className="input-group" style={{ marginBottom: 'var(--space-lg)' }}>
-              <label>Description <span className="optional-tag">(optional)</span></label>
-              
+              <label>Description</label>
+
               {/* live-filtered chips list */}
               {filteredChips.length > 0 && (
                 <div className="recent-chips-container" style={{
@@ -732,10 +868,11 @@ export default function AddExpense() {
             <motion.button
               className={`btn btn-primary btn-full add-expense-btn ${showSuccess ? 'btn-success-state' : ''}`}
               type="submit"
-              disabled={loading || showSuccess}
-              whileTap={{ scale: 0.95 }}
-              whileHover={{ scale: 1.02 }}
+              disabled={loading || showSuccess || quickFormIncomplete}
+              whileTap={{ scale: quickFormIncomplete ? 1 : 0.95 }}
+              whileHover={{ scale: quickFormIncomplete ? 1 : 1.02 }}
               transition={{ type: 'spring', stiffness: 400, damping: 15 }}
+              style={{ opacity: quickFormIncomplete ? 0.5 : 1, transition: 'opacity 0.2s' }}
             >
               {loading ? (
                 <motion.span
@@ -797,9 +934,9 @@ export default function AddExpense() {
               </div>
             )}
 
-            {/* Total UPI Amount Field */}
+            {/* Total Amount Field */}
             <div className="input-group" style={{ marginBottom: 'var(--space-lg)' }}>
-              <label>Total UPI Amount</label>
+              <label>Total Amount</label>
               <div className="amount-center" style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -824,6 +961,7 @@ export default function AddExpense() {
                       handleMathBlurOrEnter(totalAmount, setTotalAmount);
                     }
                   }}
+                  id="input-total-amount"
                   style={{
                     fontSize: '1.4rem',
                     fontWeight: 700,
@@ -912,7 +1050,26 @@ export default function AddExpense() {
                         )}
 
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
-                          {/* Category select and Amount input */}
+                          {/* Description — mandatory */}
+                          <div>
+                            <label style={{ fontSize: 'var(--font-xs)', color: 'var(--text-secondary)' }}>Description</label>
+                            <input
+                              className="input"
+                              placeholder="e.g. Snacks, Drinks..."
+                              value={row.description}
+                              onChange={(e) => handleUpdateRowField(row.id, 'description', e.target.value)}
+                              style={{
+                                padding: '8px var(--space-sm)',
+                                fontSize: 'var(--font-sm)',
+                                background: 'var(--bg-input)',
+                                border: '1px solid var(--border-color)',
+                                borderRadius: 'var(--radius-sm)',
+                                width: '100%'
+                              }}
+                            />
+                          </div>
+
+                          {/* Category + Amount row */}
                           <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
                             <div style={{ flex: 1.2 }}>
                               <label style={{ fontSize: 'var(--font-xs)', color: 'var(--text-secondary)' }}>Category</label>
@@ -961,25 +1118,6 @@ export default function AddExpense() {
                                 }}
                               />
                             </div>
-                          </div>
-
-                          {/* Description */}
-                          <div>
-                            <label style={{ fontSize: 'var(--font-xs)', color: 'var(--text-secondary)' }}>Description</label>
-                            <input
-                              className="input"
-                              placeholder="e.g. Snacks, Drinks..."
-                              value={row.description}
-                              onChange={(e) => handleUpdateRowField(row.id, 'description', e.target.value)}
-                              style={{
-                                padding: '8px var(--space-sm)',
-                                fontSize: 'var(--font-sm)',
-                                background: 'var(--bg-input)',
-                                border: '1px solid var(--border-color)',
-                                borderRadius: 'var(--radius-sm)',
-                                width: '100%'
-                              }}
-                            />
                           </div>
 
                           {/* Split Among (Shared Rooms only) */}
