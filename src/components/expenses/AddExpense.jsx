@@ -1,16 +1,104 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Header from '../layout/Header';
 import { useRoomContext } from '../../context/RoomContext';
 import { useExpenseForm } from '../../hooks/useExpenseForm';
 import { useSuccessState } from '../../hooks/useSuccessState';
-import { addExpense } from '../../services/expenseService';
+import { addExpense, addItemisedExpenseGroup } from '../../services/expenseService';
 import { validateExpense, adjustDate } from '../../utils/expenseFormHelpers';
 import CountUp from '../common/CountUp';
 import { getLastUsedMode, setLastUsedMode, getLastUsedDefaults, setLastUsedDefaults } from '../../utils/lastUsedDefaults';
 import { getRecentDescriptions, addRecentDescription } from '../../utils/recentDescriptions';
 import { detectRecurringExpenses } from '../../utils/recurringExpenses';
 import './Expenses.css';
+
+// Animated math placeholder examples
+const MATH_EXAMPLES = ['50+20=70', '120-45=75', '15×4=60', '400÷8=50', '80+30=110'];
+
+function AnimatedAmountInput({ value, onChange, onBlur, onKeyDown, id, style, className, inputRef }) {
+  const [exIdx, setExIdx] = useState(0);
+  const [exVisible, setExVisible] = useState(true);
+
+  useEffect(() => {
+    const iv = setInterval(() => {
+      setExVisible(false);
+      setTimeout(() => { setExIdx(p => (p + 1) % MATH_EXAMPLES.length); setExVisible(true); }, 320);
+    }, 2800);
+    return () => clearInterval(iv);
+  }, []);
+
+  return (
+    <div style={{ position: 'relative', display: 'inline-block', width: '100%' }}>
+      <input
+        ref={inputRef}
+        className={className || 'amount-input'}
+        type="text"
+        inputMode="decimal"
+        value={value}
+        onChange={onChange}
+        onBlur={onBlur}
+        onKeyDown={onKeyDown}
+        id={id}
+        style={style}
+        autoComplete="off"
+      />
+      {!value && (
+        <span
+          className="math-animated-placeholder"
+          style={{
+            position: 'absolute',
+            top: '50%',
+            left: style?.textAlign === 'left' ? '0' : '50%',
+            transform: style?.textAlign === 'left' ? 'translateY(-50%)' : 'translate(-50%, -50%)',
+            opacity: exVisible ? 0.35 : 0,
+            transition: 'opacity 0.3s ease',
+            pointerEvents: 'none',
+            whiteSpace: 'nowrap',
+            fontSize: 'inherit',
+            fontWeight: 'inherit',
+            color: 'var(--text-tertiary)',
+            letterSpacing: 'inherit',
+          }}
+        >
+          {MATH_EXAMPLES[exIdx]}
+        </span>
+      )}
+    </div>
+  );
+}
+
+// Simple animated placeholder overlay for amount inputs (no value)
+function AmountPlaceholderOverlay({ align = 'center', size }) {
+  const [exIdx, setExIdx] = useState(0);
+  const [exVisible, setExVisible] = useState(true);
+
+  useEffect(() => {
+    const iv = setInterval(() => {
+      setExVisible(false);
+      setTimeout(() => { setExIdx(p => (p + 1) % MATH_EXAMPLES.length); setExVisible(true); }, 300);
+    }, 2800);
+    return () => clearInterval(iv);
+  }, []);
+
+  return (
+    <span style={{
+      position: 'absolute',
+      top: '50%',
+      left: align === 'left' ? '0' : '50%',
+      transform: align === 'left' ? 'translateY(-50%)' : 'translate(-50%, -50%)',
+      opacity: exVisible ? 0.32 : 0,
+      transition: 'opacity 0.3s ease',
+      pointerEvents: 'none',
+      whiteSpace: 'nowrap',
+      fontSize: size || 'inherit',
+      fontWeight: 'inherit',
+      color: 'var(--text-tertiary)',
+      letterSpacing: 'inherit',
+    }}>
+      {MATH_EXAMPLES[exIdx]}
+    </span>
+  );
+}
 
 // Hinglish keyword category mapping
 const HINGLISH_MAP = {
@@ -154,6 +242,7 @@ export default function AddExpense() {
   const isPersonal = room?.isPersonal === true;
 
   const amountInputRef = useRef(null);
+  const focusedAmountRef = useRef(null); // tracks which amount input is currently focused
 
   // Mode Toggle State
   const [mode, setMode] = useState(() => getLastUsedMode(roomCode));
@@ -178,6 +267,8 @@ export default function AddExpense() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState('error'); // 'error' | 'success'
+  const [mathToolbarVisible, setMathToolbarVisible] = useState(false);
 
   // Auto-dismiss toast
   useEffect(() => {
@@ -185,6 +276,46 @@ export default function AddExpense() {
     const t = setTimeout(() => setToastMessage(''), 3000);
     return () => clearTimeout(t);
   }, [toastMessage]);
+
+  // Math toolbar focus tracking
+  const handleAmountFocus = useCallback((inputEl) => {
+    focusedAmountRef.current = inputEl;
+    setMathToolbarVisible(true);
+  }, []);
+
+  const handleAmountBlur = useCallback(() => {
+    // Short delay so toolbar button clicks register before hiding
+    setTimeout(() => {
+      const active = document.activeElement;
+      const isAmountInput = active?.classList.contains('amount-input') ||
+        active?.classList.contains('amount-input-field') ||
+        active?.id?.startsWith('input-amount') ||
+        active?.id === 'input-total-amount';
+      if (!isAmountInput) {
+        setMathToolbarVisible(false);
+      }
+    }, 180);
+  }, []);
+
+  const insertMathOp = useCallback((op) => {
+    const input = focusedAmountRef.current;
+    if (!input) return;
+    const start = input.selectionStart ?? input.value.length;
+    const end = input.selectionEnd ?? input.value.length;
+    const before = input.value.slice(0, start);
+    const after = input.value.slice(end);
+    const newVal = before + op + after;
+    // Use native input value setter to trigger React's onChange
+    const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+    nativeInputValueSetter.call(input, newVal);
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    // Move cursor after inserted op
+    requestAnimationFrame(() => {
+      input.focus();
+      const cursor = start + op.length;
+      input.setSelectionRange(cursor, cursor);
+    });
+  }, []);
 
   // Helper: apply jitter to a DOM element by id or selector
   const jitterEl = (selector) => {
@@ -198,10 +329,35 @@ export default function AddExpense() {
 
   // Split Transaction Mode States
   const [totalAmount, setTotalAmount] = useState('');
+  const [groupName, setGroupName] = useState('');
+  const [isSticky, setIsSticky] = useState(false);
+  const stickyAnchorRef = useRef(null); // ref on expense name field wrapper
   const [globalPaidBy, setGlobalPaidBy] = useState(() => {
     return defaults.paidBy || userIdentity || (users[0]?.id || '');
   });
   const [rows, setRows] = useState([]);
+
+  // Use IntersectionObserver to detect when Expense Name field leaves viewport
+  // — triggers sticky header only when the actual fields are scrolled away
+  useEffect(() => {
+    if (mode !== 'split') { setIsSticky(false); return; }
+    const anchor = stickyAnchorRef.current;
+    if (!anchor) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsSticky(!entry.isIntersecting);
+      },
+      {
+        root: null, // viewport
+        rootMargin: '-60px 0px 0px 0px', // account for header height
+        threshold: 0,
+      }
+    );
+
+    observer.observe(anchor);
+    return () => observer.disconnect();
+  }, [mode]);
 
   // Sort categories based on recent/frequent criteria
   const sortedCategories = useMemo(() => getSortedCategories(categories, expenses), [categories, expenses]);
@@ -361,7 +517,23 @@ export default function AddExpense() {
   };
 
   const handleUpdateRowField = (rowId, field, value) => {
-    setRows(prev => prev.map(r => r.id === rowId ? { ...r, [field]: value } : r));
+    setRows(prev => prev.map(r => {
+      if (r.id !== rowId) return r;
+      const updated = { ...r, [field]: value };
+      if (field === 'description' && value) {
+        const lowerVal = value.toLowerCase();
+        for (const [keyword, categoryName] of Object.entries(HINGLISH_MAP)) {
+          if (lowerVal.includes(keyword)) {
+            const matchedCat = findMatchingCategory(categoryName, categories);
+            if (matchedCat) {
+              updated.categoryId = matchedCat.id;
+              break;
+            }
+          }
+        }
+      }
+      return updated;
+    }));
   };
 
   const handleToggleRowSplit = (rowId, userId) => {
@@ -385,6 +557,7 @@ export default function AddExpense() {
     if (!form.categoryId) missing.push('Category');
 
     if (missing.length > 0) {
+      setToastType('error');
       setToastMessage(`Missing: ${missing.join(', ')}`);
       if (missing.includes('Amount')) jitterEl('#input-amount');
       if (missing.includes('Description')) jitterEl('#input-description');
@@ -417,6 +590,9 @@ export default function AddExpense() {
       addRecentDescription(roomCode, form.description);
 
       triggerSuccess();
+      // Success toast
+      setToastType('success');
+      setToastMessage('✅ Expense added!');
       resetForm();
     } catch (err) {
       setError(err.message || 'Failed to add expense');
@@ -430,6 +606,10 @@ export default function AddExpense() {
     e.preventDefault();
 
     const missing = [];
+    if (!groupName.trim()) {
+      missing.push('Expense Name');
+      jitterEl('#input-group-name');
+    }
     if (!totalAmount || parseFloat(totalAmount) <= 0) {
       missing.push('Total Amount');
       jitterEl('#input-total-amount');
@@ -455,21 +635,20 @@ export default function AddExpense() {
     setError('');
 
     try {
-      // Save itemized items in order
-      for (let i = rows.length - 1; i >= 0; i--) {
-        const row = rows[i];
-        const payerId = isPersonal ? (users[0]?.id || '') : globalPaidBy;
-        const splitList = isPersonal ? [payerId] : row.splitAmong;
+      const payerId = isPersonal ? (users[0]?.id || '') : globalPaidBy;
+      const items = rows.map(row => ({
+        description: row.description.trim() || groupName.trim(),
+        amount: parseFloat(row.amount),
+        categoryId: row.categoryId,
+        splitAmong: isPersonal ? [payerId] : row.splitAmong,
+      }));
 
-        await addExpense(roomCode, {
-          description: row.description.trim() || 'Itemised Expense',
-          amount: parseFloat(row.amount),
-          paidBy: payerId,
-          splitAmong: splitList,
-          categoryId: row.categoryId,
-          date: form.date, // Reuse global Date
-        }, room);
-      }
+      const commonFields = {
+        paidBy: payerId,
+        date: form.date,
+      };
+
+      await addItemisedExpenseGroup(roomCode, groupName.trim(), items, commonFields, room);
 
       // Save defaults using the last added item settings
       const lastRow = rows[0];
@@ -489,9 +668,13 @@ export default function AddExpense() {
       }
 
       triggerSuccess();
+      // Success toast
+      setToastType('success');
+      setToastMessage('✅ Split expenses added!');
 
       // Reset Split form values
       setTotalAmount('');
+      setGroupName('');
       const defaultCatId = lastRow?.categoryId || defaults.categoryId || categories[0]?.id || 'cat-1';
       const defaultSplit = lastRow?.splitAmong || defaults.splitAmong || users.map(u => u.id);
       setRows([
@@ -522,32 +705,134 @@ export default function AddExpense() {
 
   return (
     <>
-      {/* Validation toast */}
+      {/* Sticky Sub-header for Split/Itemised mode — shows only when Expense Name scrolled out */}
+      <AnimatePresence>
+        {mode === 'split' && isSticky && (
+          <motion.div
+            initial={{ opacity: 0, y: -40 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -40 }}
+            transition={{ duration: 0.22, type: 'spring', stiffness: 340, damping: 28 }}
+            style={{
+              position: 'fixed',
+              top: 'calc(var(--safe-area-top) + var(--header-height))',
+              left: 0,
+              right: 0,
+              zIndex: 100,
+              background: 'rgba(20, 20, 38, 0.88)',
+              borderBottom: '1px solid var(--border-light)',
+              padding: '9px var(--space-lg)',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              backdropFilter: 'blur(24px)',
+              WebkitBackdropFilter: 'blur(24px)',
+            }}
+          >
+            {/* Name • Amount pill format */}
+            <span style={{
+              fontSize: 'var(--font-sm)',
+              fontWeight: 600,
+              color: 'var(--text-primary)',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              flex: 1,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+            }}>
+              {groupName.trim() ? (
+                <>
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '55%' }}>
+                    {groupName}
+                  </span>
+                  {totalAmount && parseFloat(totalAmount) > 0 && (
+                    <>
+                      <span style={{ opacity: 0.4, flexShrink: 0 }}>•</span>
+                      <span style={{ color: 'var(--accent-light)', fontWeight: 700, flexShrink: 0 }}>
+                        ₹{parseFloat(totalAmount).toLocaleString('en-IN')}
+                      </span>
+                    </>
+                  )}
+                </>
+              ) : (
+                <span style={{ color: 'var(--text-tertiary)', fontWeight: 400 }}>Split Expense</span>
+              )}
+            </span>
+            {/* Remaining indicator if not zero */}
+            {!isRemainingZero && totalAmount && parseFloat(totalAmount) > 0 && (
+              <span style={{
+                fontSize: 'var(--font-xs)',
+                fontWeight: 600,
+                color: 'var(--danger)',
+                flexShrink: 0,
+                marginLeft: 'var(--space-sm)',
+              }}>
+                ₹{Math.abs(remaining).toFixed(0)} left
+              </span>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Toast — error or success */}
       <AnimatePresence>
         {toastMessage && (
           <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
+            initial={{ opacity: 0, y: -20, x: '-50%' }}
+            animate={{ opacity: 1, y: 0, x: '-50%' }}
+            exit={{ opacity: 0, y: -20, x: '-50%' }}
             transition={{ duration: 0.2 }}
             style={{
               position: 'fixed',
               top: 'calc(var(--safe-area-top) + var(--header-height) + 8px)',
               left: '50%',
-              transform: 'translateX(-50%)',
               zIndex: 210,
               width: 'calc(100% - 32px)',
               maxWidth: '380px',
             }}
           >
-            <div className="toast" style={{
+            <div className="toast" style={toastType === 'success' ? {
+              background: 'rgba(0,206,201,0.15)',
+              borderColor: 'rgba(0,206,201,0.4)',
+              color: 'var(--success)',
+            } : {
               background: 'rgba(255,107,107,0.15)',
               borderColor: 'rgba(255,107,107,0.4)',
               color: 'var(--danger)',
             }}>
-              <span>⚠️</span>
               <span>{toastMessage}</span>
             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Math Toolbar — floats above bottom nav when amount field is focused */}
+      <AnimatePresence>
+        {mathToolbarVisible && (
+          <motion.div
+            className="math-toolbar"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            transition={{ duration: 0.18, ease: 'easeOut' }}
+          >
+            {['+', '−', '×', '÷'].map(op => (
+              <button
+                key={op}
+                type="button"
+                className="math-toolbar-btn"
+                onMouseDown={(e) => {
+                  e.preventDefault(); // prevent blur before insert
+                  // Map display symbols to actual math operators
+                  const opMap = { '−': '-', '×': '*', '÷': '/' };
+                  insertMathOp(opMap[op] || op);
+                }}
+              >
+                {op}
+              </button>
+            ))}
           </motion.div>
         )}
       </AnimatePresence>
@@ -602,12 +887,12 @@ export default function AddExpense() {
               cursor: 'pointer'
             }}
           >
-            🥞 Split Transaction
+            🥞 Split
           </button>
         </div>
 
-        {/* Recurring Expense Chips */}
-        {recurringExpensesList.length > 0 && (
+        {/* Recurring Expense Chips — shown in Quick mode only */}
+        {mode === 'quick' && recurringExpensesList.length > 0 && (
           <div className="recurring-chips-container" style={{
             display: 'flex',
             gap: 'var(--space-sm)',
@@ -674,23 +959,32 @@ export default function AddExpense() {
               </button>
               <div className="amount-center">
                 <span className="currency-symbol">₹</span>
-                <input
-                  ref={amountInputRef}
-                  className="amount-input"
-                  type="text"
-                  inputMode="decimal"
-                  placeholder="₹xx + ₹x"
-                  value={form.amount}
-                  onChange={(e) => setField.amount(e.target.value)}
-                  onBlur={() => handleMathBlurOrEnter(form.amount, setField.amount)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      handleMathBlurOrEnter(form.amount, setField.amount);
-                    }
-                  }}
-                  id="input-amount"
-                />
+                <div style={{ position: 'relative' }}>
+                  <input
+                    ref={el => {
+                      amountInputRef.current = el;
+                      if (el) el.addEventListener('focus', () => handleAmountFocus(el), { once: false });
+                    }}
+                    className="amount-input"
+                    type="text"
+                    inputMode="decimal"
+                    value={form.amount}
+                    onChange={(e) => setField.amount(e.target.value)}
+                    onFocus={(e) => handleAmountFocus(e.target)}
+                    onBlur={() => { handleMathBlurOrEnter(form.amount, setField.amount); handleAmountBlur(); }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleMathBlurOrEnter(form.amount, setField.amount);
+                      }
+                    }}
+                    id="input-amount"
+                    autoComplete="off"
+                  />
+                  {!form.amount && (
+                    <AmountPlaceholderOverlay align="center" />
+                  )}
+                </div>
               </div>
               <button
                 type="button"
@@ -934,6 +1228,23 @@ export default function AddExpense() {
               </div>
             )}
 
+            {/* Expense Name Field — stickyAnchorRef watches this for sticky header */}
+            <div
+              ref={stickyAnchorRef}
+              className="input-group"
+              style={{ marginBottom: 'var(--space-lg)' }}
+              id="input-group-name-wrapper"
+            >
+              <label>Expense Name <span style={{ color: 'var(--accent-red)' }}>*</span></label>
+              <input
+                className="input"
+                placeholder="e.g. Zepto Order, Dinner, Fuel..."
+                value={groupName}
+                onChange={(e) => setGroupName(e.target.value)}
+                id="input-group-name"
+              />
+            </div>
+
             {/* Total Amount Field */}
             <div className="input-group" style={{ marginBottom: 'var(--space-lg)' }}>
               <label>Total Amount</label>
@@ -947,28 +1258,34 @@ export default function AddExpense() {
                 padding: '10px var(--space-md)'
               }}>
                 <span className="currency-symbol" style={{ fontSize: '1.4rem', fontWeight: 600, marginRight: 'var(--space-sm)' }}>₹</span>
-                <input
-                  className="amount-input"
-                  type="text"
-                  inputMode="decimal"
-                  placeholder="250+150"
-                  value={totalAmount}
-                  onChange={(e) => setTotalAmount(e.target.value)}
-                  onBlur={() => handleMathBlurOrEnter(totalAmount, setTotalAmount)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      handleMathBlurOrEnter(totalAmount, setTotalAmount);
-                    }
-                  }}
-                  id="input-total-amount"
-                  style={{
-                    fontSize: '1.4rem',
-                    fontWeight: 700,
-                    width: '100%',
-                    textAlign: 'left'
-                  }}
-                />
+                <div style={{ position: 'relative', flex: 1 }}>
+                  <input
+                    className="amount-input"
+                    type="text"
+                    inputMode="decimal"
+                    value={totalAmount}
+                    onChange={(e) => setTotalAmount(e.target.value)}
+                    onFocus={(e) => handleAmountFocus(e.target)}
+                    onBlur={() => { handleMathBlurOrEnter(totalAmount, setTotalAmount); handleAmountBlur(); }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleMathBlurOrEnter(totalAmount, setTotalAmount);
+                      }
+                    }}
+                    id="input-total-amount"
+                    style={{
+                      fontSize: '1.4rem',
+                      fontWeight: 700,
+                      width: '100%',
+                      textAlign: 'left'
+                    }}
+                    autoComplete="off"
+                  />
+                  {!totalAmount && (
+                    <AmountPlaceholderOverlay align="left" size="1.4rem" />
+                  )}
+                </div>
               </div>
             </div>
 
@@ -1050,6 +1367,54 @@ export default function AddExpense() {
                         )}
 
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
+                          {/* Item Numbering */}
+                          <div style={{ fontSize: 'var(--font-xs)', fontWeight: 700, color: 'var(--text-tertiary)' }}>
+                            Item {rows.length - index}
+                          </div>
+
+                          {/* Recurring suggestions for this item (top 3) */}
+                          {recurringExpensesList.length > 0 && (
+                            <div style={{
+                              display: 'flex',
+                              gap: '6px',
+                              overflowX: 'auto',
+                              paddingBottom: '2px',
+                              scrollbarWidth: 'none',
+                            }}>
+                              {recurringExpensesList.slice(0, 3).map((chip, ci) => (
+                                <button
+                                  key={ci}
+                                  type="button"
+                                  onClick={() => {
+                                    handleUpdateRowField(row.id, 'description', chip.description);
+                                    handleUpdateRowField(row.id, 'categoryId', chip.categoryId);
+                                    handleUpdateRowField(row.id, 'amount', String(chip.lastAmount));
+                                  }}
+                                  style={{
+                                    whiteSpace: 'nowrap',
+                                    background: 'rgba(108, 92, 231, 0.08)',
+                                    borderColor: 'rgba(108, 92, 231, 0.2)',
+                                    border: '1px solid rgba(108, 92, 231, 0.2)',
+                                    color: 'var(--accent-light)',
+                                    padding: '3px 8px',
+                                    borderRadius: 'var(--radius-full)',
+                                    fontSize: '0.68rem',
+                                    fontWeight: 600,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '3px',
+                                    cursor: 'pointer',
+                                    flexShrink: 0,
+                                  }}
+                                >
+                                  <span>{chip.description}</span>
+                                  <span style={{ opacity: 0.5 }}>·</span>
+                                  <span>₹{chip.lastAmount}</span>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+
                           {/* Description — mandatory */}
                           <div>
                             <label style={{ fontSize: 'var(--font-xs)', color: 'var(--text-secondary)' }}>Description</label>
@@ -1094,29 +1459,44 @@ export default function AddExpense() {
                             </div>
                             <div style={{ flex: 1 }}>
                               <label style={{ fontSize: 'var(--font-xs)', color: 'var(--text-secondary)' }}>Amount</label>
-                              <input
-                                className="input"
-                                type="text"
-                                inputMode="decimal"
-                                placeholder="₹0"
-                                value={row.amount}
-                                onChange={(e) => handleUpdateRowField(row.id, 'amount', e.target.value)}
-                                onBlur={() => handleRowMathBlur(row.id, row.amount)}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') {
-                                    e.preventDefault();
-                                    handleRowMathBlur(row.id, row.amount);
-                                  }
-                                }}
-                                style={{
-                                  padding: '8px var(--space-sm)',
-                                  fontSize: 'var(--font-sm)',
-                                  background: 'var(--bg-input)',
-                                  border: '1px solid var(--border-color)',
-                                  borderRadius: 'var(--radius-sm)',
-                                  width: '100%'
-                                }}
-                              />
+                              <div style={{ position: 'relative' }}>
+                                <input
+                                  className="input"
+                                  type="text"
+                                  inputMode="decimal"
+                                  value={row.amount}
+                                  onChange={(e) => handleUpdateRowField(row.id, 'amount', e.target.value)}
+                                  onFocus={(e) => handleAmountFocus(e.target)}
+                                  onBlur={() => { handleRowMathBlur(row.id, row.amount); handleAmountBlur(); }}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                      e.preventDefault();
+                                      handleRowMathBlur(row.id, row.amount);
+                                    }
+                                  }}
+                                  style={{
+                                    padding: '8px var(--space-sm)',
+                                    fontSize: 'var(--font-sm)',
+                                    background: 'var(--bg-input)',
+                                    border: '1px solid var(--border-color)',
+                                    borderRadius: 'var(--radius-sm)',
+                                    width: '100%'
+                                  }}
+                                  autoComplete="off"
+                                />
+                                {!row.amount && (
+                                  <span style={{
+                                    position: 'absolute',
+                                    top: '50%',
+                                    left: '8px',
+                                    transform: 'translateY(-50%)',
+                                    pointerEvents: 'none',
+                                    fontSize: 'var(--font-xs)',
+                                    color: 'var(--text-tertiary)',
+                                    opacity: 0.5,
+                                  }}>₹0</span>
+                                )}
+                              </div>
                             </div>
                           </div>
 
@@ -1169,26 +1549,45 @@ export default function AddExpense() {
               </div>
             </div>
 
-            {/* Remaining amount display bar */}
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: 'var(--space-lg)',
-              padding: 'var(--space-md) var(--space-lg)',
-              borderRadius: 'var(--radius-md)',
-              background: isRemainingZero ? 'var(--success-bg)' : 'var(--danger-bg)',
-              border: isRemainingZero ? '1px solid rgba(0, 206, 201, 0.3)' : '1px solid rgba(255, 107, 107, 0.3)',
-              color: isRemainingZero ? 'var(--success)' : 'var(--danger)',
-              fontWeight: 600,
-              fontSize: 'var(--font-sm)',
-              transition: 'all 0.25s ease'
-            }}>
-              <span>Remaining to Split:</span>
-              <span style={{ fontSize: 'var(--font-md)', fontWeight: 700 }}>
-                <CountUp value={remaining} decimals={2} prefix="₹" />
-              </span>
-            </div>
+            {/* Remaining to split — STICKY BAR above bottom nav */}
+            <AnimatePresence>
+              {!isRemainingZero && totalAmount && parseFloat(totalAmount) > 0 && (
+                <motion.div
+                  className="remaining-sticky-bar"
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 30 }}
+                  transition={{ duration: 0.22, ease: 'easeOut' }}
+                >
+                  <span>Remaining to Split</span>
+                  <span className="remaining-sticky-amount">
+                    <CountUp value={remaining} decimals={2} prefix="₹" />
+                  </span>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Inline remaining for zero state confirmation */}
+            {isRemainingZero && totalAmount && parseFloat(totalAmount) > 0 && (
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: 'var(--space-lg)',
+                padding: 'var(--space-md) var(--space-lg)',
+                borderRadius: 'var(--radius-md)',
+                background: 'var(--success-bg)',
+                border: '1px solid rgba(0, 206, 201, 0.3)',
+                color: 'var(--success)',
+                fontWeight: 600,
+                fontSize: 'var(--font-sm)',
+              }}>
+                <span>✓ Fully split</span>
+                <span style={{ fontSize: 'var(--font-md)', fontWeight: 700 }}>
+                  <CountUp value={0} decimals={2} prefix="₹" />
+                </span>
+              </div>
+            )}
 
             {error && <p className="error-text" style={{ marginBottom: 'var(--space-md)' }}>{error}</p>}
 

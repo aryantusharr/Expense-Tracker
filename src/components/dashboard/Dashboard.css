@@ -59,6 +59,16 @@
   font-weight: 700;
 }
 
+.prev-avg-label,
+.month-avg-label {
+  font-size: 0.6rem;
+  opacity: 0.45;
+  color: var(--text-secondary);
+  letter-spacing: 0.2px;
+  margin-top: 1px;
+  white-space: nowrap;
+}
+
 .month-stat-divider {
   width: 1px;
   height: 30px;
@@ -378,4 +388,54 @@
 
 .tooltip-icon:hover {
   color: var(--text-secondary);
+}
+
+/* Last Paid Card (Personal Mode) */
+.last-paid-card {
+  margin-bottom: var(--space-xl);
+  padding: var(--space-lg) var(--space-xl);
+}
+.last-paid-label {
+  font-size: var(--font-xs);
+  opacity: 0.6;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: var(--space-xs);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.last-paid-body {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.last-paid-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.last-paid-title {
+  font-size: var(--font-base);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+.last-paid-date {
+  font-size: var(--font-xs);
+  color: var(--text-secondary);
+  margin: 0;
+}
+.last-paid-amount {
+  font-size: var(--font-lg);
+  font-weight: 700;
+  color: var(--accent-light);
+}
+
+.last-paid-synced {
+  color: var(--accent-light);
+  font-weight: 600;
+  font-size: var(--font-xs);
 }

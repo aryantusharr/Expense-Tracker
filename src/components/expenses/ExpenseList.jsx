@@ -17,6 +17,16 @@ export default function ExpenseList() {
   const [expenseToDelete, setExpenseToDelete] = useState(null);
   const [activeDropdownId, setActiveDropdownId] = useState(null);
   const [activeSlideId, setActiveSlideId] = useState(null);
+  const [expandedGroups, setExpandedGroups] = useState(new Set());
+
+  const toggleGroup = (groupId) => {
+    setExpandedGroups(prev => {
+      const next = new Set(prev);
+      if (next.has(groupId)) next.delete(groupId);
+      else next.add(groupId);
+      return next;
+    });
+  };
 
   const userMap = useMemo(() => {
     const m = {};
@@ -64,7 +74,51 @@ export default function ExpenseList() {
 
     const sortedMonths = Object.entries(groups).sort(([a], [b]) => b.localeCompare(a));
     sortedMonths.forEach(([, monthData]) => {
-      monthData.sortedDays = Object.entries(monthData.days).sort(([a], [b]) => new Date(b) - new Date(a));
+      const dayEntries = Object.entries(monthData.days);
+      const processedDays = dayEntries.map(([dayKey, dayExpenses]) => {
+        const groupMap = {};
+        const singles = [];
+
+        dayExpenses.forEach(e => {
+          if (e.isItemised && e.groupId) {
+            if (!groupMap[e.groupId]) {
+              groupMap[e.groupId] = {
+                type: 'group',
+                groupId: e.groupId,
+                groupName: e.groupName || 'Itemised Expense',
+                items: [],
+                totalAmount: 0,
+                createdAt: e.createdAt || e.date,
+                date: e.date,
+                paidBy: e.paidBy,
+                categoryId: e.categoryId,
+                isSynced: Boolean(e.isSynced || e.parentExpenseId || e.syncedFromRoomCode),
+                syncedFromRoomName: e.syncedFromRoomName || e.syncedFromRoom || null,
+                syncedFromRoomCode: e.syncedFromRoomCode || null,
+              };
+            }
+            groupMap[e.groupId].items.push(e);
+            groupMap[e.groupId].totalAmount += parseFloat(e.amount) || 0;
+            if (new Date(e.createdAt || e.date) > new Date(groupMap[e.groupId].createdAt)) {
+              groupMap[e.groupId].createdAt = e.createdAt || e.date;
+            }
+          } else {
+            singles.push({
+              type: 'single',
+              expense: e,
+              createdAt: e.createdAt || e.date,
+            });
+          }
+        });
+
+        const dayItems = [...Object.values(groupMap), ...singles].sort((a, b) => {
+          return new Date(b.createdAt) - new Date(a.createdAt);
+        });
+
+        return [dayKey, dayItems];
+      });
+
+      monthData.sortedDays = processedDays.sort(([a], [b]) => new Date(b) - new Date(a));
     });
 
     return sortedMonths;
@@ -141,62 +195,181 @@ export default function ExpenseList() {
                         <div key={date} className="day-group">
                           <p className="section-title day-section-title">{formatDate(date)}</p>
                           <AnimatePresence mode="popLayout">
-                            {items.map((expense) => {
-                              const payer = userMap[expense.paidBy];
-                              const cat = catMap[expense.categoryId] || { icon: '📦', name: 'Other' };
-                              const isSynced = Boolean(expense.isSynced);
-                              const content = (
-                                <div className={`expense-item ${isSynced ? 'synced-expense-item' : ''}`}>
-                                  <div className="expense-icon">{cat.icon}</div>
-                                  <div className="expense-info">
-                                    <p className="expense-desc">
-                                      {expense.description}
-                                      {isSynced && (
-                                        <span className="synced-badge">
-                                          🔄 Synced from {expense.syncedFromRoomName || expense.syncedFromRoomCode || 'Shared Room'}
-                                        </span>
-                                      )}
-                                    </p>
-                                    <p className="expense-meta">
-                                      {!isPersonal && (
-                                        <>
-                                          <span className="expense-payer-dot" style={{ background: payer?.color || '#888' }} />
-                                          {payer?.name || 'Unknown'}
-                                          {!isSynced && (
+                            {items.map((item) => {
+                              if (item.type === 'single') {
+                                const expense = item.expense;
+                                const payer = userMap[expense.paidBy];
+                                const cat = catMap[expense.categoryId] || { icon: '📦', name: 'Other' };
+                                const isSynced = Boolean(expense.isSynced || expense.parentExpenseId || expense.syncedFromRoomCode);
+                                const content = (
+                                  <div className={`expense-item ${isSynced ? 'synced-expense-item' : ''}`}>
+                                    <div className="expense-icon">{cat.icon}</div>
+                                    <div className="expense-info">
+                                      <p className="expense-desc">
+                                        {expense.description}
+                                        {isSynced && (
+                                          <span className="synced-badge">
+                                            Synced from {expense.syncedFromRoomName || expense.syncedFromRoomCode || 'Shared Room'}
+                                          </span>
+                                        )}
+                                      </p>
+                                      <p className="expense-meta">
+                                        {!isPersonal && (
+                                          <>
+                                            <span className="expense-payer-dot" style={{ background: payer?.color || '#888' }} />
+                                            {payer?.name || 'Unknown'}
+                                            {!isSynced && (
+                                              <>
+                                                <span>•</span>
+                                                {expense.splitAmong?.length || 0} split
+                                              </>
+                                            )}
+                                          </>
+                                        )}
+                                      </p>
+                                    </div>
+                                    <span className="expense-amount">{formatCurrency(expense.amount)}</span>
+                                  </div>
+                                );
+
+                                return (
+                                  <motion.div
+                                    key={expense.id}
+                                    layout
+                                    initial={{ opacity: 0, scale: 0.95 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    exit={{ opacity: 0, scale: 0.95, filter: 'blur(4px)' }}
+                                    transition={{ type: 'spring', stiffness: 500, damping: 40 }}
+                                  >
+                                    {isSynced ? content : (
+                                      <SwipeableItem
+                                        isSwiped={activeSlideId === expense.id}
+                                        onSwipeChange={(swiped) => setActiveSlideId(swiped ? expense.id : null)}
+                                        onDelete={() => setExpenseToDelete(expense)}
+                                        onEdit={() => setEditModal(expense)}
+                                      >
+                                        {content}
+                                      </SwipeableItem>
+                                    )}
+                                  </motion.div>
+                                );
+                              } else {
+                                const isGroupExpanded = expandedGroups.has(item.groupId);
+                                const payer = userMap[item.paidBy];
+                                const groupCat = catMap[item.categoryId] || { icon: '🥞', name: 'Other' };
+
+                                return (
+                                  <motion.div
+                                    key={item.groupId}
+                                    layout
+                                    initial={{ opacity: 0, scale: 0.98 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    exit={{ opacity: 0, scale: 0.98 }}
+                                    style={{ marginBottom: 'var(--space-sm)' }}
+                                  >
+                                    <div 
+                                      className={`expense-item group-parent-item ${item.isSynced ? 'synced-expense-item' : ''}`} 
+                                      onClick={() => toggleGroup(item.groupId)} 
+                                      style={{ 
+                                        cursor: 'pointer', 
+                                        background: 'var(--bg-glass)', 
+                                        borderLeft: '3px solid var(--accent)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        width: '100%',
+                                        padding: '12px var(--space-md)'
+                                      }}
+                                    >
+                                      <div className="expense-icon">{groupCat.icon}</div>
+                                      <div className="expense-info" style={{ flex: 1 }}>
+                                        <p className="expense-desc" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px', fontWeight: 600, margin: 0 }}>
+                                          {item.groupName}
+                                          <span style={{ fontSize: '10px', padding: '2px 6px', borderRadius: '4px', background: 'var(--border-light)', color: 'var(--text-secondary)' }}>
+                                            {item.items.length} items
+                                          </span>
+                                          {item.isSynced && (
+                                            <span className="synced-badge">
+                                              Synced from {item.syncedFromRoomName || item.syncedFromRoomCode || 'Shared Room'}
+                                            </span>
+                                          )}
+                                        </p>
+                                        <p className="expense-meta" style={{ margin: '4px 0 0 0' }}>
+                                          {!isPersonal && (
                                             <>
-                                              <span>•</span>
-                                              {expense.splitAmong?.length || 0} split
+                                              <span className="expense-payer-dot" style={{ background: payer?.color || '#888' }} />
+                                              {payer?.name || 'Unknown'}
                                             </>
                                           )}
-                                        </>
-                                      )}
-                                    </p>
-                                  </div>
-                                  <span className="expense-amount">{formatCurrency(expense.amount)}</span>
-                                </div>
-                              );
+                                        </p>
+                                      </div>
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
+                                        <span className="expense-amount" style={{ fontWeight: 700 }}>{formatCurrency(item.totalAmount)}</span>
+                                        <motion.div animate={{ rotate: isGroupExpanded ? 90 : 0 }} transition={{ duration: 0.2 }}>
+                                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block' }}><polyline points="9 18 15 12 9 6"></polyline></svg>
+                                        </motion.div>
+                                      </div>
+                                    </div>
 
-                              return (
-                                <motion.div
-                                  key={expense.id}
-                                  layout
-                                  initial={{ opacity: 0, scale: 0.95 }}
-                                  animate={{ opacity: 1, scale: 1 }}
-                                  exit={{ opacity: 0, scale: 0.95, filter: 'blur(4px)' }}
-                                  transition={{ type: 'spring', stiffness: 500, damping: 40 }}
-                                >
-                                  {isSynced ? content : (
-                                    <SwipeableItem
-                                      isSwiped={activeSlideId === expense.id}
-                                      onSwipeChange={(swiped) => setActiveSlideId(swiped ? expense.id : null)}
-                                      onDelete={() => setExpenseToDelete(expense)}
-                                      onEdit={() => setEditModal(expense)}
-                                    >
-                                      {content}
-                                    </SwipeableItem>
-                                  )}
-                                </motion.div>
-                              );
+                                    <AnimatePresence initial={false}>
+                                      {isGroupExpanded && (
+                                        <motion.div
+                                          initial={{ height: 0, opacity: 0 }}
+                                          animate={{ height: 'auto', opacity: 1 }}
+                                          exit={{ height: 0, opacity: 0 }}
+                                          transition={{ duration: 0.25, ease: 'easeInOut' }}
+                                          style={{ overflow: 'hidden', paddingLeft: 'var(--space-md)', borderLeft: '1px dashed var(--border-light)', marginLeft: '20px', display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '4px' }}
+                                        >
+                                          {item.items.map(child => {
+                                            const childCat = catMap[child.categoryId] || { icon: '📦', name: 'Other' };
+                                            
+                                            const childContent = (
+                                              <div className="expense-item child-expense-item" style={{ padding: '8px var(--space-md)', background: 'transparent' }}>
+                                                <div className="expense-icon" style={{ width: '28px', height: '28px', fontSize: '1rem' }}>{childCat.icon}</div>
+                                                <div className="expense-info">
+                                                  <p className="expense-desc" style={{ fontSize: 'var(--font-sm)' }}>
+                                                    {child.description}
+                                                  </p>
+                                                  <p className="expense-meta" style={{ fontSize: '10px' }}>
+                                                    {!isPersonal && (
+                                                      <>
+                                                        {child.splitAmong?.length || 0} split
+                                                      </>
+                                                    )}
+                                                  </p>
+                                                </div>
+                                                <span className="expense-amount" style={{ fontSize: 'var(--font-sm)', color: 'var(--text-secondary)' }}>
+                                                  {formatCurrency(child.amount)}
+                                                </span>
+                                              </div>
+                                            );
+                                            const isChildSynced = Boolean(child.isSynced || child.parentExpenseId || child.syncedFromRoomCode);
+                                            return (
+                                              <motion.div
+                                                key={child.id}
+                                                layout
+                                                initial={{ opacity: 0, x: -10 }}
+                                                animate={{ opacity: 1, x: 0 }}
+                                                exit={{ opacity: 0, x: -10 }}
+                                              >
+                                                {isChildSynced ? childContent : (
+                                                  <SwipeableItem
+                                                    isSwiped={activeSlideId === child.id}
+                                                    onSwipeChange={(swiped) => setActiveSlideId(swiped ? child.id : null)}
+                                                    onDelete={() => setExpenseToDelete(child)}
+                                                    onEdit={() => setEditModal(child)}
+                                                  >
+                                                    {childContent}
+                                                  </SwipeableItem>
+                                                )}
+                                              </motion.div>
+                                            );
+                                          })}
+                                        </motion.div>
+                                      )}
+                                    </AnimatePresence>
+                                  </motion.div>
+                                );
+                              }
                             })}
                           </AnimatePresence>
                         </div>

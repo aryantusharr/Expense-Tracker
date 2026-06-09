@@ -1,8 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { QRCodeSVG } from 'qrcode.react';
-import { getRoomShareUrl, copyToClipboard, shareRoom } from '../../utils/helpers';
+import { copyToClipboard } from '../../utils/helpers';
 import { useRoomContext } from '../../context/RoomContext';
 import Modal from '../common/Modal';
 import ConfirmModal from '../common/ConfirmModal';
@@ -23,20 +22,12 @@ export default function ShareRoom() {
 
   const personalRooms = useMemo(() => savedRooms.filter(r => r.isPersonal), [savedRooms]);
 
-  const shareUrl = getRoomShareUrl(code);
   const roomName = room?.name || 'Room';
 
-  const handleCopy = async (text, type) => {
+  const handleCopy = async (text) => {
     await copyToClipboard(text);
-    setCopied(type);
+    setCopied('code');
     setTimeout(() => setCopied(''), 2000);
-  };
-
-  const handleNativeShare = async () => {
-    const shared = await shareRoom(code, roomName);
-    if (!shared) {
-      handleCopy(shareUrl, 'link');
-    }
   };
 
   const handleGotoDashboardClick = () => {
@@ -57,11 +48,9 @@ export default function ShareRoom() {
     if (!selectedPersonalRoom || !selectedUser) return;
     
     try {
-      // 1. Clean up old synced expenses from all personal rooms on this device
       const allPersonalRoomCodes = savedRooms.filter(r => r.isPersonal).map(r => r.code);
       await removeSyncedExpensesFromPersonalRooms(code, allPersonalRoomCodes);
 
-      // 2. Save mapping in Firestore users list
       const updatedUsers = room.users.map(u => 
         u.id === selectedUser ? { ...u, personalRoomCode: selectedPersonalRoom } : u
       );
@@ -69,12 +58,9 @@ export default function ShareRoom() {
       
       setUserIdentity(selectedUser);
 
-      // 3. Sync existing shared expenses to the personal room in the background
-// eslint-disable-next-line no-unused-vars
       syncExistingSharedExpenses(code, room?.name || 'Shared Room', selectedPersonalRoom, selectedUser).catch(err => {
         // Silent error
       });
-// eslint-disable-next-line no-unused-vars
     } catch (err) {
       // Silent error
     }
@@ -105,41 +91,18 @@ export default function ShareRoom() {
         <p className="setup-subtitle">Share this with your roommates so they can join</p>
 
         <motion.div
-          className="share-qr"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-        >
-          <QRCodeSVG
-            value={shareUrl}
-            size={180}
-            bgColor="white"
-            fgColor="#1c1c1e"
-            level="M"
-            includeMargin={false}
-          />
-        </motion.div>
-
-        <motion.div
           className="share-code"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4 }}
+          style={{ margin: 'var(--space-xl) 0 var(--space-md)' }}
         >
           {code}
         </motion.div>
 
-        <p className="copy-feedback">{copied === 'code' ? '✓ Code copied!' : ' '}</p>
-
-        <div className="share-actions">
-          <button className="btn btn-primary" onClick={handleNativeShare}>
-            📤 Share
-          </button>
-          <button className="btn btn-secondary" onClick={() => handleCopy(shareUrl, 'link')}>
-            {copied === 'link' ? '✓ Copied!' : '📋 Copy Link'}
-          </button>
-          <button className="btn btn-secondary" onClick={() => handleCopy(code, 'code')}>
-            {copied === 'code' ? '✓ Copied!' : '🔢 Code'}
+        <div style={{ width: '100%', maxWidth: '280px', margin: '0 auto var(--space-xl)' }}>
+          <button className="btn btn-primary btn-full" onClick={() => handleCopy(code)}>
+            {copied === 'code' ? '✓ Code Copied!' : '📋 Copy Code'}
           </button>
         </div>
 

@@ -1,17 +1,89 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { formatCurrency } from '../../utils/helpers';
 import './Dashboard.css';
 
-export default function FlipBalanceCard({ b, expenses }) {
+export default function FlipBalanceCard({ b, expenses, hintAnimate }) {
   const [isFlipped, setIsFlipped] = useState(false);
+  const [rotateY, setRotateY] = useState(0);
 
   const isPositive = b.balance >= 0;
   const absBalance = Math.abs(b.balance);
 
-  // Find last transaction
+  // Discoverability micro-flip: 15° partial flip → back to 0 (Twice)
+  useEffect(() => {
+    if (!hintAnimate || isFlipped) return;
+    
+    // First flip
+    setRotateY(18);
+    const t1 = setTimeout(() => {
+      if (!isFlipped) setRotateY(0);
+    }, 450);
+    
+    // Second flip
+    const t2 = setTimeout(() => {
+      if (!isFlipped) setRotateY(18);
+    }, 900);
+    
+    const t3 = setTimeout(() => {
+      if (!isFlipped) setRotateY(0);
+    }, 1350);
+
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+    };
+  }, [hintAnimate, isFlipped]);
+
+  // Sort helper: date DESC first, then createdAt DESC (Bug 1 fix)
+  const sortByLatestDate = (a, b) => {
+    const dateA = new Date(a.date || 0);
+    const dateB = new Date(b.date || 0);
+    if (dateB - dateA !== 0) return dateB - dateA;
+    return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+  };
+
+  // Group-aware Last Paid logic
   const userExpenses = expenses.filter(e => e.paidBy === b.userId);
-  const lastExp = userExpenses.sort((x, y) => new Date(y.date) - new Date(x.date))[0];
+  const groupMap = {};
+  const standalones = [];
+
+  userExpenses.forEach(e => {
+    if (e.isItemised && e.groupId) {
+      if (!groupMap[e.groupId]) {
+        groupMap[e.groupId] = {
+          isGroup: true,
+          groupId: e.groupId,
+          groupName: e.groupName || 'Itemised Expense',
+          amount: 0,
+          date: e.date,
+          createdAt: e.createdAt || e.date,
+        };
+      }
+      groupMap[e.groupId].amount += parseFloat(e.amount) || 0;
+      const existing = groupMap[e.groupId];
+      const existingDate = new Date(existing.date || 0);
+      const newDate = new Date(e.date || 0);
+      const existingCreatedAt = new Date(existing.createdAt || 0);
+      const newCreatedAt = new Date(e.createdAt || 0);
+      if (newDate > existingDate || (newDate.getTime() === existingDate.getTime() && newCreatedAt > existingCreatedAt)) {
+        groupMap[e.groupId].date = e.date;
+        groupMap[e.groupId].createdAt = e.createdAt || e.date;
+      }
+    } else {
+      standalones.push({
+        isGroup: false,
+        description: e.description || 'Other',
+        amount: parseFloat(e.amount) || 0,
+        date: e.date,
+        createdAt: e.createdAt || e.date,
+      });
+    }
+  });
+
+  const allCandidates = [...Object.values(groupMap), ...standalones];
+  const lastTx = allCandidates.sort(sortByLatestDate)[0];
 
   // Calculate current month balance
   const now = new Date();
@@ -34,13 +106,22 @@ export default function FlipBalanceCard({ b, expenses }) {
   const cmAbsBalance = Math.abs(cmBalance);
   const cmPositive = cmBalance >= 0;
 
+  const handleClick = () => {
+    setIsFlipped(!isFlipped);
+    setRotateY(isFlipped ? 0 : 180);
+  };
+
   return (
-    <div className="balance-card-container" onClick={() => setIsFlipped(!isFlipped)}>
+    <div className="balance-card-container" onClick={handleClick}>
       <motion.div
         className="balance-card-inner"
         initial={false}
-        animate={{ rotateY: isFlipped ? 180 : 0 }}
-        transition={{ duration: 0.6, type: 'spring', stiffness: 260, damping: 20 }}
+        animate={{ rotateY: isFlipped ? 180 : rotateY }}
+        transition={
+          hintAnimate && !isFlipped
+            ? { duration: 0.45, type: 'spring', stiffness: 200, damping: 18 }
+            : { duration: 0.6, type: 'spring', stiffness: 260, damping: 20 }
+        }
         style={{ transformStyle: 'preserve-3d' }}
       >
         {/* Front */}
@@ -63,11 +144,15 @@ export default function FlipBalanceCard({ b, expenses }) {
               <span className="stat-val" title={formatCurrency(b.owed)}>{formatCurrency(b.owed)}</span>
             </div>
           </div>
-          {lastExp && (
+          {lastTx && (
             <div className="last-transaction">
-              Last: Paid <span className="last-amount">{formatCurrency(lastExp.amount)}</span> for {lastExp.description || 'Other'} on {new Date(lastExp.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+              Last: Paid <span className="last-amount">{formatCurrency(lastTx.amount)}</span> for {lastTx.isGroup ? lastTx.groupName : (lastTx.description || 'Other')} on {new Date(lastTx.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
             </div>
           )}
+          {/* Hint icon */}
+          <div className="balance-card-flip-icon" style={{ position: 'absolute', top: '8px', right: '8px', fontSize: '0.7rem', opacity: 0.35, pointerEvents: 'none' }}>
+            ↕
+          </div>
         </div>
 
         {/* Back */}

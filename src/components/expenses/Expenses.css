@@ -448,3 +448,100 @@
   text-overflow: ellipsis;
   max-width: 64px;
 }
+
+/* ===== Grouped Expenses UI ===== */
+.group-parent-item {
+  position: relative;
+  transition: background var(--duration-fast), transform var(--duration-fast);
+}
+.group-parent-item:active {
+  transform: scale(0.99);
+}
+.child-expense-item {
+  position: relative;
+}
+.child-expense-item::before {
+  content: '';
+  position: absolute;
+  left: -20px;
+  top: 50%;
+  width: 12px;
+  height: 1px;
+  border-top: 1px dashed var(--border-light);
+}
+
+/* ===== Math Toolbar ===== */
+.math-toolbar {
+  position: fixed;
+  bottom: calc(var(--nav-height) + var(--safe-area-bottom));
+  left: 0;
+  right: 0;
+  z-index: 150;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  background: rgba(30, 30, 50, 0.92);
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+  border-top: 1px solid rgba(255,255,255,0.08);
+  padding: 6px var(--space-lg);
+}
+
+body.keyboard-open .math-toolbar {
+  bottom: 0 !important;
+}
+
+.math-toolbar-btn {
+  flex: 1;
+  max-width: 80px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  background: transparent;
+  border: none;
+  border-right: 1px solid rgba(255,255,255,0.06);
+  cursor: pointer;
+  transition: background var(--duration-fast), transform var(--duration-fast);
+  letter-spacing: 0;
+}
+
+.math-toolbar-btn:last-child {
+  border-right: none;
+}
+
+.math-toolbar-btn:active {
+  background: rgba(108, 92, 231, 0.25);
+  transform: scale(0.9);
+}
+
+/* ===== Remaining to Split — Sticky Bar ===== */
+.remaining-sticky-bar {
+  position: fixed;
+  bottom: calc(var(--nav-height) + var(--safe-area-bottom));
+  left: 0;
+  right: 0;
+  z-index: 120;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px var(--space-xl);
+  background: rgba(255, 107, 107, 0.12);
+  border-top: 1px solid rgba(255, 107, 107, 0.3);
+  color: var(--danger);
+  font-weight: 600;
+  font-size: var(--font-sm);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  pointer-events: none;
+}
+
+.remaining-sticky-amount {
+  font-size: var(--font-md);
+  font-weight: 700;
+}
+

@@ -1,7 +1,7 @@
 import { db } from './firebase';
 import {
   collection, addDoc, updateDoc, deleteDoc, doc,
-  onSnapshot, query, orderBy, getDoc, getDocs, where
+  onSnapshot, query, orderBy, getDoc, getDocs, where, writeBatch
 } from 'firebase/firestore';
 import { syncExpenseToPersonalRooms } from '../utils/syncExpenseToPersonal';
 import { deleteSyncedExpensesFromPersonalRooms } from '../utils/deleteSyncedExpenses';
@@ -118,4 +118,84 @@ export function subscribeToExpenses(roomCode, callback) {
   }, () => {
     callback([]);
   });
+}
+
+/**
+ * Add a group of itemised expenses in a single batch under one groupId.
+ * All items share the same groupId, groupName, and isItemised flag.
+ */
+export async function addItemisedExpenseGroup(roomCode, groupName, items, commonFields, roomData = null) {
+  const groupId = `grp-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`;
+  const createdAt = new Date().toISOString();
+  const expensesRef = collection(db, 'rooms', roomCode, 'expenses');
+  const savedItems = [];
+
+  for (const item of items) {
+    const expenseData = {
+      ...commonFields,
+      description: item.description.trim() || groupName,
+      amount: parseFloat(item.amount),
+      categoryId: item.categoryId,
+      ...(item.splitAmong ? { splitAmong: item.splitAmong } : {}),
+      groupId,
+      groupName: groupName.trim(),
+      isItemised: true,
+      createdAt,
+    };
+    const docRef = await addDoc(expensesRef, expenseData);
+    savedItems.push({ id: docRef.id, ...expenseData });
+  }
+
+  // Fire-and-forget sync (sync each item individually)
+  const rData = await getRoomData(roomCode, roomData).catch(() => null);
+  if (rData && !rData.isPersonal) {
+    savedItems.forEach(item => {
+      syncExpenseToPersonalRooms(roomCode, rData, item.id, item).catch(() => {});
+    });
+  }
+
+  return { groupId, groupName, items: savedItems };
+}
+
+/**
+ * Rename all expenses in an itemised group atomically (Firestore batch write).
+ */
+export async function updateGroupName(roomCode, groupId, newGroupName, roomData = null) {
+  const expensesRef = collection(db, 'rooms', roomCode, 'expenses');
+  const q = query(expensesRef, where('groupId', '==', groupId));
+  const snap = await getDocs(q);
+
+  if (snap.empty) return;
+
+  const batch = writeBatch(db);
+  const updatedAt = new Date().toISOString();
+  snap.docs.forEach(d => {
+    batch.update(d.ref, { groupName: newGroupName.trim(), updatedAt });
+  });
+  await batch.commit();
+
+  // Also sync group name changes to personal rooms
+  try {
+    const rData = await getRoomData(roomCode, roomData);
+    if (rData && !rData.isPersonal && rData.users) {
+      const personalRoomCodes = rData.users
+        .filter(u => u.personalRoomCode)
+        .map(u => u.personalRoomCode);
+
+      for (const pCode of personalRoomCodes) {
+        const pExpensesRef = collection(db, 'rooms', pCode, 'expenses');
+        const pq = query(pExpensesRef, where('groupId', '==', groupId));
+        const psnap = await getDocs(pq);
+        if (!psnap.empty) {
+          const pBatch = writeBatch(db);
+          psnap.docs.forEach(pd => {
+            pBatch.update(pd.ref, { groupName: newGroupName.trim(), updatedAt });
+          });
+          await pBatch.commit();
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Failed to sync group name update to personal rooms:', err);
+  }
 }

@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Header from '../layout/Header';
 import CountUp from '../common/CountUp';
 import { useRoomContext } from '../../context/RoomContext';
-import { formatCurrency } from '../../utils/helpers';
+import { formatCurrency, formatDate } from '../../utils/helpers';
 import ExpenseChart from './ExpenseChart';
 import SettlementList from './SettlementList';
 import FlipBalanceCard from './FlipBalanceCard';
@@ -26,10 +26,27 @@ export default function DashboardPage() {
   const budget = room?.budget || 0;
 
   const [showMatrixTooltip, setShowMatrixTooltip] = useState(false);
+  // One-shot discoverability hint for flip cards
+  const [hintAnimate, setHintAnimate] = useState(false);
+  const hintFiredRef = useRef(false);
+
   const handleTooltipClick = () => {
     setShowMatrixTooltip(true);
     setTimeout(() => setShowMatrixTooltip(false), 2000);
   };
+
+  // Fire balance card discoverability hint on each mount
+  useEffect(() => {
+    if (isPersonal || hintFiredRef.current) return;
+    const timer = setTimeout(() => {
+      if (!hintFiredRef.current) {
+        hintFiredRef.current = true;
+        setHintAnimate(true);
+        setTimeout(() => setHintAnimate(false), 1600);
+      }
+    }, 1400);
+    return () => clearTimeout(timer);
+  }, [isPersonal]);
 
   const { balances, total, settlements, allSettled, monthlyTotals } = useBalances(expenses, users);
   const { currentMonthTotal, prevMonthTotal, currentMonthLabel, prevMonthLabel } = useMonthTotals(expenses);
@@ -42,9 +59,72 @@ export default function DashboardPage() {
     .filter(e => e.date === todayStr)
     .reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
 
+  // Current month avg/day
   const daysElapsed = today.getDate();
   const avgPerDayVal = daysElapsed > 0 ? Math.round(currentMonthTotal / daysElapsed) : 0;
   const avgPerDayFormatted = `Avg · ₹${avgPerDayVal.toLocaleString('en-IN')}/day`;
+
+  // Previous month avg/day
+  const prevMonthDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+  const prevMonthTotalDays = new Date(today.getFullYear(), today.getMonth(), 0).getDate();
+  const prevAvgPerDayVal = prevMonthTotal > 0 ? Math.round(prevMonthTotal / prevMonthTotalDays) : 0;
+  const prevAvgFormatted = prevAvgPerDayVal > 0 ? `Avg · ₹${prevAvgPerDayVal.toLocaleString('en-IN')}/day` : null;
+
+  // Sort helper: date DESC, then createdAt DESC
+  const sortByLatestDate = (a, b) => {
+    const dateA = new Date(a.date || 0);
+    const dateB = new Date(b.date || 0);
+    if (dateB - dateA !== 0) return dateB - dateA;
+    // Tiebreak by createdAt
+    return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+  };
+
+  // Find last transaction for personal mode — Bug 1 + Bug 2 fix
+  const personalLastTx = useMemo(() => {
+    if (!isPersonal || expenses.length === 0) return null;
+    const groupMap = {};
+    const standalones = [];
+
+    expenses.forEach(e => {
+      if (e.isItemised && e.groupId) {
+        if (!groupMap[e.groupId]) {
+          groupMap[e.groupId] = {
+            isGroup: true,
+            groupId: e.groupId,
+            groupName: e.groupName || 'Itemised Expense',
+            amount: 0,
+            date: e.date,
+            createdAt: e.createdAt || e.date,
+            syncedFromRoom: e.syncedFromRoom || e.syncedFromRoomName || null,
+          };
+        }
+        groupMap[e.groupId].amount += parseFloat(e.amount) || 0;
+        // Use date-first comparison (Bug 1)
+        const existing = groupMap[e.groupId];
+        const existingDate = new Date(existing.date || 0);
+        const newDate = new Date(e.date || 0);
+        const existingCreatedAt = new Date(existing.createdAt || 0);
+        const newCreatedAt = new Date(e.createdAt || 0);
+        if (newDate > existingDate || (newDate.getTime() === existingDate.getTime() && newCreatedAt > existingCreatedAt)) {
+          groupMap[e.groupId].date = e.date;
+          groupMap[e.groupId].createdAt = e.createdAt || e.date;
+          groupMap[e.groupId].syncedFromRoom = e.syncedFromRoom || e.syncedFromRoomName || null;
+        }
+      } else {
+        standalones.push({
+          isGroup: false,
+          description: e.description || 'Other',
+          amount: parseFloat(e.amount) || 0,
+          date: e.date,
+          createdAt: e.createdAt || e.date,
+          syncedFromRoom: e.syncedFromRoom || e.syncedFromRoomName || null,
+        });
+      }
+    });
+
+    const allCandidates = [...Object.values(groupMap), ...standalones];
+    return allCandidates.sort(sortByLatestDate)[0];
+  }, [isPersonal, expenses]);
 
   return (
     <>
@@ -186,17 +266,41 @@ export default function DashboardPage() {
             <div className="month-stat">
               <span className="month-stat-label">{prevMonthLabel}</span>
               <span className="month-stat-value">{formatCurrency(prevMonthTotal)}</span>
+              {prevAvgFormatted && (
+                <span className="prev-avg-label">{prevAvgFormatted}</span>
+              )}
             </div>
             <div className="month-stat-divider" />
             <div className="month-stat">
               <span className="month-stat-label">{currentMonthLabel}</span>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
-                <span className="month-stat-value">{formatCurrency(currentMonthTotal)}</span>
-                <span style={{ fontSize: '0.65rem', opacity: 0.55, whiteSpace: 'nowrap' }}>{avgPerDayFormatted}</span>
-              </div>
+              <span className="month-stat-value">{formatCurrency(currentMonthTotal)}</span>
+              <span className="month-avg-label">{avgPerDayFormatted}</span>
             </div>
           </div>
         </motion.div>
+
+        {/* Last Paid Card (Personal Mode only) */}
+        {isPersonal && personalLastTx && (
+          <motion.div className="card last-paid-card" custom={1} initial="hidden" animate="visible" variants={cardVariants}>
+            <div className="last-paid-label">
+              Last Paid Expense
+              {personalLastTx.syncedFromRoom && (
+                <> is <span className="synced-badge">Synced from {personalLastTx.syncedFromRoom}</span></>
+              )}
+            </div>
+            <div className="last-paid-body">
+              <div className="last-paid-details">
+                <h4 className="last-paid-title">
+                  {personalLastTx.isGroup ? personalLastTx.groupName : (personalLastTx.description || 'Other')}
+                </h4>
+                <p className="last-paid-date">{formatDate(personalLastTx.date)}</p>
+              </div>
+              <div className="last-paid-amount">
+                {formatCurrency(personalLastTx.amount)}
+              </div>
+            </div>
+          </motion.div>
+        )}
 
         {/* Balance Cards — hidden in personal mode */}
         {!isPersonal && (
@@ -210,7 +314,7 @@ export default function DashboardPage() {
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.2, delay: 0.08 + i * 0.03 }}
                 >
-                  <FlipBalanceCard b={b} expenses={expenses} />
+                  <FlipBalanceCard b={b} expenses={expenses} hintAnimate={hintAnimate} />
                 </motion.div>
               ))}
             </div>

@@ -2,12 +2,13 @@ import { useEffect, useState } from 'react';
 import Modal from '../common/Modal';
 import ExpenseFormFields from './ExpenseFormFields';
 import { useExpenseForm } from '../../hooks/useExpenseForm';
-import { updateExpense } from '../../services/expenseService';
+import { updateExpense, updateGroupName } from '../../services/expenseService';
 import { validateExpense } from '../../utils/expenseFormHelpers';
 
 export default function EditExpenseModal({ expense, users, categories, roomCode, room, onClose }) {
   const isPersonal = room?.isPersonal === true;
   const { form, setField, toggleSplit, selectAll, perPerson, allGradient, reinitialize } = useExpenseForm({}, users);
+  const [groupName, setGroupName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -21,13 +22,18 @@ export default function EditExpenseModal({ expense, users, categories, roomCode,
       categoryId: expense.categoryId,
       date: expense.date,
     });
-// eslint-disable-next-line react-hooks/set-state-in-effect
+    setGroupName(expense.groupName || '');
     setError('');
 // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [expense]);
 
   const handleSave = async () => {
     if (!expense) return;
+
+    if (expense.isItemised && !groupName.trim()) {
+      setError('Expense Name is required');
+      return;
+    }
 
     const validationError = validateExpense(form, isPersonal);
     if (validationError) { setError(validationError); return; }
@@ -42,7 +48,12 @@ export default function EditExpenseModal({ expense, users, categories, roomCode,
         splitAmong: form.splitAmong,
         categoryId: form.categoryId,
         date: form.date,
+        ...(expense.isItemised ? { groupName: groupName.trim() } : {}),
       }, room);
+
+      if (expense.isItemised && groupName.trim() !== expense.groupName) {
+        await updateGroupName(roomCode, expense.groupId, groupName.trim(), room);
+      }
       onClose();
     } catch (err) {
       setError(err.message || 'Failed to save changes');
@@ -55,6 +66,18 @@ export default function EditExpenseModal({ expense, users, categories, roomCode,
       {expense && (
         <div className="expense-form" style={{ paddingBottom: 'var(--space-xl)' }}>
           <div style={{ padding: 'var(--space-lg) 0 0 0' }}>
+            {expense.isItemised && (
+              <div className="input-group" style={{ marginBottom: 'var(--space-md)' }}>
+                <label>Expense Name <span style={{ color: 'var(--accent-red)' }}>*</span></label>
+                <input
+                  className="input"
+                  placeholder="e.g. Zepto, Dinner, Fuel..."
+                  value={groupName}
+                  onChange={(e) => setGroupName(e.target.value)}
+                  id="input-group-name"
+                />
+              </div>
+            )}
             <ExpenseFormFields
               form={form}
               setField={setField}

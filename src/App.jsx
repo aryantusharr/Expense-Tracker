@@ -49,7 +49,6 @@ function AppRoutes() {
           <Route path="/" element={inRoom ? <Navigate to="/dashboard" replace /> : <LandingPage />} />
           <Route path="/create" element={<CreateRoom />} />
           <Route path="/join" element={<JoinRoom />} />
-          <Route path="/join/:code" element={<JoinFromLink />} />
           <Route path="/personal" element={<PersonalSetup />} />
           <Route path="/share/:code" element={inRoom ? <ShareRoom /> : <Navigate to="/" replace />} />
 
@@ -80,30 +79,58 @@ function ShowNavGuard() {
   return <BottomNav />;
 }
 
-/**
- * Handle deep-link join: /join/ROOMCODE
- * Auto-joins the room from the URL parameter
- */
-function JoinFromLink() {
-  const { joinRoomSession, roomCode } = useRoomContext();
-  // eslint-disable-next-line no-unused-vars
-  const params = new URL(window.location.href);
-  const code = window.location.pathname.split('/join/')[1]?.toUpperCase();
-
-  if (roomCode) {
-    return <Navigate to="/dashboard" replace />;
-  }
-
-  if (code && code.length === 6) {
-    // Attempt to join via the code
-    joinRoomSession(code);
-    return <Navigate to="/dashboard" replace />;
-  }
-
-  return <Navigate to="/join" replace />;
-}
 
 export default function App() {
+  useEffect(() => {
+    const handleFocusChange = () => {
+      const activeEl = document.activeElement;
+      const isInput = activeEl && (
+        activeEl.tagName === 'INPUT' ||
+        activeEl.tagName === 'TEXTAREA' ||
+        activeEl.getAttribute('contenteditable') === 'true'
+      );
+      if (isInput) {
+        document.body.classList.add('keyboard-open');
+      } else {
+        document.body.classList.remove('keyboard-open');
+      }
+    };
+
+    document.addEventListener('focusin', handleFocusChange);
+    document.addEventListener('focusout', handleFocusChange);
+
+    const handleResize = () => {
+      if (window.visualViewport) {
+        const isMinified = window.innerHeight - window.visualViewport.height > 150;
+        if (isMinified) {
+          document.body.classList.add('keyboard-open');
+        } else {
+          const activeEl = document.activeElement;
+          const isInput = activeEl && (
+            activeEl.tagName === 'INPUT' ||
+            activeEl.tagName === 'TEXTAREA' ||
+            activeEl.getAttribute('contenteditable') === 'true'
+          );
+          if (!isInput) {
+            document.body.classList.remove('keyboard-open');
+          }
+        }
+      }
+    };
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleResize);
+    }
+
+    return () => {
+      document.removeEventListener('focusin', handleFocusChange);
+      document.removeEventListener('focusout', handleFocusChange);
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', handleResize);
+      }
+    };
+  }, []);
+
   return (
     <BrowserRouter>
       <AppRoutes />

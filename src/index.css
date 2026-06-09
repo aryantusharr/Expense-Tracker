@@ -204,7 +204,16 @@ ul, ol { list-style: none; }
 img { max-width: 100%; display: block; }
 
 /* ========== Scrollbar ========== */
-::-webkit-scrollbar { width: 0; height: 0; }
+*::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+* {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
 
 /* ========== Layout ========== */
 .app-container {
@@ -614,6 +623,23 @@ img { max-width: 100%; display: block; }
   gap: var(--space-md);
   font-size: var(--font-sm);
   font-weight: 500;
+}
+
+/* ========== Synced Badge ========== */
+.synced-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 8px;
+  padding: 2px 6px;
+  background: rgba(108, 92, 231, 0.15);
+  color: var(--accent);
+  border-radius: var(--radius-sm);
+  font-size: 0.65rem;
+  font-weight: 600;
+  vertical-align: middle;
+  text-transform: none;
+  letter-spacing: normal;
 }
 
 
