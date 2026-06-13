@@ -89,6 +89,8 @@
   --header-height: 56px;
   --safe-area-top: env(safe-area-inset-top, 0px);
   --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --toast-bg: rgba(30, 30, 30, 0.7);
+  --math-toolbar-bg: rgba(30, 30, 50, 0.92);
 }
 
 /* Light Mode */
@@ -110,6 +112,8 @@
   --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
   --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.1);
   --shadow-glow: 0 0 20px rgba(108, 92, 231, 0.15);
+  --toast-bg: rgba(255, 255, 255, 0.7);
+  --math-toolbar-bg: rgba(255, 255, 255, 0.92);
 }
 
 /* ========== Jitter / Shake — validation feedback ========== */
@@ -227,6 +231,8 @@ img { max-width: 100%; display: block; }
 }
 
 .page-content {
+  position: relative;
+  z-index: 10;
   flex: 1;
   padding: var(--space-lg);
   padding-bottom: calc(var(--nav-height) + var(--safe-area-bottom) + var(--space-2xl));
@@ -613,7 +619,9 @@ img { max-width: 100%; display: block; }
 }
 
 .toast {
-  background: var(--bg-card-solid);
+  background: var(--toast-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   padding: var(--space-md) var(--space-lg);

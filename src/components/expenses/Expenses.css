@@ -472,20 +472,25 @@
 
 /* ===== Math Toolbar ===== */
 .math-toolbar {
-  position: fixed;
+  position: sticky;
   bottom: calc(var(--nav-height) + var(--safe-area-bottom));
   left: 0;
   right: 0;
-  z-index: 150;
+  width: 100%;
+  max-width: 430px;
+  margin: 0 auto;
+  z-index: 100;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0;
-  background: rgba(30, 30, 50, 0.92);
+  background: var(--math-toolbar-bg);
   backdrop-filter: blur(20px) saturate(150%);
   -webkit-backdrop-filter: blur(20px) saturate(150%);
-  border-top: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
   padding: 6px var(--space-lg);
+  box-sizing: border-box;
 }
 
 body.keyboard-open .math-toolbar {
@@ -504,7 +509,7 @@ body.keyboard-open .math-toolbar {
   color: var(--text-primary);
   background: transparent;
   border: none;
-  border-right: 1px solid rgba(255,255,255,0.06);
+  border-right: 1px solid var(--border-color);
   cursor: pointer;
   transition: background var(--duration-fast), transform var(--duration-fast);
   letter-spacing: 0;

@@ -269,6 +269,7 @@ export default function AddExpense() {
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState('error'); // 'error' | 'success'
   const [mathToolbarVisible, setMathToolbarVisible] = useState(false);
+  const [isNumpadOpen, setIsNumpadOpen] = useState(false);
 
   // Auto-dismiss toast
   useEffect(() => {
@@ -281,6 +282,7 @@ export default function AddExpense() {
   const handleAmountFocus = useCallback((inputEl) => {
     focusedAmountRef.current = inputEl;
     setMathToolbarVisible(true);
+    setIsNumpadOpen(true);
   }, []);
 
   const handleAmountBlur = useCallback(() => {
@@ -293,6 +295,7 @@ export default function AddExpense() {
         active?.id === 'input-total-amount';
       if (!isAmountInput) {
         setMathToolbarVisible(false);
+        setIsNumpadOpen(false);
       }
     }, 180);
   }, []);
@@ -559,7 +562,7 @@ export default function AddExpense() {
     if (missing.length > 0) {
       setToastType('error');
       setToastMessage(`Missing: ${missing.join(', ')}`);
-      if (missing.includes('Amount')) jitterEl('#input-amount');
+      if (missing.includes('Amount')) jitterEl('.amount-field');
       if (missing.includes('Description')) jitterEl('#input-description');
       if (missing.includes('Category')) jitterEl('.category-scroll-strip');
       return;
@@ -612,7 +615,7 @@ export default function AddExpense() {
     }
     if (!totalAmount || parseFloat(totalAmount) <= 0) {
       missing.push('Total Amount');
-      jitterEl('#input-total-amount');
+      jitterEl('.amount-field');
     }
     if (!isPersonal && !globalPaidBy) missing.push('Paid By');
     if (rows.length === 0) missing.push('At least one item');
@@ -718,7 +721,7 @@ export default function AddExpense() {
               top: 'calc(var(--safe-area-top) + var(--header-height))',
               left: 0,
               right: 0,
-              zIndex: 100,
+              zIndex: isNumpadOpen ? 5 : 100,
               background: 'rgba(20, 20, 38, 0.88)',
               borderBottom: '1px solid var(--border-light)',
               padding: '9px var(--space-lg)',
@@ -727,6 +730,9 @@ export default function AddExpense() {
               alignItems: 'center',
               backdropFilter: 'blur(24px)',
               WebkitBackdropFilter: 'blur(24px)',
+              opacity: isNumpadOpen ? 0 : 1,
+              pointerEvents: isNumpadOpen ? 'none' : 'auto',
+              transition: 'opacity 0.2s ease, z-index 0.2s ease'
             }}
           >
             {/* Name • Amount pill format */}
@@ -794,11 +800,9 @@ export default function AddExpense() {
             }}
           >
             <div className="toast" style={toastType === 'success' ? {
-              background: 'rgba(0,206,201,0.15)',
               borderColor: 'rgba(0,206,201,0.4)',
               color: 'var(--success)',
             } : {
-              background: 'rgba(255,107,107,0.15)',
               borderColor: 'rgba(255,107,107,0.4)',
               color: 'var(--danger)',
             }}>
@@ -808,36 +812,15 @@ export default function AddExpense() {
         )}
       </AnimatePresence>
 
-      {/* Math Toolbar — floats above bottom nav when amount field is focused */}
-      <AnimatePresence>
-        {mathToolbarVisible && (
-          <motion.div
-            className="math-toolbar"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            transition={{ duration: 0.18, ease: 'easeOut' }}
-          >
-            {['+', '−', '×', '÷'].map(op => (
-              <button
-                key={op}
-                type="button"
-                className="math-toolbar-btn"
-                onMouseDown={(e) => {
-                  e.preventDefault(); // prevent blur before insert
-                  // Map display symbols to actual math operators
-                  const opMap = { '−': '-', '×': '*', '÷': '/' };
-                  insertMathOp(opMap[op] || op);
-                }}
-              >
-                {op}
-              </button>
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <Header title="Add Expense" />
+      <Header 
+        title="Add Expense" 
+        style={{
+          opacity: isNumpadOpen ? 0 : 1,
+          zIndex: isNumpadOpen ? 5 : 40,
+          pointerEvents: isNumpadOpen ? 'none' : 'auto',
+          transition: 'opacity 0.2s ease, z-index 0.2s ease'
+        }}
+      />
       <div className="page-content">
 
         {/* Mode Toggle at top */}
@@ -943,7 +926,7 @@ export default function AddExpense() {
             transition={{ duration: 0.3 }}
           >
             {/* Amount with steppers */}
-            <div className="amount-input-wrapper" style={{ marginBottom: 'var(--space-lg)' }}>
+            <div className="amount-input-wrapper amount-field" style={{ marginBottom: 'var(--space-lg)' }}>
               <button
                 type="button"
                 className="amount-adj-btn"
@@ -1248,7 +1231,7 @@ export default function AddExpense() {
             {/* Total Amount Field */}
             <div className="input-group" style={{ marginBottom: 'var(--space-lg)' }}>
               <label>Total Amount</label>
-              <div className="amount-center" style={{
+              <div className="amount-center amount-field" style={{
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -1555,9 +1538,15 @@ export default function AddExpense() {
                 <motion.div
                   className="remaining-sticky-bar"
                   initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
+                  animate={{ 
+                    opacity: (isNumpadOpen && remaining > 0) ? 0 : 1, 
+                    y: (isNumpadOpen && remaining > 0) ? 20 : 0 
+                  }}
                   exit={{ opacity: 0, y: 30 }}
-                  transition={{ duration: 0.22, ease: 'easeOut' }}
+                  transition={{ duration: 0.2, ease: 'easeOut' }}
+                  style={{
+                    pointerEvents: (isNumpadOpen && remaining > 0) ? 'none' : 'auto'
+                  }}
                 >
                   <span>Remaining to Split</span>
                   <span className="remaining-sticky-amount">
@@ -1611,6 +1600,35 @@ export default function AddExpense() {
             </motion.button>
           </motion.form>
         )}
+
+        {/* Math Toolbar — floats above bottom nav when amount field is focused */}
+        <AnimatePresence>
+          {mathToolbarVisible && (
+            <motion.div
+              className="math-toolbar"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              transition={{ duration: 0.18, ease: 'easeOut' }}
+            >
+              {['+', '−', '×', '÷'].map(op => (
+                <button
+                  key={op}
+                  type="button"
+                  className="math-toolbar-btn"
+                  onMouseDown={(e) => {
+                    e.preventDefault(); // prevent blur before insert
+                    // Map display symbols to actual math operators
+                    const opMap = { '−': '-', '×': '*', '÷': '/' };
+                    insertMathOp(opMap[op] || op);
+                  }}
+                >
+                  {op}
+                </button>
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
       </div>
     </>
