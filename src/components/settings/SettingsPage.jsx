@@ -73,8 +73,43 @@ export default function SettingsPage() {
                 Leave this room and go to dashboard
               </p>
             </div>
-            <button className="btn btn-secondary" onClick={switchRoom} style={{ padding: '8px 16px' }}>
-              🔄 Switch
+            <button className="btn btn-secondary" onClick={switchRoom} style={{ padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="var(--accent)"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <motion.path
+                  d="M17 2.1l4 4-4 4"
+                  strokeDasharray="6 4"
+                  animate={{ strokeDashoffset: [0, -10] }}
+                  transition={{ repeat: Infinity, duration: 1.2, ease: 'linear' }}
+                />
+                <motion.path
+                  d="M3 12.2v-2a4 4 0 0 1 4-4h14"
+                  strokeDasharray="6 4"
+                  animate={{ strokeDashoffset: [0, -10] }}
+                  transition={{ repeat: Infinity, duration: 1.2, ease: 'linear' }}
+                />
+                <motion.path
+                  d="M7 21.9l-4-4 4-4"
+                  strokeDasharray="6 4"
+                  animate={{ strokeDashoffset: [0, 10] }}
+                  transition={{ repeat: Infinity, duration: 1.2, ease: 'linear' }}
+                />
+                <motion.path
+                  d="M21 11.8v2a4 4 0 0 1-4 4H3"
+                  strokeDasharray="6 4"
+                  animate={{ strokeDashoffset: [0, 10] }}
+                  transition={{ repeat: Infinity, duration: 1.2, ease: 'linear' }}
+                />
+              </svg>
+              Switch
             </button>
           </div>
         </motion.div>
@@ -223,7 +258,7 @@ export default function SettingsPage() {
         </motion.div>
 
         {/* Data Management */}
-        <DataManagement expenses={expenses} users={users} categories={categories} room={room} />
+        <DataManagement expenses={expenses} users={users} categories={categories} room={room} roomCode={roomCode} />
 
         {/* Budget Modal */}
         <Modal isOpen={showBudgetModal} onClose={() => setShowBudgetModal(false)} title="Edit Budget">

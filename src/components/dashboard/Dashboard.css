@@ -111,6 +111,52 @@
   margin-top: var(--space-xs);
 }
 
+/* ========== Balance Card Ripple ========== */
+@keyframes ripple-expand {
+  0% { transform: translate(-50%, -50%) scale(0); opacity: 0.75; }
+  100% { transform: translate(-50%, -50%) scale(12); opacity: 0; }
+}
+
+.ripple-container {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+  transform: translateZ(1px);
+  backface-visibility: hidden;
+}
+
+.ripple-circle {
+  position: absolute;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(162, 155, 254, 0.6) 0%, rgba(108, 92, 231, 0.25) 100%);
+  animation: ripple-expand 0.7s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+/* ========== Balance Card Jitter on Mount ========== */
+@keyframes card-jitter {
+  0%   { transform: translateX(0) rotate(0deg); }
+  18%  { transform: translateX(-3px) rotate(-0.4deg); }
+  36%  { transform: translateX(3px) rotate(0.4deg); }
+  54%  { transform: translateX(-2px) rotate(-0.2deg); }
+  72%  { transform: translateX(2px) rotate(0.2deg); }
+  86%  { transform: translateX(-1px); }
+  100% { transform: translateX(0) rotate(0deg); }
+}
+
+.card-jitter {
+  animation: card-jitter 0.45s ease-in-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ripple-circle { animation-duration: 0.01s; }
+  .card-jitter { animation: none; }
+}
+
 /* Balance Cards */
 .balance-grid {
   display: grid;

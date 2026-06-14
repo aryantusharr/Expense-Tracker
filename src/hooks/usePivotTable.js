@@ -21,6 +21,13 @@ export function usePivotTable(expenses, categories) {
       return d.toLocaleString('en-IN', { month: 'long', year: 'numeric' });
     });
 
+    // Count category occurrences
+    const categoryCount = {};
+    expenses.forEach(e => {
+      const catId = e.categoryId || 'unknown';
+      categoryCount[catId] = (categoryCount[catId] || 0) + 1;
+    });
+
     // 2. Gather matrix data
     const matrix = {}; 
     const monthGrandTotals = {};
@@ -46,14 +53,36 @@ export function usePivotTable(expenses, categories) {
       overallGrandTotal += amount;
     });
 
-    const sortedCategories = Object.values(matrix).sort((a, b) => a.name.localeCompare(b.name));
+    const sortedCategories = Object.values(matrix).map(cat => {
+      const roundedTotalsByMonth = {};
+      Object.keys(cat.totalsByMonth).forEach(m => {
+        roundedTotalsByMonth[m] = Math.round(cat.totalsByMonth[m]);
+      });
+      return {
+        ...cat,
+        totalsByMonth: roundedTotalsByMonth,
+        grandTotal: Math.round(cat.grandTotal)
+      };
+    }).sort((a, b) => {
+      const countA = categoryCount[a.id] || 0;
+      const countB = categoryCount[b.id] || 0;
+      if (countB !== countA) {
+        return countB - countA;
+      }
+      return a.name.localeCompare(b.name);
+    });
+
+    const roundedMonthGrandTotals = {};
+    Object.keys(monthGrandTotals).forEach(m => {
+      roundedMonthGrandTotals[m] = Math.round(monthGrandTotals[m]);
+    });
 
     return {
       monthKeys: sortedMonthsKeys,
       monthLabels,
       categories: sortedCategories,
-      monthGrandTotals,
-      overallGrandTotal
+      monthGrandTotals: roundedMonthGrandTotals,
+      overallGrandTotal: Math.round(overallGrandTotal)
     };
   }, [expenses, categories]);
 }

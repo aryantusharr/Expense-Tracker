@@ -181,10 +181,11 @@
   transition: all var(--duration-fast);
   box-shadow: var(--shadow-sm);
   position: sticky;
-  top: 70px; /* Below header */
-  z-index: 10;
+  top: calc(var(--safe-area-top) + var(--header-height));
+  z-index: 30;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border-light);
 }
 
 .month-summary-card:hover {
@@ -267,12 +268,13 @@
   align-items: center;
   gap: 4px;
   margin-left: 8px;
-  padding: 2px 6px;
-  background: rgba(108, 92, 231, 0.15);
+  padding: 0 0 0 4px;
+  background: none;
+  border: none;
+  box-shadow: none;
   color: var(--accent);
-  border-radius: var(--radius-sm);
-  font-size: 0.65rem;
-  font-weight: 600;
+  font-size: 0.6rem;
+  font-weight: 500;
   vertical-align: middle;
 }
 
@@ -424,10 +426,10 @@
 }
 
 .category-pill.selected {
-  border-color: var(--accent-light);
+  border-color: var(--border-color);
   background: rgba(108, 92, 231, 0.12);
   color: var(--text-primary);
-  box-shadow: 0 0 12px rgba(108, 92, 231, 0.25);
+  box-shadow: 0 0 16px rgba(108, 92, 231, 0.45);
 }
 
 .category-pill-icon {
@@ -437,7 +439,7 @@
 }
 
 .category-pill.selected .category-pill-icon {
-  filter: drop-shadow(0 0 6px rgba(108, 92, 231, 0.5));
+  text-shadow: 0 0 8px rgba(108, 92, 231, 0.6);
 }
 
 .category-pill-label {
@@ -472,12 +474,11 @@
 
 /* ===== Math Toolbar ===== */
 .math-toolbar {
-  position: sticky;
-  bottom: calc(var(--nav-height) + var(--safe-area-bottom));
-  left: 0;
-  right: 0;
-  width: 100%;
-  max-width: 430px;
+  position: fixed;
+  bottom: 8px;
+  left: var(--space-lg);
+  right: var(--space-lg);
+  max-width: calc(430px - 32px);
   margin: 0 auto;
   z-index: 100;
   display: flex;
@@ -491,10 +492,6 @@
   border-radius: var(--radius-md);
   padding: 6px var(--space-lg);
   box-sizing: border-box;
-}
-
-body.keyboard-open .math-toolbar {
-  bottom: 0 !important;
 }
 
 .math-toolbar-btn {
@@ -550,3 +547,75 @@ body.keyboard-open .math-toolbar {
   font-weight: 700;
 }
 
+/* ========== MICRO 4: Synced Badge One-Shot Pulse ========== */
+@keyframes sync-badge-pulse {
+  0%   { transform: scale(0.8); opacity: 0.4; }
+  50%  { transform: scale(1.12); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.synced-badge {
+  animation: sync-badge-pulse 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* ========== MICRO 2 & ANIMATION 4: Category Auto-Select Pulse ========== */
+@keyframes cat-pulse {
+  0%   { box-shadow: none; }
+  30%  { box-shadow: 0 0 18px rgba(108, 92, 231, 0.65); }
+  70%  { box-shadow: 0 0 8px rgba(108, 92, 231, 0.3); }
+  100% { box-shadow: none; }
+}
+
+.category-pulse {
+  animation: cat-pulse 0.8s ease-in-out;
+  border-radius: var(--radius-md);
+}
+
+/* ========== ANIMATION 9 & MICRO 1: Input Focus Glow + Scale ========== */
+.input {
+  transition:
+    border-color var(--duration-normal) ease,
+    box-shadow var(--duration-normal) ease,
+    transform var(--duration-normal) var(--ease-spring);
+  transform-origin: center;
+}
+
+.input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.18), 0 2px 12px rgba(108, 92, 231, 0.12);
+  transform: scale(1.018);
+}
+
+/* Amount field focus-within: more prominent glow */
+.amount-field:focus-within {
+  filter: drop-shadow(0 0 10px rgba(108, 92, 231, 0.25));
+}
+
+/* ========== MICRO 3 & ANIMATION 5: Chip Tap Scale ========== */
+.chip.clickable {
+  transition: transform 0.12s var(--ease-spring), background 0.15s ease;
+}
+.chip.clickable:active {
+  transform: scale(0.93);
+}
+
+/* Chip fill-animate class triggers a micro pulse after chip fills form */
+@keyframes chip-fill-pulse {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.03); box-shadow: 0 0 12px rgba(108, 92, 231, 0.3); }
+  100% { transform: scale(1); box-shadow: none; }
+}
+
+.chip-fill-animate {
+  animation: chip-fill-pulse 0.35s var(--ease-spring);
+}
+
+/* ========== Reduced Motion override ========== */
+@media (prefers-reduced-motion: reduce) {
+  .synced-badge { animation: none; }
+  .category-pulse { animation: none; }
+  .input:focus { transform: none; }
+  .chip.clickable:active { transform: none; }
+  .chip-fill-animate { animation: none; }
+  .amount-field:focus-within { filter: none; }
+}

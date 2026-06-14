@@ -83,13 +83,14 @@ export function detectRecurringExpenses(expenses) {
         lastAmount: mr.amount,
         lastPaidBy: mr.paidBy || null,
         lastSplitAmong: mr.splitAmong || [],
-        mostRecentDate: new Date(mr.date || 0)
+        mostRecentDate: new Date(mr.date || 0),
+        count: items.length
       });
     }
   }
 
-  // Sort by mostRecentDate descending (most recently active first)
-  recurringList.sort((a, b) => b.mostRecentDate - a.mostRecentDate);
+  // Sort by count descending, fallback to mostRecentDate descending
+  recurringList.sort((a, b) => b.count - a.count || b.mostRecentDate - a.mostRecentDate);
 
   return recurringList;
 }

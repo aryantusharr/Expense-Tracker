@@ -126,12 +126,20 @@ const HINGLISH_MAP = {
   mobile: 'Utilities', recharge: 'Utilities', wifi: 'Utilities', broadband: 'Utilities',
 
   // Smoking/Cigarettes
-  cig: 'Smoking/Cigarettes', cigs: 'Smoking/Cigarettes', cigarette: 'Smoking/Cigarettes', cigarettes: 'Smoking/Cigarettes', sutta: 'Smoking/Cigarettes',
-  bidi: 'Smoking/Cigarettes', hookah: 'Smoking/Cigarettes',
-
-  // Alcohol
+  cig: 'Smoking/Cigarettes', cigs: 'Smoking/Cigarettes', cigarette: 'Smoking/Cigarettes', cigarettes: 'Smoking/Cigarettes', sutta: 'Smoking/Cigarettes', bidi: 'Smoking/Cigarettes', hookah: 'Smoking/Cigarettes',
   beer: 'Alcohol', wine: 'Alcohol', whiskey: 'Alcohol', vodka: 'Alcohol', rum: 'Alcohol',
   daaru: 'Alcohol', drinks: 'Alcohol', alcohol: 'Alcohol', breezer: 'Alcohol'
+};
+
+// Category Merchant regex patterns mapping
+const CATEGORY_REGEX_MAP = {
+  'Groceries': /zepto|blinkit|bigbasket|kirana|doodh|milk|instamart|reliance|safal|grofers|supermarket|grocery|groceries|sabzi|aata|dal|rice/i,
+  'Food & Dining': /zomato|swiggy|biryani|pizza|burger|chai|coffee|starbucks|restaurant|cafe|dhaba|dominos|mcdonald|kfc|pizza\s*hut|food|dinner|lunch|breakfast|tea|canteen/i,
+  'Transportation': /uber|ola|rapido|metro|rickshaw|cab|taxi|auto|petrol|diesel|fuel|toll|cng|fastag|train|flight|bus/i,
+  'Entertainment': /netflix|spotify|prime|movie|cinema|theater|ticket|concert|hotstar|youtube|game|bookmyshow|playstation|xbox|nintendo|steam/i,
+  'Utilities': /rent|electricity|bijli|water|gas|internet|wifi|wi-fi|broadband|recharge|mobile|phone|dth|bill|insurance|maintenance/i,
+  'Smoking/Cigarettes': /cig|cigarette|cigarettes|sutta|bidi|pan|hookah/i,
+  'Alcohol': /beer|wine|whiskey|vodka|rum|daaru|drinks|alcohol|breezer|bar|pub|club|liquor/i
 };
 
 /**
@@ -238,7 +246,7 @@ const evaluateMathExpression = (str) => {
 };
 
 export default function AddExpense() {
-  const { roomCode, room, expenses, users, categories, userIdentity } = useRoomContext();
+  const { roomCode, room, expenses, users, categories, userIdentity, combinedRegexByCategory, learnedPatterns } = useRoomContext();
   const isPersonal = room?.isPersonal === true;
 
   const amountInputRef = useRef(null);
@@ -263,13 +271,137 @@ export default function AddExpense() {
     userIdentity
   );
 
+  const [activeRegex, setActiveRegex] = useState(null);
+
+  useEffect(() => {
+    if (!form.categoryId || !categories) {
+      setActiveRegex(null);
+      return;
+    }
+    const currentCat = categories.find(c => c.id === form.categoryId);
+    if (!currentCat) {
+      setActiveRegex(null);
+      return;
+    }
+
+    // Prefer the combined (base + learned) regex from context
+    const combinedKeys = Object.keys(combinedRegexByCategory || {});
+    const combinedKey = combinedKeys.find(key =>
+      currentCat.name.toLowerCase().includes(key.toLowerCase()) ||
+      key.toLowerCase().includes(currentCat.name.toLowerCase())
+    );
+    if (combinedKey && combinedRegexByCategory[combinedKey]) {
+      setActiveRegex(combinedRegexByCategory[combinedKey]);
+      return;
+    }
+
+    // Fallback: use the local base CATEGORY_REGEX_MAP
+    const matchingKey = Object.keys(CATEGORY_REGEX_MAP).find(key =>
+      currentCat.name.toLowerCase().includes(key.toLowerCase()) ||
+      key.toLowerCase().includes(currentCat.name.toLowerCase())
+    );
+    if (matchingKey) {
+      setActiveRegex(CATEGORY_REGEX_MAP[matchingKey]);
+    } else {
+      setActiveRegex(null);
+    }
+  }, [form.categoryId, categories, combinedRegexByCategory]);
+
+  // Caching and session tracking for globally-learned patterns
+  const [learnedCache, setLearnedCache] = useState({});
+  const [badgeDescToShow, setBadgeDescToShow] = useState('');
+  const shownPatternsRef = useRef(null);
+
+  if (shownPatternsRef.current === null) {
+    try {
+      const saved = sessionStorage.getItem('splitease_shown_learned_patterns');
+      shownPatternsRef.current = saved ? JSON.parse(saved) : {};
+    } catch {
+      shownPatternsRef.current = {};
+    }
+  }
+
+  // Derived: true when the current description matches a globally-learned pattern
+  const isDescriptionLearned = useMemo(() => {
+    if (!form.description || !form.categoryId || !learnedPatterns?.length) return false;
+    const normalized = form.description.trim().toLowerCase();
+    if (!normalized) return false;
+    const cacheKey = `${normalized}_${form.categoryId}`;
+    
+    // Cache hit: check cached results first
+    if (learnedCache[cacheKey] !== undefined) {
+      return learnedCache[cacheKey];
+    }
+    
+    // Cache miss: query the in-memory learnedPatterns
+    return learnedPatterns.some(
+      p => p.learned && p.normalizedDescription === normalized && p.categoryId === form.categoryId
+    );
+  }, [form.description, form.categoryId, learnedPatterns, learnedCache]);
+
+  // Show "✓ Learned" badge once per session per pattern
+  useEffect(() => {
+    const normalized = form.description?.trim().toLowerCase();
+    if (!normalized) {
+      setBadgeDescToShow('');
+      return;
+    }
+    if (isDescriptionLearned) {
+      if (!shownPatternsRef.current[normalized]) {
+        shownPatternsRef.current[normalized] = true;
+        sessionStorage.setItem('splitease_shown_learned_patterns', JSON.stringify(shownPatternsRef.current));
+        setBadgeDescToShow(normalized);
+      }
+    } else {
+      setBadgeDescToShow('');
+    }
+  }, [isDescriptionLearned, form.description]);
+
   const { showSuccess, triggerSuccess } = useSuccessState();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState('error'); // 'error' | 'success'
+  const [isResetting, setIsResetting] = useState(false);
+  const [isCategoryPulsing, setIsCategoryPulsing] = useState(false);
+  const [fillAnimation, setFillAnimation] = useState({ scale: 1 });
+
+  const triggerCategoryPulse = () => {
+    setIsCategoryPulsing(true);
+    setTimeout(() => setIsCategoryPulsing(false), 800);
+  };
+
+  const triggerFillPulse = () => {
+    setFillAnimation({ 
+      scale: [1, 1.04, 0.98, 1],
+      boxShadow: ['0 0 0px rgba(108, 92, 231, 0)', '0 0 20px rgba(108, 92, 231, 0.45)', '0 0 0px rgba(108, 92, 231, 0)']
+    });
+    setTimeout(() => setFillAnimation({ scale: 1, boxShadow: 'none' }), 400);
+  };
   const [mathToolbarVisible, setMathToolbarVisible] = useState(false);
   const [isNumpadOpen, setIsNumpadOpen] = useState(false);
+  const [visualViewportBottom, setVisualViewportBottom] = useState(0);
+
+  useEffect(() => {
+    if (!window.visualViewport) return;
+
+    const updateViewport = () => {
+      const offsetBottom = window.innerHeight - window.visualViewport.height - window.visualViewport.offsetTop;
+      setVisualViewportBottom(offsetBottom > 0 ? offsetBottom : 0);
+    };
+
+    window.visualViewport.addEventListener('resize', updateViewport);
+    window.visualViewport.addEventListener('scroll', updateViewport);
+    updateViewport();
+
+    const interval = setInterval(updateViewport, 200);
+
+    return () => {
+      window.visualViewport.removeEventListener('resize', updateViewport);
+      window.visualViewport.removeEventListener('scroll', updateViewport);
+      clearInterval(interval);
+    };
+  }, []);
 
   // Auto-dismiss toast
   useEffect(() => {
@@ -395,16 +527,35 @@ export default function AddExpense() {
 
   // Quick mode: live-filtered recent descriptions
   const recentDescs = useMemo(() => getRecentDescriptions(roomCode), [roomCode, showSuccess]);
-  const filteredChips = useMemo(() => {
-    if (!form.description) return recentDescs;
-    return recentDescs.filter(desc =>
-      desc.toLowerCase().includes(form.description.toLowerCase())
-    );
-  }, [recentDescs, form.description]);
+  const filteredChips = recentDescs;
 
   // Recurring Expenses detection
   const recurringExpensesList = useMemo(() => detectRecurringExpenses(expenses), [expenses]);
   const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
+
+  // Extract unique group names from itemised expenses and count their frequency
+  const itemisedGroupNamesList = useMemo(() => {
+    const frequency = {};
+    expenses.forEach(e => {
+      if (e.isItemised && e.groupName) {
+        const name = e.groupName.trim();
+        if (!name) return;
+        const key = name.toLowerCase();
+        if (!frequency[key]) {
+          frequency[key] = {
+            groupName: name,
+            count: 0,
+            categoryId: e.categoryId || null,
+          };
+        }
+        frequency[key].count += 1;
+      }
+    });
+
+    return Object.values(frequency)
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
+  }, [expenses]);
 
   const handleRecurringChipTap = (chip) => {
     if (mode !== 'quick') {
@@ -425,12 +576,7 @@ export default function AddExpense() {
       }
     }
 
-    setTimeout(() => {
-      if (amountInputRef.current) {
-        amountInputRef.current.focus();
-        amountInputRef.current.select();
-      }
-    }, 100);
+    triggerFillPulse();
   };
 
   // Split mode math calculations
@@ -460,17 +606,46 @@ export default function AddExpense() {
     setError('');
   };
 
-  // Description input handler: triggers Hinglish keyword mapping
+  // Description input handler: triggers Hinglish keyword mapping and learned patterns category auto-select
   const handleDescriptionChange = (val) => {
     setField.description(val);
 
     const lowerVal = val.toLowerCase();
+    let matched = false;
     for (const [keyword, categoryName] of Object.entries(HINGLISH_MAP)) {
       if (lowerVal.includes(keyword)) {
         const matchedCat = findMatchingCategory(categoryName, categories);
         if (matchedCat) {
-          setField.categoryId(matchedCat.id);
+          if (form.categoryId !== matchedCat.id) {
+            setField.categoryId(matchedCat.id);
+            triggerCategoryPulse();
+            triggerFillPulse();
+          }
+          matched = true;
           break; // Exit on first match
+        }
+      }
+    }
+
+    if (!matched) {
+      const normalized = val.trim().toLowerCase();
+      if (normalized) {
+        const learnedMatch = learnedPatterns?.find(
+          p => p.learned && p.normalizedDescription === normalized
+        );
+        if (learnedMatch) {
+          if (form.categoryId !== learnedMatch.categoryId) {
+            setField.categoryId(learnedMatch.categoryId);
+            triggerCategoryPulse();
+            triggerFillPulse();
+          }
+          const cacheKey = `${normalized}_${learnedMatch.categoryId}`;
+          setLearnedCache(prev => ({ ...prev, [cacheKey]: true }));
+        } else {
+          if (form.categoryId) {
+            const cacheKey = `${normalized}_${form.categoryId}`;
+            setLearnedCache(prev => ({ ...prev, [cacheKey]: false }));
+          }
         }
       }
     }
@@ -479,15 +654,43 @@ export default function AddExpense() {
   // Select a recent description chip
   const handleChipTap = (desc) => {
     setField.description(desc);
+    triggerFillPulse();
 
     // Check Hinglish mapping for selected chip
     const lowerDesc = desc.toLowerCase();
+    let matched = false;
     for (const [keyword, categoryName] of Object.entries(HINGLISH_MAP)) {
       if (lowerDesc.includes(keyword)) {
         const matchedCat = findMatchingCategory(categoryName, categories);
         if (matchedCat) {
-          setField.categoryId(matchedCat.id);
+          if (form.categoryId !== matchedCat.id) {
+            setField.categoryId(matchedCat.id);
+            triggerCategoryPulse();
+          }
+          matched = true;
           break;
+        }
+      }
+    }
+
+    if (!matched) {
+      const normalized = desc.trim().toLowerCase();
+      if (normalized) {
+        const learnedMatch = learnedPatterns?.find(
+          p => p.learned && p.normalizedDescription === normalized
+        );
+        if (learnedMatch) {
+          if (form.categoryId !== learnedMatch.categoryId) {
+            setField.categoryId(learnedMatch.categoryId);
+            triggerCategoryPulse();
+          }
+          const cacheKey = `${normalized}_${learnedMatch.categoryId}`;
+          setLearnedCache(prev => ({ ...prev, [cacheKey]: true }));
+        } else {
+          if (form.categoryId) {
+            const cacheKey = `${normalized}_${form.categoryId}`;
+            setLearnedCache(prev => ({ ...prev, [cacheKey]: false }));
+          }
         }
       }
     }
@@ -596,7 +799,11 @@ export default function AddExpense() {
       // Success toast
       setToastType('success');
       setToastMessage('✅ Expense added!');
-      resetForm();
+      setIsResetting(true);
+      setTimeout(() => {
+        resetForm();
+        setIsResetting(false);
+      }, 1000);
     } catch (err) {
       setError(err.message || 'Failed to add expense');
     } finally {
@@ -674,21 +881,24 @@ export default function AddExpense() {
       // Success toast
       setToastType('success');
       setToastMessage('✅ Split expenses added!');
-
-      // Reset Split form values
-      setTotalAmount('');
-      setGroupName('');
-      const defaultCatId = lastRow?.categoryId || defaults.categoryId || categories[0]?.id || 'cat-1';
-      const defaultSplit = lastRow?.splitAmong || defaults.splitAmong || users.map(u => u.id);
-      setRows([
-        {
-          id: 'item_reset_' + Date.now(),
-          categoryId: defaultCatId,
-          description: '',
-          amount: '',
-          splitAmong: isPersonal ? [] : defaultSplit,
-        }
-      ]);
+      setIsResetting(true);
+      setTimeout(() => {
+        // Reset Split form values
+        setTotalAmount('');
+        setGroupName('');
+        const defaultCatId = lastRow?.categoryId || defaults.categoryId || categories[0]?.id || 'cat-1';
+        const defaultSplit = lastRow?.splitAmong || defaults.splitAmong || users.map(u => u.id);
+        setRows([
+          {
+            id: 'item_reset_' + Date.now(),
+            categoryId: defaultCatId,
+            description: '',
+            amount: '',
+            splitAmong: isPersonal ? [] : defaultSplit,
+          }
+        ]);
+        setIsResetting(false);
+      }, 1000);
 
     } catch (err) {
       setError(err.message || 'Failed to save split transaction');
@@ -784,31 +994,105 @@ export default function AddExpense() {
 
       {/* Toast — error or success */}
       <AnimatePresence>
-        {toastMessage && (
+        {toastMessage && toastType === 'success' && (
           <motion.div
-            initial={{ opacity: 0, y: -20, x: '-50%' }}
-            animate={{ opacity: 1, y: 0, x: '-50%' }}
-            exit={{ opacity: 0, y: -20, x: '-50%' }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             style={{
               position: 'fixed',
-              top: 'calc(var(--safe-area-top) + var(--header-height) + 8px)',
-              left: '50%',
-              zIndex: 210,
-              width: 'calc(100% - 32px)',
-              maxWidth: '380px',
+              inset: 0,
+              background: 'rgba(10, 10, 25, 0.4)',
+              backdropFilter: 'blur(8px)',
+              WebkitBackdropFilter: 'blur(8px)',
+              zIndex: 200,
             }}
-          >
-            <div className="toast" style={toastType === 'success' ? {
-              borderColor: 'rgba(0,206,201,0.4)',
-              color: 'var(--success)',
-            } : {
-              borderColor: 'rgba(255,107,107,0.4)',
-              color: 'var(--danger)',
-            }}>
-              <span>{toastMessage}</span>
-            </div>
-          </motion.div>
+          />
+        )}
+        {toastMessage && (
+          toastType === 'success' ? (
+            <motion.div
+              key="success-toast"
+              initial={{ opacity: 0, scale: 0.8, x: '-50%', y: '-35%' }}
+              animate={{ opacity: 1, scale: 1, x: '-50%', y: '-50%' }}
+              exit={{ opacity: 0, scale: 0.8, x: '-50%', y: '-35%' }}
+              transition={{ type: 'spring', damping: 26, stiffness: 280 }}
+              style={{
+                position: 'fixed',
+                top: '50%',
+                left: '50%',
+                zIndex: 210,
+                width: 'calc(100% - 48px)',
+                maxWidth: '340px',
+              }}
+            >
+              <div style={{
+                background: 'var(--bg-elevated)',
+                border: '1px solid rgba(0, 206, 201, 0.3)',
+                borderRadius: 'var(--radius-lg)',
+                padding: 'var(--space-xl)',
+                textAlign: 'center',
+                boxShadow: 'var(--shadow-lg), 0 0 30px rgba(0, 206, 201, 0.2)',
+                backdropFilter: 'blur(24px)',
+                WebkitBackdropFilter: 'blur(24px)',
+              }}>
+                <svg width="64" height="64" viewBox="0 0 100 100" style={{ margin: '0 auto var(--space-md) auto', display: 'block' }}>
+                  <motion.circle
+                    cx="50"
+                    cy="50"
+                    r="40"
+                    stroke="var(--success)"
+                    strokeWidth="6"
+                    fill="transparent"
+                    initial={{ pathLength: 0, opacity: 0 }}
+                    animate={{ pathLength: 1, opacity: 1 }}
+                    transition={{ duration: 0.5, ease: 'easeOut' }}
+                  />
+                  <motion.path
+                    d="M32 52 L45 65 L68 35"
+                    stroke="var(--success)"
+                    strokeWidth="6"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    fill="transparent"
+                    initial={{ pathLength: 0, opacity: 0 }}
+                    animate={{ pathLength: 1, opacity: 1 }}
+                    transition={{ duration: 0.4, ease: 'easeOut', delay: 0.3 }}
+                  />
+                </svg>
+                <h3 style={{ fontSize: 'var(--font-lg)', fontWeight: 700, color: 'var(--success)', marginBottom: '8px', marginTop: 0 }}>
+                  Success!
+                </h3>
+                <p style={{ fontSize: 'var(--font-sm)', color: 'var(--text-secondary)', margin: 0, fontWeight: 500 }}>
+                  {toastMessage}
+                </p>
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="error-toast"
+              initial={{ opacity: 0, y: -20, x: '-50%' }}
+              animate={{ opacity: 1, y: 0, x: '-50%' }}
+              exit={{ opacity: 0, y: -20, x: '-50%' }}
+              transition={{ duration: 0.2 }}
+              style={{
+                position: 'fixed',
+                top: 'calc(var(--safe-area-top) + var(--header-height) + 8px)',
+                left: '50%',
+                zIndex: 210,
+                width: 'calc(100% - 32px)',
+                maxWidth: '380px',
+              }}
+            >
+              <div className="toast" style={{
+                borderColor: 'rgba(255,107,107,0.4)',
+                color: 'var(--danger)',
+              }}>
+                <span>{toastMessage}</span>
+              </div>
+            </motion.div>
+          )
         )}
       </AnimatePresence>
 
@@ -908,7 +1192,7 @@ export default function AddExpense() {
                 }}
               >
                 <span>{chip.description}</span>
-                <span style={{ opacity: 0.5 }}>·</span>
+                <span style={{ opacity: 0.5 }}>|</span>
                 <span>₹{chip.lastAmount}</span>
               </button>
             ))}
@@ -924,9 +1208,15 @@ export default function AddExpense() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
+            style={{ opacity: isResetting ? 0.5 : 1, transition: 'opacity 0.3s ease', pointerEvents: isResetting ? 'none' : 'auto' }}
           >
             {/* Amount with steppers */}
-            <div className="amount-input-wrapper amount-field" style={{ marginBottom: 'var(--space-lg)' }}>
+            <motion.div
+              className="amount-input-wrapper amount-field"
+              style={{ marginBottom: 'var(--space-lg)' }}
+              animate={fillAnimation}
+              transition={{ duration: 0.35, delay: 0.25 }}
+            >
               <button
                 type="button"
                 className="amount-adj-btn"
@@ -982,7 +1272,7 @@ export default function AddExpense() {
               >
                 +
               </button>
-            </div>
+            </motion.div>
 
             {/* Description with filtered chip list */}
             <div className="input-group" style={{ marginBottom: 'var(--space-lg)' }}>
@@ -1022,19 +1312,42 @@ export default function AddExpense() {
                 </div>
               )}
 
-              <input
+              <motion.input
                 className="input"
                 placeholder="e.g. Groceries, Electricity bill..."
                 value={form.description}
                 onChange={(e) => handleDescriptionChange(e.target.value)}
                 id="input-description"
+                animate={fillAnimation}
+                transition={{ duration: 0.35, delay: 0.20 }}
               />
+              {/* ✓ Learned badge — shows when this exact description is globally learned */}
+              {isDescriptionLearned && badgeDescToShow === form.description?.trim().toLowerCase() && (
+                <div style={{
+                  fontSize: '0.70rem',
+                  fontWeight: 600,
+                  marginTop: '4px',
+                  color: '#00b894',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  letterSpacing: '0.01em',
+                  opacity: 0.9,
+                }}>
+                  <span>✓</span>
+                  <span>Learned</span>
+                </div>
+              )}
             </div>
 
             {/* Date with steppers */}
             <div className="input-group" style={{ marginBottom: 'var(--space-lg)' }}>
               <label>Date</label>
-              <div className="date-stepper">
+              <motion.div
+                className="date-stepper"
+                animate={fillAnimation}
+                transition={{ duration: 0.35, delay: 0.15 }}
+              >
                 <button type="button" className="stepper-btn" onClick={() => setField.date(adjustDate(form.date, -1))}>−</button>
                 <input
                   className="input date-input"
@@ -1044,7 +1357,7 @@ export default function AddExpense() {
                   id="input-date"
                 />
                 <button type="button" className="stepper-btn" onClick={() => setField.date(adjustDate(form.date, 1))}>+</button>
-              </div>
+              </motion.div>
             </div>
 
             {/* Sorted Category Pills */}
@@ -1057,7 +1370,12 @@ export default function AddExpense() {
                   </span>
                 )}
               </div>
-              <div className="category-scroll-strip" style={{ display: 'flex', gap: 'var(--space-sm)', overflowX: 'auto', paddingBottom: '4px' }}>
+              <motion.div
+                className={`category-scroll-strip${isCategoryPulsing ? ' category-pulse' : ''}`}
+                animate={fillAnimation}
+                transition={{ duration: 0.35, delay: 0.10 }}
+                style={{ display: 'flex', gap: 'var(--space-sm)', overflowX: 'auto', paddingBottom: '4px' }}
+              >
                 {sortedCategories.map(cat => {
                   const isSelected = form.categoryId === cat.id;
                   return (
@@ -1080,14 +1398,19 @@ export default function AddExpense() {
                     </motion.button>
                   );
                 })}
-              </div>
+              </motion.div>
             </div>
 
             {/* Paid By — hidden in personal mode */}
             {!isPersonal && (
               <div className="input-group" style={{ marginBottom: 'var(--space-lg)' }}>
                 <label>Paid By</label>
-                <div className="user-select-row" style={{ display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap' }}>
+                <motion.div
+                  className="user-select-row"
+                  animate={fillAnimation}
+                  transition={{ duration: 0.35, delay: 0.05 }}
+                  style={{ display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap' }}
+                >
                   {users.map(user => (
                     <button
                       key={user.id}
@@ -1100,7 +1423,7 @@ export default function AddExpense() {
                       <span>{user.name}</span>
                     </button>
                   ))}
-                </div>
+                </motion.div>
               </div>
             )}
 
@@ -1118,7 +1441,12 @@ export default function AddExpense() {
                     All
                   </button>
                 </div>
-                <div className="user-select-row" style={{ display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap' }}>
+                <motion.div
+                  className="user-select-row"
+                  animate={fillAnimation}
+                  transition={{ duration: 0.35, delay: 0 }}
+                  style={{ display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap' }}
+                >
                   {users.map(user => (
                     <button
                       key={user.id}
@@ -1133,7 +1461,7 @@ export default function AddExpense() {
                       <span>{user.name}</span>
                     </button>
                   ))}
-                </div>
+                </motion.div>
                 {form.splitAmong.length > 0 && form.amount && (
                   <p className="split-info">₹{perPerson} per person</p>
                 )}
@@ -1173,6 +1501,7 @@ export default function AddExpense() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
+            style={{ opacity: isResetting ? 0.5 : 1, transition: 'opacity 0.3s ease', pointerEvents: isResetting ? 'none' : 'auto' }}
           >
             {/* Global Date Field */}
             <div className="input-group" style={{ marginBottom: 'var(--space-lg)' }}>
@@ -1219,6 +1548,44 @@ export default function AddExpense() {
               id="input-group-name-wrapper"
             >
               <label>Expense Name <span style={{ color: 'var(--accent-red)' }}>*</span></label>
+              {itemisedGroupNamesList.length > 0 && (
+                <div className="recent-chips-container" style={{
+                  display: 'flex',
+                  gap: 'var(--space-sm)',
+                  overflowX: 'auto',
+                  paddingBottom: '8px',
+                  marginBottom: '6px',
+                  scrollbarWidth: 'none',
+                  WebkitOverflowScrolling: 'touch'
+                }}>
+                  {itemisedGroupNamesList.map((chip, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => {
+                        setGroupName(chip.groupName);
+                        setTotalAmount('');
+                        if (chip.categoryId && rows.length > 0) {
+                          setRows(prev => prev.map(r => ({ ...r, categoryId: chip.categoryId })));
+                        }
+                      }}
+                      className="chip clickable"
+                      style={{
+                        whiteSpace: 'nowrap',
+                        background: 'rgba(255, 255, 255, 0.05)',
+                        borderColor: 'var(--border-color)',
+                        color: 'var(--text-secondary)',
+                        padding: '5px 10px',
+                        borderRadius: 'var(--radius-full)',
+                        fontSize: 'var(--font-xs)',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      {chip.groupName}
+                    </button>
+                  ))}
+                </div>
+              )}
               <input
                 className="input"
                 placeholder="e.g. Zepto Order, Dinner, Fuel..."
@@ -1391,7 +1758,7 @@ export default function AddExpense() {
                                   }}
                                 >
                                   <span>{chip.description}</span>
-                                  <span style={{ opacity: 0.5 }}>·</span>
+                                  <span style={{ opacity: 0.5 }}>|</span>
                                   <span>₹{chip.lastAmount}</span>
                                 </button>
                               ))}
@@ -1542,8 +1909,8 @@ export default function AddExpense() {
                     opacity: (isNumpadOpen && remaining > 0) ? 0 : 1, 
                     y: (isNumpadOpen && remaining > 0) ? 20 : 0 
                   }}
-                  exit={{ opacity: 0, y: 30 }}
-                  transition={{ duration: 0.2, ease: 'easeOut' }}
+                  exit={{ opacity: 0, y: 30, transition: { duration: 0.2, ease: 'easeIn' } }}
+                  transition={{ duration: 0.3, ease: 'easeOut' }}
                   style={{
                     pointerEvents: (isNumpadOpen && remaining > 0) ? 'none' : 'auto'
                   }}
@@ -1606,10 +1973,13 @@ export default function AddExpense() {
           {mathToolbarVisible && (
             <motion.div
               className="math-toolbar"
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-              transition={{ duration: 0.18, ease: 'easeOut' }}
+              exit={{ opacity: 0, y: 40, transition: { duration: 0.2, ease: 'easeIn' } }}
+              transition={{ type: 'spring', stiffness: 300, damping: 24 }}
+              style={{
+                bottom: `${visualViewportBottom + 8}px`
+              }}
             >
               {['+', '−', '×', '÷'].map(op => (
                 <button

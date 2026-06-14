@@ -49,15 +49,17 @@ export default function DashboardPage() {
   }, [isPersonal]);
 
   const { balances, total, settlements, allSettled, monthlyTotals } = useBalances(expenses, users);
-  const { currentMonthTotal, prevMonthTotal, currentMonthLabel, prevMonthLabel } = useMonthTotals(expenses);
+  const { currentMonthTotal: rawCurrentMonthTotal, prevMonthTotal: rawPrevMonthTotal, currentMonthLabel, prevMonthLabel } = useMonthTotals(expenses);
+  const currentMonthTotal = Math.round(rawCurrentMonthTotal);
+  const prevMonthTotal = Math.round(rawPrevMonthTotal);
   const pivotData = usePivotTable(expenses, categories);
 
   const today = new Date();
   const todayStr = today.toISOString().split('T')[0];
   const dayOfMonth = today.getDate();
-  const todayTotal = expenses
+  const todayTotal = Math.round(expenses
     .filter(e => e.date === todayStr)
-    .reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
+    .reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0));
 
   // Current month avg/day
   const daysElapsed = today.getDate();
@@ -191,7 +193,7 @@ export default function DashboardPage() {
         <motion.div className="card total-card" custom={0} initial="hidden" animate="visible" variants={cardVariants}>
           <p className="total-label">Total Expenses</p>
           <h2 className="total-amount">
-            <CountUp value={total} prefix="₹" />
+            <CountUp value={Math.round(total)} prefix="₹" />
           </h2>
           {isPersonal ? (
             <p className="total-count">{expenses.length} expense{expenses.length !== 1 ? 's' : ''}</p>

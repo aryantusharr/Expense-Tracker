@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { formatCurrency } from '../../utils/helpers';
 import './Dashboard.css';
@@ -6,35 +6,22 @@ import './Dashboard.css';
 export default function FlipBalanceCard({ b, expenses, hintAnimate }) {
   const [isFlipped, setIsFlipped] = useState(false);
   const [rotateY, setRotateY] = useState(0);
+  const [ripple, setRipple] = useState(null);
+  const [isJittering, setIsJittering] = useState(false);
+  const containerRef = useRef(null);
 
   const isPositive = b.balance >= 0;
   const absBalance = Math.abs(b.balance);
 
-  // Discoverability micro-flip: 15° partial flip → back to 0 (Twice)
+  // Jitter on mount to hint card is interactive
   useEffect(() => {
-    if (!hintAnimate || isFlipped) return;
-    
-    // First flip
-    setRotateY(18);
-    const t1 = setTimeout(() => {
-      if (!isFlipped) setRotateY(0);
-    }, 450);
-    
-    // Second flip
-    const t2 = setTimeout(() => {
-      if (!isFlipped) setRotateY(18);
-    }, 900);
-    
-    const t3 = setTimeout(() => {
-      if (!isFlipped) setRotateY(0);
-    }, 1350);
+    const t = setTimeout(() => {
+      setIsJittering(true);
+      setTimeout(() => setIsJittering(false), 450);
+    }, 600);
+    return () => clearTimeout(t);
+  }, [b.userId]); // fires once per card
 
-    return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-      clearTimeout(t3);
-    };
-  }, [hintAnimate, isFlipped]);
 
   // Sort helper: date DESC first, then createdAt DESC (Bug 1 fix)
   const sortByLatestDate = (a, b) => {
@@ -106,26 +93,44 @@ export default function FlipBalanceCard({ b, expenses, hintAnimate }) {
   const cmAbsBalance = Math.abs(cmBalance);
   const cmPositive = cmBalance >= 0;
 
-  const handleClick = () => {
-    setIsFlipped(!isFlipped);
-    setRotateY(isFlipped ? 0 : 180);
+  const handleClick = (e) => {
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    // Capture ripple coordinates relative to card
+    if (containerRef.current && !prefersReduced) {
+      const rect = containerRef.current.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      setRipple({ x, y, id: Date.now() });
+      setTimeout(() => setRipple(null), 700);
+    }
+    setIsFlipped(prev => !prev);
+    setRotateY(prev => prev === 0 ? 180 : 0);
   };
 
   return (
-    <div className="balance-card-container" onClick={handleClick}>
+    <div
+      ref={containerRef}
+      className={`balance-card-container${isJittering ? ' card-jitter' : ''}`}
+      onClick={handleClick}
+    >
       <motion.div
         className="balance-card-inner"
         initial={false}
         animate={{ rotateY: isFlipped ? 180 : rotateY }}
-        transition={
-          hintAnimate && !isFlipped
-            ? { duration: 0.45, type: 'spring', stiffness: 200, damping: 18 }
-            : { duration: 0.6, type: 'spring', stiffness: 260, damping: 20 }
-        }
+        transition={{ duration: 0.6, type: 'spring', stiffness: 260, damping: 20 }}
         style={{ transformStyle: 'preserve-3d' }}
       >
         {/* Front */}
         <div className="card balance-card balance-card-front" style={{ backfaceVisibility: 'hidden' }}>
+          {ripple && (
+            <div className="ripple-container">
+              <span
+                key={ripple.id}
+                className="ripple-circle"
+                style={{ left: ripple.x, top: ripple.y }}
+              />
+            </div>
+          )}
           <div className="balance-avatar" style={{ background: b.color }}>
             {b.name[0]}
           </div>
@@ -149,14 +154,19 @@ export default function FlipBalanceCard({ b, expenses, hintAnimate }) {
               Last: Paid <span className="last-amount">{formatCurrency(lastTx.amount)}</span> for {lastTx.isGroup ? lastTx.groupName : (lastTx.description || 'Other')} on {new Date(lastTx.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
             </div>
           )}
-          {/* Hint icon */}
-          <div className="balance-card-flip-icon" style={{ position: 'absolute', top: '8px', right: '8px', fontSize: '0.7rem', opacity: 0.35, pointerEvents: 'none' }}>
-            ↕
-          </div>
         </div>
 
         {/* Back */}
         <div className="card balance-card balance-card-back" style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}>
+          {ripple && (
+            <div className="ripple-container">
+              <span
+                key={ripple.id}
+                className="ripple-circle"
+                style={{ left: ripple.x, top: ripple.y }}
+              />
+            </div>
+          )}
           <h4 className="back-title">This Month</h4>
           <p className={`balance-amount ${cmPositive ? 'positive' : 'negative'}`}>
             {cmPositive ? '+' : '−'}₹{cmAbsBalance.toLocaleString('en-IN')}

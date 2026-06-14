@@ -1,13 +1,75 @@
 import { db } from './firebase';
 import {
   collection, addDoc, updateDoc, deleteDoc, doc,
-  onSnapshot, query, orderBy, getDoc, getDocs, where, writeBatch
+  onSnapshot, query, orderBy, getDoc, getDocs, where, writeBatch,
+  setDoc, serverTimestamp, increment
 } from 'firebase/firestore';
 import { syncExpenseToPersonalRooms } from '../utils/syncExpenseToPersonal';
 import { deleteSyncedExpensesFromPersonalRooms } from '../utils/deleteSyncedExpenses';
 
 // Re-export for backward compatibility
 export { syncExistingSharedExpenses } from '../utils/syncExistingExpenses';
+
+/**
+ * Learns a description–category association by incrementing a global Firestore counter.
+ * Uses a deterministic document ID to prevent duplicates without requiring composite indexes.
+ * MUST be called fire-and-forget (non-blocking) — never await this in the UI path.
+ *
+ * @param {string} description - Raw description text entered by the user.
+ * @param {string} categoryId  - The selected category ID.
+ * @param {string} [categoryName] - Optional resolved category name (e.g. 'Groceries').
+ */
+export async function learnPatternFromExpense(description, categoryId, categoryName = '') {
+  if (!description || !categoryId) return;
+
+  const normalized = description.trim().toLowerCase();
+  if (!normalized || normalized.length < 2) return;
+
+  // Deterministic ID: prevents duplicate documents without composite indexes
+  const docId = `${normalized}_${categoryId}`.replace(/[/]/g, '_').slice(0, 500);
+  const ref = doc(db, 'learned_patterns', docId);
+
+  const now = serverTimestamp();
+
+  try {
+    // Atomic create-or-update: merge ensures we don't overwrite existing fields
+    // createdAt is only written on first create (field won't exist yet)
+    await setDoc(ref, {
+      description,
+      normalizedDescription: normalized,
+      categoryId,
+      categoryName: categoryName || categoryId,
+      count: increment(1),
+      lastUsedAt: now,
+      window30days: true,
+    }, { merge: true });
+
+    // Read back the updated count to check if we've crossed the learned threshold
+    const updatedSnap = await getDoc(ref);
+    if (updatedSnap.exists()) {
+      const data = updatedSnap.data();
+
+      const updates = {};
+
+      // Promote to learned once count reaches 5
+      if ((data.count || 0) >= 5 && !data.learned) {
+        updates.learned = true;
+      }
+
+      // Stamp createdAt on first save (won't exist yet on new docs)
+      if (!data.createdAt) {
+        updates.createdAt = now;
+      }
+
+      if (Object.keys(updates).length > 0) {
+        await setDoc(ref, updates, { merge: true });
+      }
+    }
+  } catch (err) {
+    // Silently swallow — never let pattern learning affect the save pipeline
+    console.warn('[LearnPattern] Non-critical write failed:', err?.message);
+  }
+}
 
 /**
  * Calculate a user's exact share of a shared expense (equal split, last person receives remainder).
@@ -48,6 +110,12 @@ export async function addExpense(roomCode, expense, roomData = null) {
   if (rData && !rData.isPersonal) {
     syncExpenseToPersonalRooms(roomCode, rData, docRef.id, newExpense).catch(() => {});
   }
+
+  // Fire-and-forget pattern learning (non-blocking)
+  learnPatternFromExpense(
+    expense.description,
+    expense.categoryId,
+  ).catch(() => {});
 
   return newExpense;
 }
@@ -153,6 +221,14 @@ export async function addItemisedExpenseGroup(roomCode, groupName, items, common
       syncExpenseToPersonalRooms(roomCode, rData, item.id, item).catch(() => {});
     });
   }
+
+  // Fire-and-forget pattern learning for each itemised row
+  savedItems.forEach(item => {
+    learnPatternFromExpense(
+      item.description || groupName,
+      item.categoryId,
+    ).catch(() => {});
+  });
 
   return { groupId, groupName, items: savedItems };
 }

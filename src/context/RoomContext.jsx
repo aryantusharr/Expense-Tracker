@@ -2,6 +2,10 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { subscribeToRoom, updateRoomData } from '../services/roomService';
 import { subscribeToExpenses } from '../services/expenseService';
+import { db } from '../services/firebase';
+import { collection, onSnapshot, query, where } from 'firebase/firestore';
+import { saveLearnedPatternsToIndexedDB, getLearnedPatternsFromIndexedDB } from '../utils/indexedDBHelper';
+import { compileCombinedRegex } from '../utils/categoryRegex';
 
 const RoomContext = createContext(null);
 
@@ -59,6 +63,56 @@ export function RoomProvider({ children }) {
     if (!code) return null;
     return localStorage.getItem(`splitease_identity_${code}`) || null;
   });
+
+  // Keep a ref of room categories to avoid stale closures in the live snapshot listener
+  const categoriesRef = useRef([]);
+  useEffect(() => {
+    categoriesRef.current = room?.categories || [];
+  }, [room?.categories]);
+
+  // Learned patterns + compiled combined regex (global, non-blocking)
+  const [learnedPatterns, setLearnedPatterns] = useState([]);
+  const [combinedRegexByCategory, setCombinedRegexByCategory] = useState({});
+
+  // Live listener for /learned_patterns — stays fresh so "✓ Learned" badge
+  // triggers immediately after the 5th save (no app restart needed).
+  useEffect(() => {
+    if (!navigator.onLine) {
+      // Offline: seed from IndexedDB once then stay static
+      getLearnedPatternsFromIndexedDB().then(patterns => {
+        setLearnedPatterns(patterns || []);
+        setCombinedRegexByCategory(compileCombinedRegex(patterns || [], categoriesRef.current));
+      }).catch(() => {});
+      return;
+    }
+
+    const q = query(
+      collection(db, 'learned_patterns'),
+      where('learned', '==', true),
+      where('window30days', '==', true)
+    );
+
+    const unsub = onSnapshot(
+      q,
+      (snap) => {
+        const patterns = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        setLearnedPatterns(patterns);
+        setCombinedRegexByCategory(compileCombinedRegex(patterns, categoriesRef.current));
+        // Keep IndexedDB in sync for offline fallback
+        saveLearnedPatternsToIndexedDB(patterns).catch(() => {});
+      },
+      () => {
+        // Firestore listener error — fall back to IndexedDB silently
+        getLearnedPatternsFromIndexedDB().then(patterns => {
+          setLearnedPatterns(patterns || []);
+          setCombinedRegexByCategory(compileCombinedRegex(patterns || [], categoriesRef.current));
+        }).catch(() => {});
+      }
+    );
+
+    return unsub;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Hydrate from cache on cold load when offline
   useEffect(() => {
@@ -224,6 +278,14 @@ export function RoomProvider({ children }) {
     }
   }, [roomCode]);
 
+  // Re-compile regex when categories load (after room context is ready)
+  useEffect(() => {
+    if (!learnedPatterns.length) return;
+    const cats = room?.categories || [];
+    setCombinedRegexByCategory(compileCombinedRegex(learnedPatterns, cats));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [room?.categories]);
+
   const value = {
     room,
     expenses,
@@ -238,6 +300,8 @@ export function RoomProvider({ children }) {
     categories: room?.categories || [],
     userIdentity,
     setUserIdentity: setUserIdentityInRoom,
+    learnedPatterns,
+    combinedRegexByCategory,
   };
 
   return (

@@ -2,7 +2,6 @@
   position: relative;
   overflow: hidden;
   border-radius: var(--radius-md);
-  margin-bottom: var(--space-sm);
 }
 
 .swipeable-actions {

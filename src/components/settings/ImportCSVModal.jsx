@@ -200,6 +200,11 @@ export default function ImportCSVModal({ isOpen, onClose }) {
         filename: file?.name || 'unknown.csv',
       });
       localStorage.setItem('csv-import-history', JSON.stringify(history.slice(0, 10)));
+
+      // Save last import details
+      localStorage.setItem('lastImportTimestamp', new Date().toISOString());
+      localStorage.setItem('lastImportRoomCode', roomCode);
+      localStorage.setItem('lastImportItemCount', String(result.imported));
     }
 
     setStep('success');
