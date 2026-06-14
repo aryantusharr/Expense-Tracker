@@ -56,6 +56,11 @@ export async function syncExpenseToPersonalRooms(roomCode, roomData, expenseId, 
         syncedFromRoomName: roomData.name,
         parentExpenseId: expenseId,
         updatedAt: new Date().toISOString(),
+        ...(expense.isItemised ? {
+          isItemised: true,
+          groupId: expense.groupId,
+          groupName: expense.groupName,
+        } : {}),
       };
 
       if (existingDoc) {

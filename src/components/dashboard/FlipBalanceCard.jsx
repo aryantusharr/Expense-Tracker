@@ -1,17 +1,76 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { formatCurrency } from '../../utils/helpers';
 import './Dashboard.css';
 
-export default function FlipBalanceCard({ b, expenses }) {
+export default function FlipBalanceCard({ b, expenses, hintAnimate }) {
   const [isFlipped, setIsFlipped] = useState(false);
+  const [rotateY, setRotateY] = useState(0);
+  const [ripple, setRipple] = useState(null);
+  const [isJittering, setIsJittering] = useState(false);
+  const containerRef = useRef(null);
 
   const isPositive = b.balance >= 0;
   const absBalance = Math.abs(b.balance);
 
-  // Find last transaction
+  // Jitter on mount to hint card is interactive
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setIsJittering(true);
+      setTimeout(() => setIsJittering(false), 450);
+    }, 600);
+    return () => clearTimeout(t);
+  }, [b.userId]); // fires once per card
+
+
+  // Sort helper: date DESC first, then createdAt DESC (Bug 1 fix)
+  const sortByLatestDate = (a, b) => {
+    const dateA = new Date(a.date || 0);
+    const dateB = new Date(b.date || 0);
+    if (dateB - dateA !== 0) return dateB - dateA;
+    return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+  };
+
+  // Group-aware Last Paid logic
   const userExpenses = expenses.filter(e => e.paidBy === b.userId);
-  const lastExp = userExpenses.sort((x, y) => new Date(y.date) - new Date(x.date))[0];
+  const groupMap = {};
+  const standalones = [];
+
+  userExpenses.forEach(e => {
+    if (e.isItemised && e.groupId) {
+      if (!groupMap[e.groupId]) {
+        groupMap[e.groupId] = {
+          isGroup: true,
+          groupId: e.groupId,
+          groupName: e.groupName || 'Itemised Expense',
+          amount: 0,
+          date: e.date,
+          createdAt: e.createdAt || e.date,
+        };
+      }
+      groupMap[e.groupId].amount += parseFloat(e.amount) || 0;
+      const existing = groupMap[e.groupId];
+      const existingDate = new Date(existing.date || 0);
+      const newDate = new Date(e.date || 0);
+      const existingCreatedAt = new Date(existing.createdAt || 0);
+      const newCreatedAt = new Date(e.createdAt || 0);
+      if (newDate > existingDate || (newDate.getTime() === existingDate.getTime() && newCreatedAt > existingCreatedAt)) {
+        groupMap[e.groupId].date = e.date;
+        groupMap[e.groupId].createdAt = e.createdAt || e.date;
+      }
+    } else {
+      standalones.push({
+        isGroup: false,
+        description: e.description || 'Other',
+        amount: parseFloat(e.amount) || 0,
+        date: e.date,
+        createdAt: e.createdAt || e.date,
+      });
+    }
+  });
+
+  const allCandidates = [...Object.values(groupMap), ...standalones];
+  const lastTx = allCandidates.sort(sortByLatestDate)[0];
 
   // Calculate current month balance
   const now = new Date();
@@ -34,18 +93,44 @@ export default function FlipBalanceCard({ b, expenses }) {
   const cmAbsBalance = Math.abs(cmBalance);
   const cmPositive = cmBalance >= 0;
 
+  const handleClick = (e) => {
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    // Capture ripple coordinates relative to card
+    if (containerRef.current && !prefersReduced) {
+      const rect = containerRef.current.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      setRipple({ x, y, id: Date.now() });
+      setTimeout(() => setRipple(null), 700);
+    }
+    setIsFlipped(prev => !prev);
+    setRotateY(prev => prev === 0 ? 180 : 0);
+  };
+
   return (
-    <div className="balance-card-container" onClick={() => setIsFlipped(!isFlipped)}>
+    <div
+      ref={containerRef}
+      className={`balance-card-container${isJittering ? ' card-jitter' : ''}`}
+      onClick={handleClick}
+    >
       <motion.div
         className="balance-card-inner"
         initial={false}
-        animate={{ rotateY: isFlipped ? 180 : 0 }}
+        animate={{ rotateY: isFlipped ? 180 : rotateY }}
         transition={{ duration: 0.6, type: 'spring', stiffness: 260, damping: 20 }}
         style={{ transformStyle: 'preserve-3d' }}
       >
         {/* Front */}
         <div className="card balance-card balance-card-front" style={{ backfaceVisibility: 'hidden' }}>
-          <div className="balance-card-flip-icon">🔄</div>
+          {ripple && (
+            <div className="ripple-container">
+              <span
+                key={ripple.id}
+                className="ripple-circle"
+                style={{ left: ripple.x, top: ripple.y }}
+              />
+            </div>
+          )}
           <div className="balance-avatar" style={{ background: b.color }}>
             {b.name[0]}
           </div>
@@ -64,17 +149,25 @@ export default function FlipBalanceCard({ b, expenses }) {
               <span className="stat-val" title={formatCurrency(b.owed)}>{formatCurrency(b.owed)}</span>
             </div>
           </div>
-          {lastExp && (
+          {lastTx && (
             <div className="last-transaction">
-              Last: Paid <span className="last-amount">{formatCurrency(lastExp.amount)}</span> for {lastExp.description || 'Other'} on {new Date(lastExp.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+              Last: Paid <span className="last-amount">{formatCurrency(lastTx.amount)}</span> for {lastTx.isGroup ? lastTx.groupName : (lastTx.description || 'Other')} on {new Date(lastTx.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
             </div>
           )}
         </div>
 
         {/* Back */}
         <div className="card balance-card balance-card-back" style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}>
-          <div className="balance-card-flip-icon">🔄</div>
-          <h4 className="back-title">Current Month</h4>
+          {ripple && (
+            <div className="ripple-container">
+              <span
+                key={ripple.id}
+                className="ripple-circle"
+                style={{ left: ripple.x, top: ripple.y }}
+              />
+            </div>
+          )}
+          <h4 className="back-title">This Month</h4>
           <p className={`balance-amount ${cmPositive ? 'positive' : 'negative'}`}>
             {cmPositive ? '+' : '−'}₹{cmAbsBalance.toLocaleString('en-IN')}
           </p>

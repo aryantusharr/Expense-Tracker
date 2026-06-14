@@ -29,6 +29,7 @@ export function adjustDate(date, days) {
  */
 export function validateExpense(form, isPersonal) {
   if (!form.amount || parseFloat(form.amount) <= 0) return 'Amount is mandatory';
+  if (!form.description || form.description.trim() === '') return 'Description is mandatory';
   if (!isPersonal && !form.paidBy) return 'Please select who paid';
   if (!isPersonal && form.splitAmong.length === 0) return 'Please select at least one person to split with';
   if (!form.categoryId) return 'Please select a category';
