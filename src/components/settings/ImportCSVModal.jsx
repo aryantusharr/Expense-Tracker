@@ -3,6 +3,7 @@ import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import Modal from '../common/Modal';
 import { parseCSVForMapping, applyMappings, importToFirestore } from '../../services/csvImportService';
 import { useRoomContext } from '../../context/RoomContext';
+import { updateRoomData } from '../../services/roomService';
 import './ImportCSVModal.css';
 
 // eslint-disable-next-line no-unused-vars
@@ -201,10 +202,17 @@ export default function ImportCSVModal({ isOpen, onClose }) {
       });
       localStorage.setItem('csv-import-history', JSON.stringify(history.slice(0, 10)));
 
-      // Save last import details
+      // Save last import details (localStorage for offline/cache fallback)
       localStorage.setItem('lastImportTimestamp', new Date().toISOString());
       localStorage.setItem('lastImportRoomCode', roomCode);
       localStorage.setItem('lastImportItemCount', String(result.imported));
+
+      // Persist import metadata on the Firestore room document so the banner
+      // is visible across devices and is truly room-scoped (not just localStorage).
+      updateRoomData(roomCode, {
+        lastImportAt: new Date().toISOString(),
+        lastImportCount: result.imported,
+      }).catch(() => {}); // fire-and-forget
     }
 
     setStep('success');

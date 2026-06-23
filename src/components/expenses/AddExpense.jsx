@@ -15,6 +15,7 @@ import './Expenses.css';
 // Animated math placeholder examples
 const MATH_EXAMPLES = ['50+20=70', '120-45=75', '15×4=60', '400÷8=50', '80+30=110'];
 
+// eslint-disable-next-line no-unused-vars
 function AnimatedAmountInput({ value, onChange, onBlur, onKeyDown, id, style, className, inputRef }) {
   const [exIdx, setExIdx] = useState(0);
   const [exVisible, setExVisible] = useState(true);
@@ -132,6 +133,7 @@ const HINGLISH_MAP = {
 };
 
 // Category Merchant regex patterns mapping
+// eslint-disable-next-line no-unused-vars
 const CATEGORY_REGEX_MAP = {
   'Groceries': /zepto|blinkit|bigbasket|kirana|doodh|milk|instamart|reliance|safal|grofers|supermarket|grocery|groceries|sabzi|aata|dal|rice/i,
   'Food & Dining': /zomato|swiggy|biryani|pizza|burger|chai|coffee|starbucks|restaurant|cafe|dhaba|dominos|mcdonald|kfc|pizza\s*hut|food|dinner|lunch|breakfast|tea|canteen/i,
@@ -239,14 +241,14 @@ const evaluateMathExpression = (str) => {
     if (typeof result === 'number' && !isNaN(result) && isFinite(result)) {
       return parseFloat(result.toFixed(2));
     }
-  } catch (e) {
+  } catch {
     // Ignore evaluation errors
   }
   return null;
 };
 
 export default function AddExpense() {
-  const { roomCode, room, expenses, users, categories, userIdentity, combinedRegexByCategory, learnedPatterns } = useRoomContext();
+  const { roomCode, room, expenses, users, categories, userIdentity } = useRoomContext();
   const isPersonal = room?.isPersonal === true;
 
   const amountInputRef = useRef(null);
@@ -271,91 +273,9 @@ export default function AddExpense() {
     userIdentity
   );
 
-  const [activeRegex, setActiveRegex] = useState(null);
 
-  useEffect(() => {
-    if (!form.categoryId || !categories) {
-      setActiveRegex(null);
-      return;
-    }
-    const currentCat = categories.find(c => c.id === form.categoryId);
-    if (!currentCat) {
-      setActiveRegex(null);
-      return;
-    }
 
-    // Prefer the combined (base + learned) regex from context
-    const combinedKeys = Object.keys(combinedRegexByCategory || {});
-    const combinedKey = combinedKeys.find(key =>
-      currentCat.name.toLowerCase().includes(key.toLowerCase()) ||
-      key.toLowerCase().includes(currentCat.name.toLowerCase())
-    );
-    if (combinedKey && combinedRegexByCategory[combinedKey]) {
-      setActiveRegex(combinedRegexByCategory[combinedKey]);
-      return;
-    }
 
-    // Fallback: use the local base CATEGORY_REGEX_MAP
-    const matchingKey = Object.keys(CATEGORY_REGEX_MAP).find(key =>
-      currentCat.name.toLowerCase().includes(key.toLowerCase()) ||
-      key.toLowerCase().includes(currentCat.name.toLowerCase())
-    );
-    if (matchingKey) {
-      setActiveRegex(CATEGORY_REGEX_MAP[matchingKey]);
-    } else {
-      setActiveRegex(null);
-    }
-  }, [form.categoryId, categories, combinedRegexByCategory]);
-
-  // Caching and session tracking for globally-learned patterns
-  const [learnedCache, setLearnedCache] = useState({});
-  const [badgeDescToShow, setBadgeDescToShow] = useState('');
-  const shownPatternsRef = useRef(null);
-
-  if (shownPatternsRef.current === null) {
-    try {
-      const saved = sessionStorage.getItem('splitease_shown_learned_patterns');
-      shownPatternsRef.current = saved ? JSON.parse(saved) : {};
-    } catch {
-      shownPatternsRef.current = {};
-    }
-  }
-
-  // Derived: true when the current description matches a globally-learned pattern
-  const isDescriptionLearned = useMemo(() => {
-    if (!form.description || !form.categoryId || !learnedPatterns?.length) return false;
-    const normalized = form.description.trim().toLowerCase();
-    if (!normalized) return false;
-    const cacheKey = `${normalized}_${form.categoryId}`;
-    
-    // Cache hit: check cached results first
-    if (learnedCache[cacheKey] !== undefined) {
-      return learnedCache[cacheKey];
-    }
-    
-    // Cache miss: query the in-memory learnedPatterns
-    return learnedPatterns.some(
-      p => p.learned && p.normalizedDescription === normalized && p.categoryId === form.categoryId
-    );
-  }, [form.description, form.categoryId, learnedPatterns, learnedCache]);
-
-  // Show "✓ Learned" badge once per session per pattern
-  useEffect(() => {
-    const normalized = form.description?.trim().toLowerCase();
-    if (!normalized) {
-      setBadgeDescToShow('');
-      return;
-    }
-    if (isDescriptionLearned) {
-      if (!shownPatternsRef.current[normalized]) {
-        shownPatternsRef.current[normalized] = true;
-        sessionStorage.setItem('splitease_shown_learned_patterns', JSON.stringify(shownPatternsRef.current));
-        setBadgeDescToShow(normalized);
-      }
-    } else {
-      setBadgeDescToShow('');
-    }
-  }, [isDescriptionLearned, form.description]);
 
   const { showSuccess, triggerSuccess } = useSuccessState();
   const [loading, setLoading] = useState(false);
@@ -475,7 +395,12 @@ export default function AddExpense() {
   // Use IntersectionObserver to detect when Expense Name field leaves viewport
   // — triggers sticky header only when the actual fields are scrolled away
   useEffect(() => {
-    if (mode !== 'split') { setIsSticky(false); return; }
+    if (mode !== 'split') {
+      Promise.resolve().then(() => {
+        setIsSticky(false);
+      });
+      return;
+    }
     const anchor = stickyAnchorRef.current;
     if (!anchor) return;
 
@@ -501,7 +426,9 @@ export default function AddExpense() {
   useEffect(() => {
     if (roomCode) {
       const savedMode = getLastUsedMode(roomCode);
-      setMode(savedMode);
+      Promise.resolve().then(() => {
+        setMode(savedMode);
+      });
     }
   }, [roomCode]);
 
@@ -509,23 +436,25 @@ export default function AddExpense() {
   useEffect(() => {
     if (!roomCode) return;
     const roomDefaults = getLastUsedDefaults(roomCode);
-    setGlobalPaidBy(roomDefaults.paidBy || userIdentity || (users[0]?.id || ''));
-
     const defaultCatId = roomDefaults.categoryId || categories[0]?.id || 'cat-1';
     const defaultSplit = roomDefaults.splitAmong || users.map(u => u.id);
 
-    setRows([
-      {
-        id: 'item_initial_' + Date.now(),
-        categoryId: defaultCatId,
-        description: '',
-        amount: '',
-        splitAmong: isPersonal ? [] : defaultSplit,
-      }
-    ]);
+    Promise.resolve().then(() => {
+      setGlobalPaidBy(roomDefaults.paidBy || userIdentity || (users[0]?.id || ''));
+      setRows([
+        {
+          id: 'item_initial_' + Date.now(),
+          categoryId: defaultCatId,
+          description: '',
+          amount: '',
+          splitAmong: isPersonal ? [] : defaultSplit,
+        }
+      ]);
+    });
   }, [roomCode, categories, users, isPersonal, userIdentity]);
 
   // Quick mode: live-filtered recent descriptions
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const recentDescs = useMemo(() => getRecentDescriptions(roomCode), [roomCode, showSuccess]);
   const filteredChips = recentDescs;
 
@@ -606,12 +535,11 @@ export default function AddExpense() {
     setError('');
   };
 
-  // Description input handler: triggers Hinglish keyword mapping and learned patterns category auto-select
+  // Description input handler: triggers Hinglish keyword mapping for category auto-select
   const handleDescriptionChange = (val) => {
     setField.description(val);
 
     const lowerVal = val.toLowerCase();
-    let matched = false;
     for (const [keyword, categoryName] of Object.entries(HINGLISH_MAP)) {
       if (lowerVal.includes(keyword)) {
         const matchedCat = findMatchingCategory(categoryName, categories);
@@ -621,31 +549,7 @@ export default function AddExpense() {
             triggerCategoryPulse();
             triggerFillPulse();
           }
-          matched = true;
           break; // Exit on first match
-        }
-      }
-    }
-
-    if (!matched) {
-      const normalized = val.trim().toLowerCase();
-      if (normalized) {
-        const learnedMatch = learnedPatterns?.find(
-          p => p.learned && p.normalizedDescription === normalized
-        );
-        if (learnedMatch) {
-          if (form.categoryId !== learnedMatch.categoryId) {
-            setField.categoryId(learnedMatch.categoryId);
-            triggerCategoryPulse();
-            triggerFillPulse();
-          }
-          const cacheKey = `${normalized}_${learnedMatch.categoryId}`;
-          setLearnedCache(prev => ({ ...prev, [cacheKey]: true }));
-        } else {
-          if (form.categoryId) {
-            const cacheKey = `${normalized}_${form.categoryId}`;
-            setLearnedCache(prev => ({ ...prev, [cacheKey]: false }));
-          }
         }
       }
     }
@@ -658,7 +562,6 @@ export default function AddExpense() {
 
     // Check Hinglish mapping for selected chip
     const lowerDesc = desc.toLowerCase();
-    let matched = false;
     for (const [keyword, categoryName] of Object.entries(HINGLISH_MAP)) {
       if (lowerDesc.includes(keyword)) {
         const matchedCat = findMatchingCategory(categoryName, categories);
@@ -667,30 +570,7 @@ export default function AddExpense() {
             setField.categoryId(matchedCat.id);
             triggerCategoryPulse();
           }
-          matched = true;
           break;
-        }
-      }
-    }
-
-    if (!matched) {
-      const normalized = desc.trim().toLowerCase();
-      if (normalized) {
-        const learnedMatch = learnedPatterns?.find(
-          p => p.learned && p.normalizedDescription === normalized
-        );
-        if (learnedMatch) {
-          if (form.categoryId !== learnedMatch.categoryId) {
-            setField.categoryId(learnedMatch.categoryId);
-            triggerCategoryPulse();
-          }
-          const cacheKey = `${normalized}_${learnedMatch.categoryId}`;
-          setLearnedCache(prev => ({ ...prev, [cacheKey]: true }));
-        } else {
-          if (form.categoryId) {
-            const cacheKey = `${normalized}_${form.categoryId}`;
-            setLearnedCache(prev => ({ ...prev, [cacheKey]: false }));
-          }
         }
       }
     }
@@ -1321,23 +1201,7 @@ export default function AddExpense() {
                 animate={fillAnimation}
                 transition={{ duration: 0.35, delay: 0.20 }}
               />
-              {/* ✓ Learned badge — shows when this exact description is globally learned */}
-              {isDescriptionLearned && badgeDescToShow === form.description?.trim().toLowerCase() && (
-                <div style={{
-                  fontSize: '0.70rem',
-                  fontWeight: 600,
-                  marginTop: '4px',
-                  color: '#00b894',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  letterSpacing: '0.01em',
-                  opacity: 0.9,
-                }}>
-                  <span>✓</span>
-                  <span>Learned</span>
-                </div>
-              )}
+
             </div>
 
             {/* Date with steppers */}

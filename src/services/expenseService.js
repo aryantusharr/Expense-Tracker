@@ -1,8 +1,7 @@
 import { db } from './firebase';
 import {
   collection, addDoc, updateDoc, deleteDoc, doc,
-  onSnapshot, query, orderBy, getDoc, getDocs, where, writeBatch,
-  setDoc, serverTimestamp, increment
+  onSnapshot, query, orderBy, getDoc, getDocs, where, writeBatch
 } from 'firebase/firestore';
 import { syncExpenseToPersonalRooms } from '../utils/syncExpenseToPersonal';
 import { deleteSyncedExpensesFromPersonalRooms } from '../utils/deleteSyncedExpenses';
@@ -10,65 +9,35 @@ import { deleteSyncedExpensesFromPersonalRooms } from '../utils/deleteSyncedExpe
 // Re-export for backward compatibility
 export { syncExistingSharedExpenses } from '../utils/syncExistingExpenses';
 
+// DEPRECATED: learnPatternFromExpense removed. No code should reference
+// 'learned' or 'regex' pattern storage. Category auto-select uses
+// Hinglish keyword mapping only (see utils/categoryRegex.js BASE_CATEGORY_REGEX).
+
 /**
- * Learns a description–category association by incrementing a global Firestore counter.
- * Uses a deterministic document ID to prevent duplicates without requiring composite indexes.
- * MUST be called fire-and-forget (non-blocking) — never await this in the UI path.
+ * Resolves a safe categoryId for a given expense.
+ * If the provided categoryId doesn't exist in roomData.categories, falls back
+ * to the first 'Others'/'Other' category to prevent silent mis-mapping.
  *
- * @param {string} description - Raw description text entered by the user.
- * @param {string} categoryId  - The selected category ID.
- * @param {string} [categoryName] - Optional resolved category name (e.g. 'Groceries').
+ * @param {string} categoryId - The categoryId to validate.
+ * @param {Object|null} roomData - The room document (may be null).
+ * @returns {string} A valid categoryId, or the original if room data unavailable.
  */
-export async function learnPatternFromExpense(description, categoryId, categoryName = '') {
-  if (!description || !categoryId) return;
-
-  const normalized = description.trim().toLowerCase();
-  if (!normalized || normalized.length < 2) return;
-
-  // Deterministic ID: prevents duplicate documents without composite indexes
-  const docId = `${normalized}_${categoryId}`.replace(/[/]/g, '_').slice(0, 500);
-  const ref = doc(db, 'learned_patterns', docId);
-
-  const now = serverTimestamp();
-
-  try {
-    // Atomic create-or-update: merge ensures we don't overwrite existing fields
-    // createdAt is only written on first create (field won't exist yet)
-    await setDoc(ref, {
-      description,
-      normalizedDescription: normalized,
-      categoryId,
-      categoryName: categoryName || categoryId,
-      count: increment(1),
-      lastUsedAt: now,
-      window30days: true,
-    }, { merge: true });
-
-    // Read back the updated count to check if we've crossed the learned threshold
-    const updatedSnap = await getDoc(ref);
-    if (updatedSnap.exists()) {
-      const data = updatedSnap.data();
-
-      const updates = {};
-
-      // Promote to learned once count reaches 5
-      if ((data.count || 0) >= 5 && !data.learned) {
-        updates.learned = true;
-      }
-
-      // Stamp createdAt on first save (won't exist yet on new docs)
-      if (!data.createdAt) {
-        updates.createdAt = now;
-      }
-
-      if (Object.keys(updates).length > 0) {
-        await setDoc(ref, updates, { merge: true });
-      }
-    }
-  } catch (err) {
-    // Silently swallow — never let pattern learning affect the save pipeline
-    console.warn('[LearnPattern] Non-critical write failed:', err?.message);
+function resolveSafeCategoryId(categoryId, roomData) {
+  const cats = roomData?.categories;
+  if (!cats || cats.length === 0) return categoryId; // can't validate — pass through
+  const exists = cats.some(c => c.id === categoryId);
+  if (exists) return categoryId;
+  // Soft fallback: find 'Others' or 'Other'
+  const fallback = cats.find(c => c.name === 'Others' || c.name === 'Other');
+  if (fallback) {
+    console.warn(
+      `[ExpenseService] categoryId "${categoryId}" not found in room. ` +
+      `Falling back to "${fallback.name}" (${fallback.id}).`
+    );
+    return fallback.id;
   }
+  // No 'Others' either — use first category as last resort
+  return cats[0].id;
 }
 
 /**
@@ -100,22 +69,24 @@ async function getRoomData(roomCode, roomData) {
  * Add an expense. Sync to personal rooms happens in the background.
  */
 export async function addExpense(roomCode, expense, roomData = null) {
+  const rData = await getRoomData(roomCode, roomData).catch(() => null);
+
+  // Soft-validate categoryId — fall back to 'Others' if ID doesn't exist in room
+  const safeCategoryId = resolveSafeCategoryId(expense.categoryId, rData);
+  const expenseData = {
+    ...expense,
+    categoryId: safeCategoryId,
+    createdAt: new Date().toISOString(),
+  };
+
   const expensesRef = collection(db, 'rooms', roomCode, 'expenses');
-  const expenseData = { ...expense, createdAt: new Date().toISOString() };
   const docRef = await addDoc(expensesRef, expenseData);
   const newExpense = { id: docRef.id, ...expenseData };
 
   // Fire-and-forget sync
-  const rData = await getRoomData(roomCode, roomData).catch(() => null);
   if (rData && !rData.isPersonal) {
     syncExpenseToPersonalRooms(roomCode, rData, docRef.id, newExpense).catch(() => {});
   }
-
-  // Fire-and-forget pattern learning (non-blocking)
-  learnPatternFromExpense(
-    expense.description,
-    expense.categoryId,
-  ).catch(() => {});
 
   return newExpense;
 }
@@ -124,11 +95,18 @@ export async function addExpense(roomCode, expense, roomData = null) {
  * Update an existing expense.
  */
 export async function updateExpense(roomCode, expenseId, updates, roomData = null) {
+  const rData = await getRoomData(roomCode, roomData).catch(() => null);
+
+  // Soft-validate categoryId if it's being updated
+  const safeUpdates = { ...updates };
+  if (safeUpdates.categoryId !== undefined) {
+    safeUpdates.categoryId = resolveSafeCategoryId(safeUpdates.categoryId, rData);
+  }
+
   const expenseRef = doc(db, 'rooms', roomCode, 'expenses', expenseId);
-  await updateDoc(expenseRef, { ...updates, updatedAt: new Date().toISOString() });
+  await updateDoc(expenseRef, { ...safeUpdates, updatedAt: new Date().toISOString() });
 
   // Fire-and-forget sync
-  const rData = await getRoomData(roomCode, roomData).catch(() => null);
   if (rData && !rData.isPersonal) {
     const updatedSnap = await getDoc(expenseRef).catch(() => null);
     if (updatedSnap?.exists()) {
@@ -221,14 +199,6 @@ export async function addItemisedExpenseGroup(roomCode, groupName, items, common
       syncExpenseToPersonalRooms(roomCode, rData, item.id, item).catch(() => {});
     });
   }
-
-  // Fire-and-forget pattern learning for each itemised row
-  savedItems.forEach(item => {
-    learnPatternFromExpense(
-      item.description || groupName,
-      item.categoryId,
-    ).catch(() => {});
-  });
 
   return { groupId, groupName, items: savedItems };
 }

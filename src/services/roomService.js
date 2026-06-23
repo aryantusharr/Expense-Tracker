@@ -52,8 +52,27 @@ const DEFAULT_CATEGORIES = [
   { id: 'cat-11', name: 'Subscriptions', icon: '📱' },
   { id: 'cat-12', name: 'Coffee & Tea', icon: '☕' },
   { id: 'cat-13', name: 'Party & Nightlife', icon: '🪩' },
-  { id: 'cat-14', name: 'Other', icon: '📦' },
+  { id: 'cat-14', name: 'Others', icon: '📦' },
 ];
+
+/**
+ * Deduplicates any categories named 'Others' or 'Other', keeping the first
+ * occurrence (oldest ID). Merges extras into the survivor so no data is lost.
+ * Should be called before writing categories to Firestore.
+ */
+function deduplicateOthers(categories) {
+  if (!categories || categories.length === 0) return categories;
+  const othersIndices = categories
+    .map((c, i) => ({ c, i }))
+    .filter(({ c }) => c.name === 'Others' || c.name === 'Other');
+  if (othersIndices.length <= 1) return categories;
+  // Keep the first occurrence, drop the rest
+  const keepIdx = othersIndices[0].i;
+  const dropIds = new Set(othersIndices.slice(1).map(({ c }) => c.id));
+  return categories
+    .filter((c, i) => i === keepIdx || !dropIds.has(c.id))
+    .map((c, i) => i === keepIdx ? { ...c, name: 'Others' } : c);
+}
 
 // User colors palette
 const USER_COLORS = [
@@ -92,7 +111,7 @@ export async function createRoom(roomName, userNames) {
     name: roomName,
     code: roomCode,
     users,
-    categories: DEFAULT_CATEGORIES,
+    categories: deduplicateOthers(DEFAULT_CATEGORIES),
     createdAt: new Date().toISOString(),
   };
 
@@ -127,7 +146,7 @@ export async function createPersonalTracker(userName, monthlyBudget = 0) {
     name: `${userName}'s Expenses`,
     code: roomCode,
     users,
-    categories: DEFAULT_CATEGORIES,
+    categories: deduplicateOthers(DEFAULT_CATEGORIES),
     isPersonal: true,
     budget: monthlyBudget,
     createdAt: new Date().toISOString(),

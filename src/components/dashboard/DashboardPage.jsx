@@ -195,9 +195,7 @@ export default function DashboardPage() {
           <h2 className="total-amount">
             <CountUp value={Math.round(total)} prefix="₹" />
           </h2>
-          {isPersonal ? (
-            <p className="total-count">{expenses.length} expense{expenses.length !== 1 ? 's' : ''}</p>
-          ) : (
+          {!isPersonal && (
             <div style={{ display: 'flex', justifyContent: 'center', marginTop: 'var(--space-xs)' }}>
               <span style={{
                 display: 'inline-flex',

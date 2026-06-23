@@ -1,11 +1,8 @@
-// eslint-disable-next-line no-unused-vars
+// RoomContext.jsx
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { subscribeToRoom, updateRoomData } from '../services/roomService';
 import { subscribeToExpenses } from '../services/expenseService';
-import { db } from '../services/firebase';
-import { collection, onSnapshot, query, where } from 'firebase/firestore';
-import { saveLearnedPatternsToIndexedDB, getLearnedPatternsFromIndexedDB } from '../utils/indexedDBHelper';
-import { compileCombinedRegex } from '../utils/categoryRegex';
+
 
 const RoomContext = createContext(null);
 
@@ -25,7 +22,7 @@ function loadSavedRooms() {
 function cacheRoomData(code, data) {
   try {
     localStorage.setItem(`splitease_room_cache_${code}`, JSON.stringify(data));
-  } catch (e) { /* storage full — ignore */ }
+  } catch { /* storage full — ignore */ }
 }
 
 function getCachedRoomData(code) {
@@ -38,7 +35,7 @@ function getCachedRoomData(code) {
 function cacheExpenses(code, list) {
   try {
     localStorage.setItem(`splitease_expenses_cache_${code}`, JSON.stringify(list));
-  } catch (e) { /* storage full — ignore */ }
+  } catch { /* storage full — ignore */ }
 }
 
 function getCachedExpenses(code) {
@@ -70,61 +67,19 @@ export function RoomProvider({ children }) {
     categoriesRef.current = room?.categories || [];
   }, [room?.categories]);
 
-  // Learned patterns + compiled combined regex (global, non-blocking)
-  const [learnedPatterns, setLearnedPatterns] = useState([]);
-  const [combinedRegexByCategory, setCombinedRegexByCategory] = useState({});
-
-  // Live listener for /learned_patterns — stays fresh so "✓ Learned" badge
-  // triggers immediately after the 5th save (no app restart needed).
-  useEffect(() => {
-    if (!navigator.onLine) {
-      // Offline: seed from IndexedDB once then stay static
-      getLearnedPatternsFromIndexedDB().then(patterns => {
-        setLearnedPatterns(patterns || []);
-        setCombinedRegexByCategory(compileCombinedRegex(patterns || [], categoriesRef.current));
-      }).catch(() => {});
-      return;
-    }
-
-    const q = query(
-      collection(db, 'learned_patterns'),
-      where('learned', '==', true),
-      where('window30days', '==', true)
-    );
-
-    const unsub = onSnapshot(
-      q,
-      (snap) => {
-        const patterns = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        setLearnedPatterns(patterns);
-        setCombinedRegexByCategory(compileCombinedRegex(patterns, categoriesRef.current));
-        // Keep IndexedDB in sync for offline fallback
-        saveLearnedPatternsToIndexedDB(patterns).catch(() => {});
-      },
-      () => {
-        // Firestore listener error — fall back to IndexedDB silently
-        getLearnedPatternsFromIndexedDB().then(patterns => {
-          setLearnedPatterns(patterns || []);
-          setCombinedRegexByCategory(compileCombinedRegex(patterns || [], categoriesRef.current));
-        }).catch(() => {});
-      }
-    );
-
-    return unsub;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   // Hydrate from cache on cold load when offline
   useEffect(() => {
     if (!roomCode) return;
     const cachedRoom = getCachedRoomData(roomCode);
     const cachedExpenses = getCachedExpenses(roomCode);
-    if (cachedRoom && !room) {
-      setRoom(cachedRoom);
-    }
-    if (cachedExpenses && expenses.length === 0) {
-      setExpenses(cachedExpenses);
-    }
+    Promise.resolve().then(() => {
+      if (cachedRoom && !room) {
+        setRoom(cachedRoom);
+      }
+      if (cachedExpenses && expenses.length === 0) {
+        setExpenses(cachedExpenses);
+      }
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomCode]);
 
@@ -278,13 +233,7 @@ export function RoomProvider({ children }) {
     }
   }, [roomCode]);
 
-  // Re-compile regex when categories load (after room context is ready)
-  useEffect(() => {
-    if (!learnedPatterns.length) return;
-    const cats = room?.categories || [];
-    setCombinedRegexByCategory(compileCombinedRegex(learnedPatterns, cats));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [room?.categories]);
+
 
   const value = {
     room,
@@ -300,8 +249,6 @@ export function RoomProvider({ children }) {
     categories: room?.categories || [],
     userIdentity,
     setUserIdentity: setUserIdentityInRoom,
-    learnedPatterns,
-    combinedRegexByCategory,
   };
 
   return (

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Modal from '../common/Modal';
 import ImportCSVModal from './ImportCSVModal';
@@ -24,26 +24,93 @@ export default function DataManagement({ expenses, users, categories, room, room
   const [showImportModal, setShowImportModal] = useState(false);
   const [importBannerDismissed, setImportBannerDismissed] = useState(false);
 
-  const importHistory = useMemo(() => {
+  const [importHistory, setImportHistory] = useState(() => {
     try {
       const hist = JSON.parse(localStorage.getItem('csv-import-history') || '[]');
       return hist[0] || null;
-    } catch { return null; }
-  }, [showImportModal]);
+    } catch {
+      return null;
+    }
+  });
 
-  // Room-scoped 7-day import banner
-  const importBanner = useMemo(() => {
+  const [importBanner, setImportBanner] = useState(() => {
     try {
-      const ts = localStorage.getItem('lastImportTimestamp');
-      const rc = localStorage.getItem('lastImportRoomCode');
-      const count = localStorage.getItem('lastImportItemCount');
-      if (!ts || !rc || !count) return null;
-      if (rc !== roomCode) return null;
+      let ts = room?.lastImportAt;
+      let count = room?.lastImportCount;
+
+      if (!ts || count === undefined || count === null) {
+        ts = localStorage.getItem('lastImportTimestamp');
+        const rc = localStorage.getItem('lastImportRoomCode');
+        if (rc === roomCode) {
+          count = localStorage.getItem('lastImportItemCount');
+        } else {
+          ts = null;
+          count = null;
+        }
+      }
+
+      if (!ts || count === undefined || count === null) return null;
+
       const age = Date.now() - new Date(ts).getTime();
       if (age > SEVEN_DAYS_MS) return null;
       return { count: parseInt(count, 10), timestamp: ts };
-    } catch { return null; }
-  }, [roomCode, showImportModal]);
+    } catch {
+      return null;
+    }
+  });
+
+  // Sync import history and banner from state/storage in effects to ensure purity during render
+  useEffect(() => {
+    try {
+      const hist = JSON.parse(localStorage.getItem('csv-import-history') || '[]');
+      Promise.resolve().then(() => {
+        setImportHistory(hist[0] || null);
+      });
+    } catch {
+      Promise.resolve().then(() => {
+        setImportHistory(null);
+      });
+    }
+  }, [showImportModal]);
+
+  useEffect(() => {
+    try {
+      let ts = room?.lastImportAt;
+      let count = room?.lastImportCount;
+
+      if (!ts || count === undefined || count === null) {
+        // Fallback to localStorage
+        ts = localStorage.getItem('lastImportTimestamp');
+        const rc = localStorage.getItem('lastImportRoomCode');
+        if (rc === roomCode) {
+          count = localStorage.getItem('lastImportItemCount');
+        } else {
+          ts = null;
+          count = null;
+        }
+      }
+
+      if (!ts || count === undefined || count === null) {
+        Promise.resolve().then(() => {
+          setImportBanner(null);
+        });
+        return;
+      }
+
+      const age = Date.now() - new Date(ts).getTime();
+      Promise.resolve().then(() => {
+        if (age > SEVEN_DAYS_MS) {
+          setImportBanner(null);
+        } else {
+          setImportBanner({ count: parseInt(count, 10), timestamp: ts });
+        }
+      });
+    } catch {
+      Promise.resolve().then(() => {
+        setImportBanner(null);
+      });
+    }
+  }, [room, roomCode, showImportModal]);
 
   const availableMonths = useMemo(() => {
     const months = new Set();
