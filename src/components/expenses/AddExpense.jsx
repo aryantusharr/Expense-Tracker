@@ -8,7 +8,7 @@ import { addExpense, addItemisedExpenseGroup } from '../../services/expenseServi
 import { validateExpense, adjustDate } from '../../utils/expenseFormHelpers';
 import CountUp from '../common/CountUp';
 import { getLastUsedMode, setLastUsedMode, getLastUsedDefaults, setLastUsedDefaults } from '../../utils/lastUsedDefaults';
-import { getRecentDescriptions, addRecentDescription } from '../../utils/recentDescriptions';
+import { addRecentDescription } from '../../utils/recentDescriptions';
 import { detectRecurringExpenses } from '../../utils/recurringExpenses';
 import './Expenses.css';
 
@@ -453,38 +453,152 @@ export default function AddExpense() {
     });
   }, [roomCode, categories, users, isPersonal, userIdentity]);
 
-  // Quick mode: live-filtered recent descriptions
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const recentDescs = useMemo(() => getRecentDescriptions(roomCode), [roomCode, showSuccess]);
-  const filteredChips = recentDescs;
+  // Quick mode: live-filtered description suggestions based on 45-day usage count
+  const descriptionChips = useMemo(() => {
+    const roomExpenses = isPersonal ? expenses.filter(e => !e.isSynced) : expenses;
+    // eslint-disable-next-line react-hooks/purity
+    const fortyFiveDaysAgo = Date.now() - 45 * 24 * 60 * 60 * 1000;
 
-  // Recurring Expenses detection
-  const recurringExpensesList = useMemo(() => detectRecurringExpenses(expenses), [expenses]);
-  const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
-
-  // Extract unique group names from itemised expenses and count their frequency
-  const itemisedGroupNamesList = useMemo(() => {
-    const frequency = {};
-    expenses.forEach(e => {
-      if (e.isItemised && e.groupName) {
-        const name = e.groupName.trim();
-        if (!name) return;
-        const key = name.toLowerCase();
-        if (!frequency[key]) {
-          frequency[key] = {
-            groupName: name,
-            count: 0,
-            categoryId: e.categoryId || null,
-          };
-        }
-        frequency[key].count += 1;
-      }
+    const recentExpenses = roomExpenses.filter(e => {
+      const time = e.lastUsedAt ? new Date(e.lastUsedAt).getTime() : (e.createdAt ? new Date(e.createdAt).getTime() : (e.date ? new Date(e.date).getTime() : 0));
+      return time >= fortyFiveDaysAgo;
     });
 
-    return Object.values(frequency)
-      .sort((a, b) => b.count - a.count)
+    const groups = {};
+    for (const e of recentExpenses) {
+      const desc = (e.description || '').trim();
+      if (!desc) continue;
+      const key = desc.toLowerCase();
+      if (!groups[key]) {
+        // Find room-wide matches to compute usage count and last used date
+        const matches = roomExpenses.filter(x => (x.description || '').trim().toLowerCase() === key);
+        const maxCount = matches.reduce((max, x) => Math.max(max, x.usageCount !== undefined ? x.usageCount : 1), matches.length || 1);
+        const lastUsed = matches.reduce((max, x) => {
+          const t = x.lastUsedAt ? new Date(x.lastUsedAt).getTime() : (x.createdAt ? new Date(x.createdAt).getTime() : 0);
+          return Math.max(max, t);
+        }, 0);
+
+        groups[key] = {
+          description: desc,
+          usageCount: maxCount,
+          lastUsedAt: lastUsed
+        };
+      }
+    }
+
+    return Object.values(groups)
+      .sort((a, b) => b.usageCount - a.usageCount || b.lastUsedAt - a.lastUsedAt)
+      .slice(0, 10)
+      .map(g => g.description);
+  }, [expenses, isPersonal]);
+  const filteredChips = descriptionChips;
+
+  // Recurring Expenses suggestions: filtered for recurring entries in last 45 days, sorted by 45-day usage count
+  const recurringExpensesList = useMemo(() => {
+    const roomExpenses = isPersonal ? expenses.filter(e => !e.isSynced) : expenses;
+    // eslint-disable-next-line react-hooks/purity
+    const fortyFiveDaysAgo = Date.now() - 45 * 24 * 60 * 60 * 1000;
+
+    const recentExpenses = roomExpenses.filter(e => {
+      const time = e.lastUsedAt ? new Date(e.lastUsedAt).getTime() : (e.createdAt ? new Date(e.createdAt).getTime() : (e.date ? new Date(e.date).getTime() : 0));
+      return time >= fortyFiveDaysAgo;
+    });
+
+    const detected = detectRecurringExpenses(recentExpenses);
+
+    const recurringMap = {};
+    for (const item of detected) {
+      const key = item.description.trim().toLowerCase();
+      recurringMap[key] = {
+        description: item.description,
+        categoryId: item.categoryId,
+        lastAmount: item.lastAmount,
+        lastPaidBy: item.lastPaidBy,
+        lastSplitAmong: item.lastSplitAmong,
+        usageCount: 1,
+        lastUsedAt: 0
+      };
+    }
+
+    for (const e of recentExpenses) {
+      if (e.recurring === true || e.isRecurring === true) {
+        const key = (e.description || '').trim().toLowerCase();
+        if (!recurringMap[key]) {
+          recurringMap[key] = {
+            description: (e.description || '').trim(),
+            categoryId: e.categoryId,
+            lastAmount: e.amount,
+            lastPaidBy: e.paidBy || null,
+            lastSplitAmong: e.splitAmong || [],
+            usageCount: 1,
+            lastUsedAt: 0
+          };
+        }
+      }
+    }
+
+    for (const key in recurringMap) {
+      const group = recurringMap[key];
+      const matches = roomExpenses.filter(x => (x.description || '').trim().toLowerCase() === key);
+      const maxCount = matches.reduce((max, x) => Math.max(max, x.usageCount !== undefined ? x.usageCount : 1), matches.length || 1);
+      const lastUsed = matches.reduce((max, x) => {
+        const t = x.lastUsedAt ? new Date(x.lastUsedAt).getTime() : (x.createdAt ? new Date(x.createdAt).getTime() : 0);
+        return Math.max(max, t);
+      }, 0);
+      group.usageCount = maxCount;
+      group.lastUsedAt = lastUsed;
+    }
+
+    return Object.values(recurringMap)
+      .sort((a, b) => b.usageCount - a.usageCount || b.lastUsedAt - a.lastUsedAt)
       .slice(0, 10);
-  }, [expenses]);
+  }, [expenses, isPersonal]);
+
+  // Name suggestions: Group unique group names from itemised expenses in last 45 days, sorted by usageCount
+  const itemisedGroupNamesList = useMemo(() => {
+    const roomExpenses = isPersonal ? expenses.filter(e => !e.isSynced) : expenses;
+    // eslint-disable-next-line react-hooks/purity
+    const fortyFiveDaysAgo = Date.now() - 45 * 24 * 60 * 60 * 1000;
+
+    const recentExpenses = roomExpenses.filter(e => {
+      const time = e.lastUsedAt ? new Date(e.lastUsedAt).getTime() : (e.createdAt ? new Date(e.createdAt).getTime() : (e.date ? new Date(e.date).getTime() : 0));
+      return time >= fortyFiveDaysAgo;
+    });
+
+    const groups = {};
+    for (const e of recentExpenses) {
+      if (e.isItemised && e.groupName) {
+        const name = e.groupName.trim();
+        if (!name) continue;
+        const key = name.toLowerCase();
+        if (!groups[key]) {
+          groups[key] = {
+            groupName: name,
+            categoryId: e.categoryId || null,
+            usageCount: 1,
+            lastUsedAt: 0
+          };
+        }
+      }
+    }
+
+    for (const key in groups) {
+      const group = groups[key];
+      const matches = roomExpenses.filter(x => x.isItemised && (x.groupName || '').trim().toLowerCase() === key);
+      const maxCount = matches.reduce((max, x) => Math.max(max, x.usageCount !== undefined ? x.usageCount : 1), matches.length || 1);
+      const lastUsed = matches.reduce((max, x) => {
+        const t = x.lastUsedAt ? new Date(x.lastUsedAt).getTime() : (x.createdAt ? new Date(x.createdAt).getTime() : 0);
+        return Math.max(max, t);
+      }, 0);
+      group.usageCount = maxCount;
+      group.lastUsedAt = lastUsed;
+    }
+
+    return Object.values(groups)
+      .sort((a, b) => b.usageCount - a.usageCount || b.lastUsedAt - a.lastUsedAt)
+      .slice(0, 10);
+  }, [expenses, isPersonal]);
+
 
   const handleRecurringChipTap = (chip) => {
     if (mode !== 'quick') {
@@ -494,7 +608,6 @@ export default function AddExpense() {
     setField.description(chip.description);
     setField.categoryId(chip.categoryId);
     setField.amount(String(chip.lastAmount));
-    setField.date(todayStr);
 
     if (!isPersonal) {
       if (chip.lastPaidBy) {
@@ -506,6 +619,36 @@ export default function AddExpense() {
     }
 
     triggerFillPulse();
+  };
+
+  const handleRecurringChipTapInRow = (rowId, chip) => {
+    setRows(prev => prev.map(r => {
+      if (r.id !== rowId) return r;
+
+      let finalCategoryId = chip.categoryId || r.categoryId;
+
+      // Hinglish keyword mapping check for selected description to auto-select category
+      if (chip.description) {
+        const lowerVal = chip.description.toLowerCase();
+        for (const [keyword, categoryName] of Object.entries(HINGLISH_MAP)) {
+          if (lowerVal.includes(keyword)) {
+            const matchedCat = findMatchingCategory(categoryName, categories);
+            if (matchedCat) {
+              finalCategoryId = matchedCat.id;
+              break;
+            }
+          }
+        }
+      }
+
+      return {
+        ...r,
+        description: chip.description,
+        categoryId: finalCategoryId,
+        amount: String(chip.lastAmount),
+        splitAmong: chip.lastSplitAmong && chip.lastSplitAmong.length > 0 ? [...chip.lastSplitAmong] : [...r.splitAmong]
+      };
+    }));
   };
 
   // Split mode math calculations
@@ -1428,7 +1571,6 @@ export default function AddExpense() {
                       type="button"
                       onClick={() => {
                         setGroupName(chip.groupName);
-                        setTotalAmount('');
                         if (chip.categoryId && rows.length > 0) {
                           setRows(prev => prev.map(r => ({ ...r, categoryId: chip.categoryId })));
                         }
@@ -1595,15 +1737,11 @@ export default function AddExpense() {
                               paddingBottom: '2px',
                               scrollbarWidth: 'none',
                             }}>
-                              {recurringExpensesList.slice(0, 3).map((chip, ci) => (
+                              {recurringExpensesList.slice(0, 10).map((chip, ci) => (
                                 <button
                                   key={ci}
                                   type="button"
-                                  onClick={() => {
-                                    handleUpdateRowField(row.id, 'description', chip.description);
-                                    handleUpdateRowField(row.id, 'categoryId', chip.categoryId);
-                                    handleUpdateRowField(row.id, 'amount', String(chip.lastAmount));
-                                  }}
+                                  onClick={() => handleRecurringChipTapInRow(row.id, chip)}
                                   style={{
                                     whiteSpace: 'nowrap',
                                     background: 'rgba(108, 92, 231, 0.08)',

@@ -5,6 +5,7 @@ import {
 } from 'firebase/firestore';
 import { syncExpenseToPersonalRooms } from '../utils/syncExpenseToPersonal';
 import { deleteSyncedExpensesFromPersonalRooms } from '../utils/deleteSyncedExpenses';
+import { getUsageFieldsForNewExpense, getUsageFieldsForUpdatedExpense } from '../utils/expenseFormHelpers';
 
 // Re-export for backward compatibility
 export { syncExistingSharedExpenses } from '../utils/syncExistingExpenses';
@@ -73,13 +74,21 @@ export async function addExpense(roomCode, expense, roomData = null) {
 
   // Soft-validate categoryId — fall back to 'Others' if ID doesn't exist in room
   const safeCategoryId = resolveSafeCategoryId(expense.categoryId, rData);
+
+  const expensesRef = collection(db, 'rooms', roomCode, 'expenses');
+  const snap = await getDocs(expensesRef).catch(() => null);
+  const existingExpenses = snap ? snap.docs.map(d => ({ id: d.id, ...d.data() })) : [];
+
   const expenseData = {
     ...expense,
     categoryId: safeCategoryId,
     createdAt: new Date().toISOString(),
   };
 
-  const expensesRef = collection(db, 'rooms', roomCode, 'expenses');
+  const { usageCount, lastUsedAt } = getUsageFieldsForNewExpense(expenseData, existingExpenses);
+  expenseData.usageCount = usageCount;
+  expenseData.lastUsedAt = lastUsedAt;
+
   const docRef = await addDoc(expensesRef, expenseData);
   const newExpense = { id: docRef.id, ...expenseData };
 
@@ -97,10 +106,22 @@ export async function addExpense(roomCode, expense, roomData = null) {
 export async function updateExpense(roomCode, expenseId, updates, roomData = null) {
   const rData = await getRoomData(roomCode, roomData).catch(() => null);
 
+  const expensesRef = collection(db, 'rooms', roomCode, 'expenses');
+  const snap = await getDocs(expensesRef).catch(() => null);
+  const existingExpenses = snap ? snap.docs.map(d => ({ id: d.id, ...d.data() })) : [];
+  const oldExpense = existingExpenses.find(e => e.id === expenseId);
+
   // Soft-validate categoryId if it's being updated
   const safeUpdates = { ...updates };
   if (safeUpdates.categoryId !== undefined) {
     safeUpdates.categoryId = resolveSafeCategoryId(safeUpdates.categoryId, rData);
+  }
+
+  if (oldExpense) {
+    const updatedExpense = { ...oldExpense, ...safeUpdates };
+    const { usageCount, lastUsedAt } = getUsageFieldsForUpdatedExpense(updatedExpense, existingExpenses, expenseId);
+    safeUpdates.usageCount = usageCount;
+    safeUpdates.lastUsedAt = lastUsedAt;
   }
 
   const expenseRef = doc(db, 'rooms', roomCode, 'expenses', expenseId);
@@ -174,6 +195,8 @@ export async function addItemisedExpenseGroup(roomCode, groupName, items, common
   const groupId = `grp-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`;
   const createdAt = new Date().toISOString();
   const expensesRef = collection(db, 'rooms', roomCode, 'expenses');
+  const snap = await getDocs(expensesRef).catch(() => null);
+  const existingExpenses = snap ? snap.docs.map(d => ({ id: d.id, ...d.data() })) : [];
   const savedItems = [];
 
   for (const item of items) {
@@ -188,8 +211,15 @@ export async function addItemisedExpenseGroup(roomCode, groupName, items, common
       isItemised: true,
       createdAt,
     };
+
+    const { usageCount, lastUsedAt } = getUsageFieldsForNewExpense(expenseData, existingExpenses);
+    expenseData.usageCount = usageCount;
+    expenseData.lastUsedAt = lastUsedAt;
+
     const docRef = await addDoc(expensesRef, expenseData);
-    savedItems.push({ id: docRef.id, ...expenseData });
+    const savedItem = { id: docRef.id, ...expenseData };
+    savedItems.push(savedItem);
+    existingExpenses.push(savedItem);
   }
 
   // Fire-and-forget sync (sync each item individually)
