@@ -20,11 +20,10 @@
         "dev",
         "--",
         "--host",
-        "--force",
-        "--port",
-        "5199"
+        "--force"
       ],
-      "port": 5199
+      "port": 5199,
+      "autoPort": true
     },
     {
       "name": "splitease-learn",

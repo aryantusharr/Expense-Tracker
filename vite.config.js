@@ -18,5 +18,7 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react()],
+    // launch tooling hands out a free port through PORT; plain `npm run dev` stays on 5173
+    server: process.env.PORT ? { port: Number(process.env.PORT) } : {},
   }
 })
