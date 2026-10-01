@@ -65,7 +65,7 @@ Decisions (her "do whatever is best" → Claude's picks): category delete keeps 
 - [ ] HTTPS preview pass: Add to Home Screen icon, offline, copy/share, PDF/Excel save
 
 ## Phase 4 · Data check
-- [ ] Real-shaped data in test project renders correctly: balances, settlements, synced entries, itemised groups, budgets
+- [x] Real-shaped data check (2 Oct, `scripts/data-check.mjs <anon backup>`, read-only): balances sum to 0 in all 10 rooms, match exact math within ₹3.3 (D4NYY3; the app gives the odd paisa of each split to the last person — old rule, unchanged), settlements net to the balances, 3,403 synced copies all point to an existing parent (225 differ by ≤₹0.02 — same last-person rule), 519 itemised bills with one payer each, budgets present on the 4 personal rooms. UI spot check on D4NYY3: net + settlements + matrix totals agree. Findings: 5 expenses sit under a room doc that doesn't exist (P8UW2Y — invisible in the app, harmless); 2 expenses in N4EWMU use a category not in the room list (shown under Other / fallback sheet).
 
 ## Phase 5 · Go live (only with her explicit yes)
 - [ ] Tighter live rules (no bulk listing, rooms only by code, no room deletes, lock learned_patterns) + tweak `checkRoomNameExists` query; test on the test project first
@@ -105,3 +105,4 @@ Decisions (her "do whatever is best" → Claude's picks): category delete keeps 
 - 2026-10-02 · Phase 2.6 built (src/utils/categoryGuess.js; old HINGLISH_MAP + categoryRegex.js removed). 31 logic checks pass; tested on the test project in room "Test Learned" (code ADVACX): learned picks (5+ in 30 days, shared across members), 4x / >30-day cases don't learn, learned beats word list, manual tap wins (Quick + Items), save writes the same document, recurring chip OK, Dashboard/History/Settings load with no new errors. Dev config `splitease-learn` (port 5211) added because 5173/5199 were used by other chats. Next: Phase 3 phone test.
 
 - 2026-10-02 · Phone pass 1 fixes (Settings padding reset, join-code stamp, sync pulse ring, tap-through payer bill, sync receipt clip, matrix % colours, clipped glows in scroll strips). New icons from SplitEase/icons wired in (manifest, favicon, apple-touch), sw.js cache → splitease-v2. Test-project preview channel `phone-test` deployed (expires 2026-10-08): https://splitease-test-2026--phone-test-1jiy4laa.web.app
+- 2026-10-02 · Phase 4 data check done (see Phase 4). Next: Phase 5 prep on the test project (tighter rules).
