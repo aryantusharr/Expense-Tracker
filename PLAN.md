@@ -3,7 +3,7 @@
 ## Phase 0 · Setup ✅
 - [x] Cleared leftover .git/index.lock; `redesign` branch created
 - [x] Tools: Homebrew + Node 24 were present; firebase-tools 15.32 installed (gh skipped until PR time)
-- [x] GitHub push works (account aryantusharr = hers)
+- [ ] GitHub push: saved token on this Mac is invalid — re-auth needed (account aryantusharr = hers)
 - [x] Firebase CLI signed in as himanshu12.hk@gmail.com (she confirmed this is the account to use)
 - [x] `.env` untracked (was public on GitHub); live settings now in `.env.production.local` (git-ignored, used only by `npm run build`)
 - [x] Test project `splitease-test-2026` created: web app, Firestore (nam5/US — live is asia-south2; fine for testing), open test rules expiring 2027-01-01 (`firestore.test.rules`, deployed via `firebase.test.json`)
