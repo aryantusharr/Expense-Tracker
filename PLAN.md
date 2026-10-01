@@ -50,6 +50,13 @@ Decisions (her "do whatever is best" → Claude's picks): category delete keeps 
 - [x] Fix pass — all 27 QA items + keypad/nav spacing, 7 local commits (not pushed)
 - [x] Cleanup (2 Oct): chart.js + react-chartjs-2 removed; ConfirmModal/Modal/CountUp/MathPlaceholder/Header, Expenses.css, Settings.css deleted; index.css 640 → 78 lines (base reset + app container); lint 0 problems; build clean. Emoji: only stored category data left (roomService defaults, 'Other' fallbacks = must stay for existing rooms); a11y audited on Dashboard/History/Settings/Add: no unlabeled controls, dialog/toast/nav semantics OK.
 
+## Phase 2.6 · Learned categories (new feature, approved by her 2026-10-02 — build before Phase 3)
+- [ ] Add missing Hinglish words to the fixed list (aaloo, pyaaz/pyaz, thumbsup, …) — "option C"
+- [ ] Learn from the room's own expenses ("option A"): same description + same category 5+ times in the last 30 days → auto-pick. Computed on the phone from expenses already loaded; no new Firestore collection, no schema/rules change
+- [ ] Match whole words + light spelling normalisation (pyaaz = pyaz); the user's manual pick always wins; works for recurring too
+- [ ] Fix substring false matches in the fixed list (e.g. "pan" hits "company", "bar" hits "barber")
+- Why not a stored "learned patterns" collection: the old one (removed in 5a388de) caused wrong picks and sync trouble
+
 ## Phase 3 · iPhone testing
 - Day-to-day: `npm run dev -- --host` → open http://<mac-ip>:5173 on the iPhone (same Wi-Fi), pointed at the TEST project. Instant reloads; no PWA install/offline/clipboard (needs HTTPS).
 - Full PWA check: deploy to a Firebase preview channel on the TEST project → HTTPS link, Add to Home Screen, offline, copy/share.
