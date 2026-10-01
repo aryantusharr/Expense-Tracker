@@ -1,13 +1,13 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useRoomContext } from './context/RoomContext';
-import BottomNav from './components/layout/BottomNav';
+import FloatingNav from './components/layout/FloatingNav';
 import LandingPage from './components/setup/LandingPage';
 import CreateRoom from './components/setup/CreateRoom';
 import JoinRoom from './components/setup/JoinRoom';
 import ShareRoom from './components/setup/ShareRoom';
 import PersonalSetup from './components/setup/PersonalSetup';
-import DashboardPage from './components/dashboard/DashboardPage';
+import DashboardScreen from './components/dashboard/DashboardScreen';
 import AddExpense from './components/expenses/AddExpense';
 import ExpenseList from './components/expenses/ExpenseList';
 import SettingsPage from './components/settings/SettingsPage';
@@ -59,7 +59,7 @@ function AppRoutes() {
           <Route path="/share/:code" element={inRoom ? <ShareRoom /> : <Navigate to="/" replace />} />
 
           {/* App routes (with bottom nav) — redirect to landing if not in room */}
-          <Route path="/dashboard" element={inRoom ? <DashboardPage /> : <Navigate to="/" replace />} />
+          <Route path="/dashboard" element={inRoom ? <DashboardScreen /> : <Navigate to="/" replace />} />
           <Route path="/add" element={inRoom ? <AddExpense /> : <Navigate to="/" replace />} />
           <Route path="/history" element={inRoom ? <ExpenseList /> : <Navigate to="/" replace />} />
           <Route path="/settings" element={inRoom ? <SettingsPage /> : <Navigate to="/" replace />} />
@@ -79,13 +79,13 @@ function AppRoutes() {
 function ShowNavGuard() {
   const location = useLocation();
   const { roomCode } = useRoomContext();
-  const hideOn = ['/share', '/create', '/join', '/personal', '/foundations'];
+  const hideOn = ['/share', '/create', '/join', '/personal', '/foundations'];  // hide on /add once the redesigned Add screen has its own close
   // Guard 1: not inside a room yet
   if (!roomCode) return null;
   // Guard 2: setup/landing routes
   const shouldHide = hideOn.some(p => location.pathname.startsWith(p)) || location.pathname === '/';
   if (shouldHide) return null;
-  return <BottomNav />;
+  return <FloatingNav />;
 }
 
 

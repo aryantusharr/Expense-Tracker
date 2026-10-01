@@ -63,6 +63,46 @@
 @keyframes se-drift-2 { to { transform: translate(-150px, -140px) scale(.85); } }
 @keyframes se-drift-3 { to { transform: translate(90px, -240px) scale(1.3); } }
 
+/* ---- Screen-level entrances & small loops used across the final boards ---- */
+/* rise-in for sections (stagger with animation-delay) */
+.se-in { animation: se-in 1s cubic-bezier(.16, 1, .3, 1) both; }
+@keyframes se-in { from { opacity: 0; transform: translateY(26px) scale(.97); filter: blur(6px); } to { opacity: 1; transform: none; filter: none; } }
+/* list rows slide in from the right */
+.se-row { animation: se-row .7s cubic-bezier(.16, 1, .3, 1) both; }
+@keyframes se-row { from { opacity: 0; transform: translateX(24px); } }
+/* digits dropping into place */
+.se-drop { display: inline-block; animation: se-drop .85s var(--se-ease-strong) both; }
+@keyframes se-drop { from { opacity: 0; transform: translateY(-46px) rotate(-10deg); } }
+/* reel digits */
+.se-reels { display: inline-flex; align-items: flex-start; overflow: hidden; }
+.se-reel-window { display: block; overflow: hidden; }
+.se-reel { display: flex; flex-direction: column; transition: transform .95s cubic-bezier(.2, .9, .2, 1); }
+/* bars + meters growing */
+.se-grow-x { animation: se-grow-x 1.1s var(--se-ease-soft) both; }
+.se-grow-y { transform-origin: bottom center; animation: se-grow-y 1.1s var(--se-ease-soft) both; }
+@keyframes se-grow-x { from { transform: scaleX(0); } }
+@keyframes se-grow-y { from { transform: scaleY(0); } }
+/* ticker / marquee (duplicate the content twice inside) */
+.se-marquee { display: flex; white-space: nowrap; width: max-content; animation: se-marquee 16s linear infinite; }
+@keyframes se-marquee { to { transform: translateX(-50%); } }
+/* live dot + warning blink + spinning sync icon */
+.se-live { animation: se-live 1.4s ease-in-out infinite; }
+@keyframes se-live { 50% { opacity: .25; } }
+.se-blink { animation: se-blink 1.2s steps(2, start) infinite; }
+@keyframes se-blink { to { visibility: hidden; } }
+.se-spin { animation: se-spin 3s linear infinite; transform-origin: center; }
+@keyframes se-spin { to { transform: rotate(360deg); } }
+/* tooltip pop above a bar */
+.se-tip { animation: se-tip var(--se-dur-medium) var(--se-ease-strong) both; }
+@keyframes se-tip { from { opacity: 0; transform: translate(-50%, 8px) scale(.8); } to { opacity: 1; transform: translate(-50%, 0); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .se-in, .se-row { animation: se-fade var(--se-dur-quick) ease both !important; filter: none !important; }
+  .se-drop, .se-grow-x, .se-grow-y, .se-tip { animation: none !important; }
+  .se-reel { transition: none !important; }
+  .se-marquee, .se-live, .se-blink, .se-spin { animation: none !important; }
+}
+
 /* ---- Reduce motion (M4b) ----
    Stop: orbs drift, marquees, sway, flowing slips, pulses, sheen.
    Become a .2s fade: print, tear, sheet, flip, pop, shake.

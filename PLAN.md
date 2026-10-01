@@ -19,10 +19,12 @@
 
 ## Phase 2 · Build (order is a suggestion)
 - [x] Foundations (preview: /foundations — dev/test builds only): `src/styles/tokens.css` (--se-* colours dark/light, Sora/Unbounded/JetBrains Mono self-hosted via @fontsource, radii, motion tokens, reduce-motion), `src/styles/motion.css` (pop/print/stamp/tear/sheet/shake, orbs), `src/styles/ui.css`, `src/components/ui/` (Button, IconButton, Chip, Sheet, Toast/useToast, CategoryIcon), `src/design/categoryIcons.js` (32 A-line icons + name/emoji → icon mapping; stored emoji unchanged), `src/utils/haptics.js`
-  - Open question for her: Smoking, Weed, Saving, Apple watch have no matching icon (show "Other" dots for now)
+  - 4 extra icons added on the canvas (Smoking, Weed, Saving, Gadgets) → 36 icons
   - Screen-specific icons (nav, header, etc.) and signature moves get built with their screens
 - [ ] Onboarding (landing w/ orbit keys + ⚙ room sheet, create chat, share postcard + sync setup, join paper strip + keypad, personal chat + join by code)
-- [ ] Dashboard (shared + personal)
+- [x] Dashboard (shared + personal) — `src/components/dashboard/DashboardScreen.jsx` + `parts/`, data in `dashboardData.js` (reuses splitCalculator / settlementEngine, read-only). New FloatingNav replaces BottomNav everywhere (old Add screen keeps the nav until Add is rebuilt — it has no back button). Checked dark + light, shared + personal on test data.
+  - Open with her: month-start cards show the new (empty) month; Settings board draws a different nav (used the Dashboard one everywhere); budget status only ON TRACK / OVER BUDGET; "NOT LOGGED" = no payment dated today
+  - Cleanup later: chart.js + react-chartjs-2 now unused
 - [ ] Add Expense (Quick ⇄ Items, slips, receipt print save)
 - [ ] History (month stack, search/filters, printing bills, tear delete + undo, receipt edit)
 - [ ] Settings (room card, sync pill, join-code receipt, categories, pull-cord theme, export, import wizard, budget)
@@ -49,3 +51,4 @@
 - 2026-10-01 · Phase 0 done. Test project splitease-test-2026; env split + live guard; dev server runs against test. Test preview builds: `npm run build:test` then `firebase deploy --config firebase.test.json --only hosting:… --project test` (preview channel: `firebase hosting:channel:deploy <name> --config firebase.test.json --project test`).
 - 2026-10-01 · Phase 1 done. Backup taken; live rules found fully open; anonymised copy of real rooms in test project, verified in the app (Test Room 3 shows balances).
 - 2026-10-01 · Phase 2 foundations built and checked in the browser (dark + light, sheet, toast, icons); old screens untouched (new styles are --se-* / .se-* only).
+- 2026-10-01 · Dashboard rebuilt (shared + personal) + floating nav; 36 category icons.

@@ -12,7 +12,7 @@ Shatakshi is a designer, not a developer. She designed the whole redesign with C
 
 ## Source of truth for the design
 - Canvas (final screens, dark + light, interactive): https://claude.ai/artifact/GDZtygngsFojuKiobhL9n4 — page "Final app". Read boards with the Artifact tool / claude.ai if available; otherwise ask her to open the board and screenshot it.
-- Claude project "SplitEase" docs: SplitEase-Design-System.md (tokens, every screen's spec, motion system §16), SplitEase-Code-Review-Feature-Inventory.md.
+- Local copy: docs/SplitEase-Design-System.md (read this first — cheaper than the canvas). Claude project "SplitEase" docs: SplitEase-Design-System.md (tokens, every screen's spec, motion system §16), SplitEase-Code-Review-Feature-Inventory.md.
 - Rules from the design phase: visual redesign only — no new features, same data model; premium not calm; light + dark only; test data always starts with "Test".
 - If the design can't be built as drawn (iOS limits, performance), say so and propose alternatives before improvising.
 
@@ -27,3 +27,14 @@ Shatakshi is a designer, not a developer. She designed the whole redesign with C
 
 ## Project facts
 React 19 + Vite 8, Framer Motion, Chart.js, Firestore (no Firebase Auth), react-router 7, jsPDF + autotable, SheetJS. PWA: public/sw.js (network-first, bump the cache version on every release) + public/manifest.json. Hosting: Firebase Hosting, dist/, SPA rewrite. Her phone: iPhone 13 Pro, Safari / Home-Screen PWA.
+
+## Saving usage (she's on a usage-limited plan — be economical without cutting quality)
+- Read only what you need: search (grep/glob) first, then open the specific file section. Don't re-read files you just edited or already have in context.
+- Don't dump big outputs: pipe long logs/builds through `tail -40` or grep for errors; never print package-lock.json, dist/ or node_modules.
+- One focused task per conversation. When a phase or screen is done, update PLAN.md, then suggest she starts a fresh conversation (or run /compact) — PLAN.md carries the context forward.
+- Use subagents (Explore) for wide codebase searches so only the conclusion comes back.
+- Batch related edits in one pass; don't edit → run → edit the same file repeatedly for tiny tweaks — collect fixes first.
+- Screenshots and browser automation are expensive: use them for her final checks and visual bugs, not for every small change. Prefer `npm run build` + lint to catch errors.
+- Design specs: read the relevant section of SplitEase-Design-System.md for the screen you're building — not the whole doc or every canvas board.
+- Keep replies short: what changed, how to see it, next options. No long recaps.
+- For simple, mechanical work (renames, copy changes, small CSS fixes) say so and suggest she can switch to a lighter model; switch back for new screens/logic.
