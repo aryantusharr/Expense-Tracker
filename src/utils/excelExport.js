@@ -13,8 +13,7 @@ import * as XLSX from 'xlsx';
 export function exportToExcel(expenses, categories = [], roomName = 'SplitEase') {
   try {
     if (!expenses || expenses.length === 0) {
-      alert('No expenses to export.');
-      return;
+      throw new Error('No expenses to export.');
     }
 
     // Build a category lookup map
@@ -65,9 +64,9 @@ export function exportToExcel(expenses, categories = [], roomName = 'SplitEase')
 
     // Trigger browser download
     XLSX.writeFile(workbook, filename);
-  } catch (err) {
-    // Silent error
-    alert('Failed to export Excel: ' + err.message);
+    return filename;
+  } finally {
+    // errors propagate to the caller, which shows a toast
   }
 }
 
@@ -87,8 +86,7 @@ export function exportToExcelMonthly(expenses, categories = [], roomName = 'Spli
     });
 
     if (!filtered || filtered.length === 0) {
-      alert(`No expenses found for ${monthObj.label}.`);
-      return;
+      throw new Error(`No expenses found for ${monthObj.label}.`);
     }
 
     // Build a category lookup map
@@ -139,8 +137,8 @@ export function exportToExcelMonthly(expenses, categories = [], roomName = 'Spli
 
     // Trigger browser download
     XLSX.writeFile(workbook, filename);
-  } catch (err) {
-    // Silent error
-    alert('Failed to export Excel: ' + err.message);
+    return filename;
+  } finally {
+    // errors propagate to the caller, which shows a toast
   }
 }

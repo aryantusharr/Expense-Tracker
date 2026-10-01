@@ -9,7 +9,7 @@ import Sheet from '../ui/Sheet';
 import { useToast } from '../ui/Toast';
 import CategoriesSection from './CategoriesSection';
 import ProfileSync from './ProfileSync';
-import DataManagement from './DataManagement';
+import DataSection from './DataSection';
 import './Settings.css';
 import './SettingsScreen.css';
 
@@ -145,8 +145,7 @@ export default function SettingsScreen() {
         </div>
 
         <Pill icon={P.data}>Data</Pill>
-        {/* Export / import — still the old controls until the S6 flows are rebuilt */}
-        <DataManagement expenses={expenses} users={users} categories={categories} room={room} roomCode={roomCode} />
+        <DataSection expenses={expenses} users={users} categories={categories} room={room} roomCode={roomCode} />
 
         <Pill icon={P.room}>Room</Pill>
         <div className="st-card se-glass st-rows">

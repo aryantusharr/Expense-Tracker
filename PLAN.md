@@ -38,7 +38,8 @@
 - [~] Settings — built in 3 chunks (`src/components/settings/SettingsScreen.jsx`, `CategoriesSection.jsx`, `SettingsScreen.css`)
   - [x] Chunk 1 · room ID card (members, personal budget bar → budget sheet), join-code receipt (COPIED stamp + toast), Categories (counts, bin → inline confirm → tear, ⋮⋮ lift/swap, add/edit sheet with the 36 icons, stored as `line:<key>`), Appearance pull-cord + circular wipe, Room rows (switch room, rename sheet). Old `SettingsPage` + `CategoryManager` deleted. NOT tested yet. Deleting a category does NOT rewrite expenses (same as before) — they show under Other; the board says "move to Other" (decide if a real move is wanted).
   - [x] Chunk 2 · `ProfileSync.jsx`: pill in the shared room card (SYNCING TO … with flowing ₹ slips / grey SYNC OFF) + sheet: info (SYNC ON stamp, rules, Change / Turn off + confirm), 3-step setup (who → personal room, or 'Create a personal room' → receipt preview with past count + your share → SYNC ON stamp). Same data operations as the old SyncSettings (deleted). Reuses `.ob-who` styles from Onboarding.css. NOT tested yet. The receipt always copies past expenses (as the old app did); board title reads like a choice.
-  - [ ] Chunk 3 · Data: export scope → report receipt print → PDF/Excel (with Exports phase), import wizard (S6). Until then the OLD `DataManagement` still shows.
+  - [x] Chunk 3a · `DataSection.jsx`: Data rows (Export report / Import CSV with last-import line), "N expenses imported · SHOWS 7 DAYS" banner (same 7-day rule), Export sheet: scope chips (All time / This month / Pick month + month chips) → report receipt prints from a buzzing slot (4 stops; month totals for All time, category totals for a month) → Save as PDF / Excel with toasts (saved / nothing to export / couldn't export). `pdfExport`/`excelExport` no longer `alert()` — they throw and return the filename. Old DataManagement deleted. NOT tested yet. PDF/Excel FILES are still the old design (Rs., no styling) — that's the Exports phase.
+  - [ ] Chunk 3b · Import wizard (S6): steps before-you-start → upload → match people → split groups → match categories → preview → importing → N IMPORTED. The OLD `ImportCSVModal` still opens from Import CSV until then.
 - [ ] Exports: PDF magazine report (embed fonts for ₹), styled Excel (xlsx-js-style), toasts instead of alert()
 - [ ] Cleanup: dead code, emoji iconography, a11y labels
 
@@ -76,3 +77,4 @@
 - 2026-10-01 · Onboarding chunk 2 built (Create, Share + sync, Personal); old setup/ screens removed. Untested by design — her test pass next.
 - 2026-10-01 · Settings chunk 1 built (untested by design). Old sync + data cards still in place, restyled in chunks 2–3.
 - 2026-10-01 · Settings chunk 2 built (profile sync pill + sheets), untested by design.
+- 2026-10-01 · Settings chunk 3a built (Data rows + export sheet), untested by design.
