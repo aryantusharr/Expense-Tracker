@@ -72,9 +72,9 @@ Decisions (her "do whatever is best" → Claude's picks): category delete keeps 
 - [x] Go-live data steps (1 Oct, her yes per step): fresh live backup `backups/splitease-7bb6c-2026-10-01T10-45-21` (10 rooms, 5,475 exp); she deleted the 7 test rooms on live herself via `scripts/delete-rooms.mjs` (54YWA8, 8BFAJD, J3423S, PYCUXE, NCRY97, 99XW7F, ghost P8UW2Y — 1,010 exp; auto-mode blocks Claude from bulk deletes); after-delete backup `backups/splitease-7bb6c-2026-10-01T10-51-59` (4 rooms, 4,465 exp); `roomNames` backfilled on live for the 4 rooms (`scripts/backfill-room-names.mjs`), read back OK.
 - [ ] (done above) Before go-live: backfill `roomNames` for the existing live rooms (needs her yes; 11 docs), else old room names won't show as TAKEN. Live rules deploy: `firebase deploy --only firestore:rules --project live` with `firestore.rules` (needs her yes + fresh backup)
 - Prep done (2 Oct): SW cache bumped to splitease-v3; `npm run build` = live config only (no test project refs), lint clean; `redesign` is 59 commits ahead of main and main has nothing new → merge is a fast-forward. Still TODO before deploy: backfill script for `roomNames` (must run BEFORE the rules deploy — it needs the old open rules to list live rooms; write it with a dry-run default like scripts/wipe-test.mjs).
-- [ ] Fresh backup → merge to main → bump SW cache → `firebase deploy --only hosting --project live`
+- [x] (1 Oct, order changed to app-then-rules, her pick) `redesign` fast-forwarded into main + pushed (old main = b33421b); `firebase deploy --only hosting --project live` → live serves splitease-v3; then `firestore.rules` deployed to live — raw checks: listing rooms / learned_patterns / roomNames = 403, get room by code + its expenses + roomNames/<name> = 200
 - [ ] Verify on her phone; tell the other 2 users to close + reopen the app
-- [ ] Rollback ready: `firebase hosting:rollback` / re-deploy previous release
+- [ ] Rollback ready: hosting → Firebase console › Hosting › Release history › Rollback (24 Jun release), or build b33421b + deploy; rules → console › Firestore › Rules history, or deploy `allow read, write: if true`
 - [ ] Ask her, then delete the test Firebase project
 
 ## Log
@@ -111,3 +111,4 @@ Decisions (her "do whatever is best" → Claude's picks): category delete keeps 
 - 2026-10-02 · Phase 4 data check done (see Phase 4). Next: Phase 5 prep on the test project (tighter rules).
 - 2026-10-02 · Phase 5 prep done in this chat (rules tested on test, build checked, SW v3). Actual go-live (backup, roomNames backfill, rules, merge, deploy) moves to a fresh chat — needs her explicit yes per live step.
 - 2026-10-01 · Go-live started: backup, 7 test rooms deleted on live, roomNames backfilled (4). Next: merge + hosting deploy, then rules (proposed order: hosting before rules — the old app's name check queries rooms, which the strict rules deny).
+- 2026-10-01 · LIVE: new app published + strict rules deployed (app first, then rules). Next: her phone check, tell the other 2 users to close + reopen, then ask before deleting the test project.
