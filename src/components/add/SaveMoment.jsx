@@ -1,70 +1,91 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { haptic } from '../../utils/haptics';
+import { LineIcon } from '../ui/CategoryIcon';
 import FloatingNav from '../layout/FloatingNav';
+import './SaveMoment.css';
 
-const fmtN = n => n.toLocaleString('en-IN', { maximumFractionDigits: 2 });
+const fmtN = n => n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const prettyDate = d => new Date(`${d}T00:00`).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }).toUpperCase();
 const reduce = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
+// Board "App-Add-Expense" save sequence: slot buzz + paper slides out of the printer in 4 stops (2.8s),
+// at 3.0s the nav slides in and the receipt flies into History (.85s), then nav bounce + History pop + "+1".
+const PRINT_MS = 3000;
+const FLY_MS = 850;
+const LAND_MS = 1000;
+const TICKS = [340, 800, 1180, 1640, 2300];
+
 /**
- * Save moment (spec §7): printer slot buzz → 4-stop stutter print → receipt flies into the History
- * tab of the nav → nav bounce + History pop + "+1". Tap anywhere during the print to skip to the flight.
- * `onDone` fires when it's over.
+ * lines: [{ name, amount, iconPath? }] · rows: extra [{ a, b }] lines (e.g. SPLIT 3 WAYS) · paid: "RAVI PAID" or ''.
+ * Tap anywhere during the print to skip ahead to the flight.
  */
-export default function SaveMoment({ title, lines, total, date, onDone }) {
-  const [phase, setPhase] = useState('print');   // print → fly → plus
-  const [fly, setFly] = useState({ dx: 0, dy: 300, x: 0, y: 0 });
+export default function SaveMoment({ title, lines, rows = [], total, date, paid, room, onDone }) {
+  const [phase, setPhase] = useState('print');   // print → fly → land
+  const [fly, setFly] = useState({ dx: 0, dy: 240, bx: 0, by: 0 });
   const paper = useRef(null);
   const quick = reduce();
   const done = useRef(onDone);
   useEffect(() => { done.current = onDone; });
 
-  // Measure paper → History tab, then fly there.
   const goFly = () => {
-    const tab = document.querySelector('.sm .fnav__tab:nth-child(2)')?.getBoundingClientRect();
+    const tab = document.querySelector('.sm .fnav__tab:nth-child(2)');
     const box = paper.current?.getBoundingClientRect();
     if (tab && box) {
-      const tx = tab.left + tab.width / 2, ty = tab.top + tab.height / 2;
-      setFly({ dx: tx - (box.left + box.width / 2), dy: ty - (box.top + box.height / 2), x: tx, y: ty });
+      const t = tab.getBoundingClientRect();
+      const ico = tab.querySelector('svg').getBoundingClientRect();
+      setFly({
+        dx: t.left + t.width / 2 - (box.left + box.width / 2), dy: t.top + t.height / 2 - (box.top + box.height / 2),
+        bx: ico.right - 2, by: ico.top - 9,
+      });
     }
     setPhase('fly');
   };
 
   useEffect(() => {
     if (phase === 'print') {
-      const ticks = quick ? [] : [350, 700, 1050, 1400].map(t => setTimeout(() => haptic('tap'), t));
-      const t = setTimeout(goFly, quick ? 400 : 2000);
+      haptic('choose');
+      const ticks = quick ? [] : TICKS.map(t => setTimeout(() => haptic('tap'), t));
+      const t = setTimeout(goFly, quick ? 400 : PRINT_MS);
       return () => { ticks.forEach(clearTimeout); clearTimeout(t); };
     }
     if (phase === 'fly') {
-      const t = setTimeout(() => { haptic('success'); setPhase('plus'); }, quick ? 200 : 650);
+      const t = setTimeout(() => { haptic('success'); setPhase('land'); }, quick ? 200 : FLY_MS);
       return () => clearTimeout(t);
     }
-    const t = setTimeout(() => done.current(), quick ? 400 : 900);
+    const t = setTimeout(() => done.current(), quick ? 400 : LAND_MS);
     return () => clearTimeout(t);
   }, [phase, quick]);
 
   return createPortal(
-    <div className={`sm ${phase === 'plus' ? 'sm--land' : ''}`} onClick={() => phase === 'print' && goFly()} role="status" aria-label="Saving receipt">
-      <div className="sm-slot" aria-hidden="true"><span /></div>
-      <div
-        ref={paper}
-        className={`sm-paper ib-paper ${phase === 'print' ? 'sm-paper--print' : 'sm-paper--fly'} ${phase === 'plus' ? 'sm-gone' : ''}`}
-        style={{ '--dx': `${fly.dx}px`, '--dy': `${fly.dy}px` }}
-      >
-        <div className="ib-paper__head"><span className="ib-paper__brand">RECEIPT</span><span>{prettyDate(date)}</span></div>
-        <div className="ib-rule" />
-        <div className="ib-paper__title">{title}</div>
-        {lines.map((l, i) => (
-          <div className="ib-line" key={i}><span className="ib-item__name">{l.name}</span><i /><b>₹{fmtN(l.amount)}</b></div>
-        ))}
-        <div className="ib-rule" />
-        <div className="ib-line ib-line--total"><span>TOTAL</span><i /><b>₹{fmtN(total)}</b></div>
-        <span className="ib-zig" aria-hidden="true" />
+    <div className={`sm sm--${phase}`} onClick={() => phase === 'print' && goFly()} role="status" aria-label="Saving receipt">
+      <div className="sm-win" style={{ '--dx': `${fly.dx}px`, '--dy': `${fly.dy}px` }}>
+        <div ref={paper} className={`sm-paper ${phase === 'print' ? 'sm-paper--print' : phase === 'fly' ? 'sm-paper--fly' : 'sm-gone'}`}>
+          <b className="sm-paper__title">{title}</b>
+          <span className="sm-paper__date">{prettyDate(date)}{paid ? ` · ${paid}` : ''}</span>
+          <span className="sm-paper__rule" />
+          {lines.map((l, i) => (
+            <span className="sm-paper__line" key={i}>
+              {l.iconPath && <span className="sm-stamp" aria-hidden="true"><LineIcon path={l.iconPath} size={10} strokeWidth={2.4} /></span>}
+              <span className="sm-paper__name">{l.name}</span><span>{fmtN(l.amount)}</span>
+            </span>
+          ))}
+          {rows.map((r, i) => <span className="sm-paper__line" key={`r${i}`}><span className="sm-paper__name">{r.a}</span><span>{r.b}</span></span>)}
+          <span className="sm-paper__rule" />
+          <span className="sm-paper__total"><span>TOTAL</span><span>₹{fmtN(total)}</span></span>
+          <span className="sm-paper__added">✓ ADDED TO {room}</span>
+          <span className="sm-paper__bars" aria-hidden="true">|||| ||| || |||| |</span>
+        </div>
       </div>
-      <FloatingNav />
-      {phase === 'plus' && <span className="sm-plus" style={{ left: fly.x, top: fly.y }} aria-hidden="true">+1</span>}
+
+      {phase === 'print' && (
+        <div className="sm-slot">
+          <span className="sm-slot__slit" aria-hidden="true" />
+          <span className="sm-slot__label">PRINTING…</span>
+        </div>
+      )}
+      <div className={`sm-nav sm-nav--${phase}`}><FloatingNav /></div>
+      {phase === 'land' && <span className="sm-plus" style={{ left: fly.bx, top: fly.by }} aria-hidden="true">+1</span>}
     </div>,
     document.body
   );

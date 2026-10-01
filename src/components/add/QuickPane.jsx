@@ -9,9 +9,11 @@ import Keypad from './Keypad';
 import SlipsStrip from './SlipsStrip';
 import SlideToAdd from './SlideToAdd';
 import SaveMoment from './SaveMoment';
+import { resolveCategoryIcon } from '../../design/categoryIcons';
 import { evalExpr, hasOperator, pressKey } from './amountExpr';
 
 const QUICK_ADDS = [50, 100, 200, 500];
+const nameOf = m => (m?.name || '').replace(/^test[\s_-]+/i, '') || m?.name || '';
 const fmtN = n => n.toLocaleString('en-IN', { maximumFractionDigits: 2 });
 
 function AmountCard({ amount, expr, isPersonal, count, onEdit }) {
@@ -82,7 +84,15 @@ export default function QuickPane({ c }) {
   const confirm = async () => {
     const res = await c.submitQuick();
     if (!res.ok) { toast({ kind: 'error', message: <b>{res.message}</b> }); setShake(s => s + 1); return; }
-    setSaved({ title: res.description, lines: [{ name: res.description, amount: res.amount }], total: res.amount, date: form.date });
+    const cat = c.sortedCategories.find(x => x.id === form.categoryId);
+    const payer = members.find(m => m.id === form.paidBy);
+    const n = form.splitAmong.length;
+    setSaved({
+      title: res.description, date: form.date, total: res.amount, room: c.room?.name || c.roomCode,
+      paid: isPersonal ? '' : `${nameOf(payer)} PAID`,
+      lines: [{ name: res.description, amount: res.amount, iconPath: cat ? resolveCategoryIcon(cat).path : undefined }],
+      rows: isPersonal || n < 1 ? [] : [{ a: `SPLIT ${n} WAYS`, b: `${n} × ${fmtN(Math.round(res.amount / n * 100) / 100)}` }],
+    });
   };
   const finish = () => { setSaved(null); c.resetQuick(); setExpr(''); setView('amount'); };
 

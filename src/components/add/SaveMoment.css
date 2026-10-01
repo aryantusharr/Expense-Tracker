@@ -1,0 +1,95 @@
+/* ========================================
+   Save moment — board "App-Add-Expense": slot buzz, paper slides out in 4 stops,
+   nav slides in + receipt flies to History, nav bounce, History pop, "+1"
+   ======================================== */
+.sm {
+  position: fixed; inset: 0; z-index: 90; background: rgba(4, 4, 14, 0.62);
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); animation: se-fade .2s ease both;
+}
+:root[data-theme='light'] .sm { background: rgba(21, 20, 43, 0.5); }
+.sm .fnav { pointer-events: none; animation: none !important; }
+.sm-nav--print .fnav { opacity: 0; }
+.sm-nav--fly .fnav { animation: sm-navin .45s cubic-bezier(.34, 1.4, .64, 1) both !important; }
+.sm-nav--land .fnav { animation: sm-navb .7s cubic-bezier(.3, 1.4, .5, 1) both !important; }
+@keyframes sm-navin { from { transform: translateY(120px); } }
+@keyframes sm-navb { 0% { transform: translateY(0); } 25% { transform: translateY(7px) scaleY(.92); } 50% { transform: translateY(-12px) scaleY(1.04); } 70% { transform: translateY(4px); } 85% { transform: translateY(-3px); } 100% { transform: translateY(0); } }
+.sm--land .fnav__tab:nth-child(2) { color: #9BEADF; }
+.sm--land .fnav__tab:nth-child(2) svg { animation: sm-histpop .6s cubic-bezier(.34, 1.8, .64, 1); }
+@keyframes sm-histpop { 0% { transform: scale(1); } 40% { transform: scale(1.45) rotate(-12deg); } 70% { transform: scale(.9); } 100% { transform: scale(1); } }
+
+/* printer slot — sits where the nav will appear */
+.sm-slot {
+  position: fixed; z-index: 3; left: 16px; right: 16px; max-width: 480px; margin: 0 auto; height: 60px;
+  bottom: calc(24px + env(safe-area-inset-bottom) * .5); border-radius: 999px;
+  background: linear-gradient(180deg, #2A2945, #15142B); border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center;
+  animation: sm-buzz .12s linear infinite;
+}
+.sm-slot__slit { position: absolute; left: 50%; top: -3px; width: 244px; max-width: 80%; height: 8px; transform: translateX(-50%); border-radius: 4px; background: #07071A; box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.8); }
+.sm-slot__label { font: 500 11px var(--se-font-mono); letter-spacing: .2em; color: #9BEADF; }
+@keyframes sm-buzz { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-1px); } 75% { transform: translateX(1px); } }
+
+/* window above the slot: clips the paper while it is still inside the printer */
+.sm-win {
+  position: fixed; z-index: 2; left: 50%; width: 230px; margin-left: -115px; height: min(62vh, 520px);
+  bottom: calc(84px + env(safe-area-inset-bottom) * .5); overflow: visible;
+}
+.sm--print .sm-win { overflow: hidden; }
+.sm-paper {
+  position: absolute; left: 7px; right: 7px; bottom: 0; box-sizing: border-box; background: #FBFAFF; color: #15142B;
+  padding: 16px 16px 18px; font: 400 11px var(--se-font-mono); display: flex; flex-direction: column; gap: 7px;
+  box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.35);
+  -webkit-mask: linear-gradient(135deg, transparent 5px, #000 0) top left, linear-gradient(225deg, transparent 5px, #000 0) top right;
+  -webkit-mask-size: 51% 100%; -webkit-mask-repeat: no-repeat;
+  mask: linear-gradient(135deg, transparent 5px, #000 0) top left, linear-gradient(225deg, transparent 5px, #000 0) top right;
+  mask-size: 51% 100%; mask-repeat: no-repeat;
+}
+.sm-paper--print { transform: translateY(100%); animation: sm-printS 2.8s linear forwards; }
+/* four stops; at each: a 1–2px twitch, the 2nd also flashes brighter */
+@keyframes sm-printS {
+  0% { transform: translateY(100%); }
+  12% { transform: translateY(84%); }
+  18% { transform: translateY(84%); }
+  19% { transform: translateY(84%) translateX(1.5px); }
+  20% { transform: translateY(84%) translateX(-1.5px); }
+  21% { transform: translateY(84%); }
+  34% { transform: translateY(60%); }
+  42% { transform: translateY(60%); }
+  43% { transform: translateY(61.5%) translateX(-2px); filter: brightness(1.25); }
+  44% { transform: translateY(60%); filter: none; }
+  58% { transform: translateY(36%); }
+  64% { transform: translateY(36%); }
+  65% { transform: translateY(36%) translateX(2px); }
+  66% { transform: translateY(37%) translateX(-1px); }
+  67% { transform: translateY(36%); }
+  82% { transform: translateY(12%); }
+  88% { transform: translateY(12%); }
+  89% { transform: translateY(13%) translateX(1px); }
+  90% { transform: translateY(12%); }
+  100% { transform: translateY(0); }
+}
+.sm-paper--fly { animation: sm-flyh .85s cubic-bezier(.5, -.3, .7, .4) forwards; }
+@keyframes sm-flyh {
+  0% { transform: translate(0, 0) scale(1) rotate(0); }
+  18% { transform: translate(0, -26px) scale(1.04) rotate(-3deg); }
+  100% { transform: translate(var(--dx), var(--dy)) scale(.06) rotate(-28deg); opacity: .2; }
+}
+.sm-gone { visibility: hidden; }
+.sm-paper__title { text-align: center; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; word-break: break-word; }
+.sm-paper__date { text-align: center; font-size: 9px; color: #6F6E88; }
+.sm-paper__rule { border-top: 1px dashed #B9B6DA; }
+.sm-paper__line { display: flex; gap: 6px; align-items: center; }
+.sm-paper__name { flex: 1; min-width: 0; text-transform: uppercase; }
+.sm-stamp { width: 16px; height: 16px; border-radius: 50%; border: 1.2px solid #3B2F6B; color: #3B2F6B; display: grid; place-items: center; flex-shrink: 0; transform: rotate(-5deg); opacity: .85; }
+.sm-paper__total { display: flex; justify-content: space-between; font-size: 14px; font-weight: 700; }
+.sm-paper__added { text-align: center; font-size: 9px; color: #0A8577; letter-spacing: .1em; text-transform: uppercase; }
+.sm-paper__bars { text-align: center; letter-spacing: 2px; font-size: 13px; }
+.sm-plus {
+  position: fixed; z-index: 120; padding: 1px 6px; border-radius: 999px; background: #5FD4C4; color: #07071A;
+  font: 700 9px var(--se-font-mono); animation: se-pop .45s cubic-bezier(.34, 1.56, .64, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sm-slot { animation: none; }
+  .sm-paper--print { animation: se-fade .2s ease both; transform: none; }
+  .sm-paper--fly { animation: se-fade .2s ease reverse forwards; }
+}

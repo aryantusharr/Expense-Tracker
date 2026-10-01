@@ -123,7 +123,12 @@ export default function ItemsPane({ c }) {
   const confirm = async () => {
     const res = await c.submitBill();
     if (!res.ok) { toast({ kind: 'error', message: <b>{res.message}</b> }); setSlideShake(s => s + 1); return; }
-    setSaved({ title: res.name, lines: c.rows.map(r => ({ name: r.description, amount: parseFloat(r.amount) })), total: res.total, date: form.date });
+    const payer = members.find(m => m.id === form.paidBy);
+    setSaved({
+      title: res.name, date: form.date, total: res.total, room: c.room?.name || c.roomCode,
+      paid: isPersonal ? '' : `${(payer?.name || '').replace(/^test[\s_-]+/i, '').toUpperCase()} PAID`,
+      lines: c.rows.map(r => ({ name: r.description, amount: parseFloat(r.amount), iconPath: resolveCategoryIcon(cats.find(x => x.id === r.categoryId)).path })),
+    });
   };
   const finish = () => { setSaved(null); c.resetBill(); setStage('setup'); setDrafting(false); };
 
