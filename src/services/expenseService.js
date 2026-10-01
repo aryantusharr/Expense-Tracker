@@ -106,12 +106,15 @@ export async function addExpense(roomCode, expense, roomData = null, knownExpens
 /**
  * Update an existing expense.
  */
-export async function updateExpense(roomCode, expenseId, updates, roomData = null) {
+export async function updateExpense(roomCode, expenseId, updates, roomData = null, knownExpenses = null) {
   const rData = await getRoomData(roomCode, roomData).catch(() => null);
 
   const expensesRef = collection(db, 'rooms', roomCode, 'expenses');
-  const snap = await getDocs(expensesRef).catch(() => null);
-  const existingExpenses = snap ? snap.docs.map(d => ({ id: d.id, ...d.data() })) : [];
+  let existingExpenses = knownExpenses;
+  if (!existingExpenses) {
+    const snap = await getDocs(expensesRef).catch(() => null);
+    existingExpenses = snap ? snap.docs.map(d => ({ id: d.id, ...d.data() })) : [];
+  }
   const oldExpense = existingExpenses.find(e => e.id === expenseId);
 
   // Soft-validate categoryId if it's being updated

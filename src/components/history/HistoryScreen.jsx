@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useLocation } from 'react-router-dom';
 import { useRoomContext } from '../../context/RoomContext';
 import { useToast } from '../ui/Toast';
 import { haptic } from '../../utils/haptics';
@@ -14,12 +13,10 @@ import EmptyHistory from './EmptyHistory';
 import './History.css';
 
 const UNDO_MS = 4500;
-const SAVE_TIMEOUT_MS = 6000;
 
 export default function HistoryScreen() {
   const { roomCode, room, expenses, users, categories, userIdentity } = useRoomContext();
   const toast = useToast();
-  const { state } = useLocation();
   const isPersonal = room?.isPersonal === true;
   const budget = Number(room?.budget) || 0;
   const meId = isPersonal ? (users[0]?.id ?? null) : (userIdentity || null);
@@ -110,27 +107,16 @@ export default function HistoryScreen() {
 
   // ---- edit (board 6b) ----
   const [editing, setEditing] = useState(null);
-  const saveEdit = async (updates, newGroupName) => {
+  // Close the sheet straight away; Firestore applies the change locally at once and syncs in the background.
+  const saveEdit = (updates, newGroupName) => {
     const e = editing;
-    const run = (async () => {
-      await updateExpense(roomCode, e.id, updates, room);
-      if (newGroupName) await updateGroupName(roomCode, e.groupId, newGroupName, room);
-    })();
-    // Offline writes queue inside Firestore and never resolve — don't leave the sheet hanging.
-    const outcome = await Promise.race([run.then(() => 'ok', err => err), new Promise(r => setTimeout(() => r('slow'), SAVE_TIMEOUT_MS))]);
-    if (outcome !== 'ok' && outcome !== 'slow') { toast({ message: 'Couldn’t save the change', sub: String(outcome?.message || outcome), kind: 'error' }); }
-    else { haptic('choose'); }
     setEditing(null);
+    haptic('choose');
+    (async () => {
+      await updateExpense(roomCode, e.id, updates, room, expenses);
+      if (newGroupName) await updateGroupName(roomCode, e.groupId, newGroupName, room);
+    })().catch(err => toast({ message: 'Couldn’t save the change', sub: String(err?.message || err), kind: 'error' }));
   };
-
-  // ---- arrival from Add (the receipt just flew into History) ----
-  const [wasLanded] = useState(() => !!state?.landed);
-  const landedId = useMemo(() => {
-    if (!wasLanded) return null;
-    let best = null;
-    months.forEach(m => m.days.forEach(d => d.entries.forEach(en => { if (!best || en.createdAt > best.createdAt) best = en; })));
-    return best ? best.id : null;
-  }, [wasLanded, months]);
 
   const headCount = `${entryCount} ${entryCount === 1 ? 'EXPENSE' : 'EXPENSES'} · ${(room?.name || '').toUpperCase()}`;
 
@@ -200,12 +186,12 @@ export default function HistoryScreen() {
             {day.entries.map(en => en.kind === 'bill' ? (
               <BillCard
                 key={en.id} bill={en} catOf={catOf} users={users} meId={meId} isPersonal={isPersonal}
-                dim={entryDim(en)} removed={hidden.has(en.id)} landed={en.id === landedId}
+                dim={entryDim(en)} removed={hidden.has(en.id)}
                 onEditItem={it => setEditing(it)} onTear={() => tear(en)} onLocked={() => locked(en)}
               />
             ) : (
               <TearRow
-                key={en.id} locked={isSyncedExp(en.e)} removed={hidden.has(en.id)} dim={entryDim(en)} landed={en.id === landedId}
+                key={en.id} locked={isSyncedExp(en.e)} removed={hidden.has(en.id)} dim={entryDim(en)}
                 onTap={() => (isSyncedExp(en.e) ? locked(en) : setEditing(en.e))} onTear={() => tear(en)} onLocked={() => locked(en)}
               >
                 <ExpenseCard e={en.e} cat={catOf(en.e)} users={users} meId={meId} isPersonal={isPersonal} />

@@ -23,8 +23,7 @@ export default function EditSheet({ expense, users, categories, isPersonal, meId
     groupName: expense.groupName || '',
   }));
   const [field, setField] = useState('amt');
-  const [saving, setSaving] = useState(false);
-  const [err, setErr] = useState('');
+    const [err, setErr] = useState('');
   const set = (k, v) => setD(p => ({ ...p, [k]: v }));
   const name = id => (id === meId ? 'You' : users.find(u => u.id === id)?.name || '—');
   const cat = categories.find(c => c.id === d.categoryId);
@@ -32,12 +31,11 @@ export default function EditSheet({ expense, users, categories, isPersonal, meId
 
   const days = [0, 1, 2, 3, 4].map(n => { const t = new Date(); t.setDate(t.getDate() - n); return { key: localDateStr(t), wd: n === 0 ? 'TODAY' : n === 1 ? 'YDAY' : WD[t.getDay()], dn: t.getDate() }; });
 
-  const save = async () => {
+  const save = () => {
     if (!(d.amount > 0)) { setErr('Amount must be more than ₹0'); haptic('error'); setField('amt'); return; }
     if (!isPersonal && d.splitAmong.length === 0) { setErr('Pick at least one person to split with'); haptic('error'); setField('split'); return; }
     if (bill && !d.groupName.trim()) { setErr('Bill name is required'); haptic('error'); setField('bill'); return; }
-    setSaving(true);
-    await onSave({
+    onSave({
       description: d.description.trim() || 'Untitled',
       amount: Math.round(d.amount * 100) / 100,
       categoryId: d.categoryId,
@@ -127,7 +125,7 @@ export default function EditSheet({ expense, users, categories, isPersonal, meId
         {err && <p className="he__err">{err}</p>}
         <div className="he__btns">
           <button type="button" className="se-btn se-btn--secondary se-btn--lg se-press" style={{ flex: 1 }} onClick={onClose}>Cancel</button>
-          <button type="button" className="se-btn se-btn--primary se-btn--lg se-press" style={{ flex: 1.5 }} onClick={save} disabled={saving}>{saving ? 'Saving…' : 'Save changes'}</button>
+          <button type="button" className="se-btn se-btn--primary se-btn--lg se-press" style={{ flex: 1.5 }} onClick={save}>Save changes</button>
         </div>
       </div>
     </Sheet>
