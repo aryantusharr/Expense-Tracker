@@ -1,0 +1,82 @@
+/* ========================================
+   SplitEase redesign — core motion (Motion system board)
+   Six core moves usable anywhere: pop · print · stamp · tear · sheet · shake.
+   Signature moves (flip card, pull-cord, slot buzz, flowing slips) live with
+   the one screen allowed to use them.
+   ======================================== */
+
+/* pop — chips, monograms, icons, toasts, new rows */
+.se-pop { animation: se-pop var(--se-dur-medium) var(--se-ease-strong) both; }
+@keyframes se-pop { from { transform: scale(.3); opacity: 0; } }
+
+/* print — receipts, new bills, join-code card, report preview, sync card */
+.se-print { animation: se-print var(--se-dur-slow) var(--se-ease-soft) both; }
+@keyframes se-print {
+  from { clip-path: inset(0 0 100% 0); transform: translateY(-12px); }
+  to { clip-path: inset(0 0 0 0); transform: none; }
+}
+
+/* stamp — COPIED · ADMIT · NO ROOM · TAKEN · SYNC ON · N IMPORTED; lands at −8° */
+.se-stamp { animation: se-stamp var(--se-dur-medium) var(--se-ease-strong) both; transform: rotate(-8deg); }
+@keyframes se-stamp {
+  from { transform: rotate(-8deg) scale(2.2); opacity: 0; }
+  to { transform: rotate(-8deg) scale(1); opacity: 1; }
+}
+
+/* tear — delete expense / category / room: two halves fly apart (wrap halves in .se-tear-l / .se-tear-r) */
+.se-tear-l { animation: se-tear-l var(--se-dur-medium) var(--se-ease-out) forwards; }
+.se-tear-r { animation: se-tear-r var(--se-dur-medium) var(--se-ease-out) forwards; }
+@keyframes se-tear-l { to { transform: translate(-40px, 18px) rotate(-10deg); opacity: 0; } }
+@keyframes se-tear-r { to { transform: translate(40px, 18px) rotate(10deg); opacity: 0; } }
+
+/* sheet — every bottom sheet: in .45s soft, out .2s ease-out */
+.se-sheet-in { animation: se-sheet-in var(--se-dur-medium) var(--se-ease-soft) both; }
+.se-sheet-out { animation: se-sheet-out var(--se-dur-quick) var(--se-ease-out) forwards; }
+@keyframes se-sheet-in { from { transform: translateY(105%); } }
+@keyframes se-sheet-out { to { transform: translateY(105%); } }
+.se-fade-in { animation: se-fade var(--se-dur-quick) ease both; }
+.se-fade-out { animation: se-fade var(--se-dur-quick) ease reverse forwards; }
+@keyframes se-fade { from { opacity: 0; } to { opacity: 1; } }
+
+/* shake — wrong code, taken name, missing fields (always with error haptic) */
+.se-shake { animation: se-shake .2s var(--se-ease-out) 2; }
+@keyframes se-shake {
+  25% { transform: translateX(-8px); }
+  75% { transform: translateX(8px); }
+}
+
+/* toast entrance */
+.se-toast-in { animation: se-toast-in var(--se-dur-medium) var(--se-ease-soft) both; }
+.se-toast-out { animation: se-fade var(--se-dur-quick) var(--se-ease-out) reverse forwards; }
+@keyframes se-toast-in { from { opacity: 0; transform: translateY(24px) scale(.96); } }
+
+/* press feedback for anything tappable */
+.se-press { transition: transform .3s var(--se-ease-strong); }
+.se-press:active { transform: scale(.93); }
+
+/* Ambient background orbs */
+.se-orb { position: absolute; border-radius: 50%; filter: blur(70px); pointer-events: none; }
+.se-orb-1 { animation: se-drift-1 16s ease-in-out infinite alternate; }
+.se-orb-2 { animation: se-drift-2 19s ease-in-out infinite alternate; }
+.se-orb-3 { animation: se-drift-3 14s ease-in-out infinite alternate; }
+@keyframes se-drift-1 { to { transform: translate(120px, 200px) scale(1.25); } }
+@keyframes se-drift-2 { to { transform: translate(-150px, -140px) scale(.85); } }
+@keyframes se-drift-3 { to { transform: translate(90px, -240px) scale(1.3); } }
+
+/* ---- Reduce motion (M4b) ----
+   Stop: orbs drift, marquees, sway, flowing slips, pulses, sheen.
+   Become a .2s fade: print, tear, sheet, flip, pop, shake.
+   Keep: stamps (they carry meaning) — fade + land at −8°, no overshoot. */
+@media (prefers-reduced-motion: reduce) {
+  .se-orb-1, .se-orb-2, .se-orb-3, .se-ambient { animation: none !important; }
+  .se-pop, .se-print, .se-sheet-in, .se-toast-in {
+    animation: se-fade var(--se-dur-quick) ease both !important;
+    clip-path: none !important;
+  }
+  .se-tear-l, .se-tear-r, .se-sheet-out, .se-toast-out {
+    animation: se-fade var(--se-dur-quick) ease reverse forwards !important;
+  }
+  .se-shake { animation: none !important; }
+  .se-stamp { animation: se-fade var(--se-dur-quick) ease both !important; }
+  .se-press, .se-press:active { transition: none; transform: none; }
+}

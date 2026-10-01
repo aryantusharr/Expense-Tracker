@@ -18,7 +18,9 @@
 - Test room codes: D4NYY3 = Test Room 3 (C53 copy, 1,181 exp), NCRY97 = Test Room 4; personal: N4EWMU, W6LTVB, MB739V
 
 ## Phase 2 · Build (order is a suggestion)
-- [ ] Foundations: CSS tokens (colours dark/light, type: Sora / Unbounded / JetBrains Mono, radius, glass), 32 A-line icons, motion tokens + reduced motion, buttons/chips/sheets/toasts
+- [x] Foundations (preview: /foundations — dev/test builds only): `src/styles/tokens.css` (--se-* colours dark/light, Sora/Unbounded/JetBrains Mono self-hosted via @fontsource, radii, motion tokens, reduce-motion), `src/styles/motion.css` (pop/print/stamp/tear/sheet/shake, orbs), `src/styles/ui.css`, `src/components/ui/` (Button, IconButton, Chip, Sheet, Toast/useToast, CategoryIcon), `src/design/categoryIcons.js` (32 A-line icons + name/emoji → icon mapping; stored emoji unchanged), `src/utils/haptics.js`
+  - Open question for her: Smoking, Weed, Saving, Apple watch have no matching icon (show "Other" dots for now)
+  - Screen-specific icons (nav, header, etc.) and signature moves get built with their screens
 - [ ] Onboarding (landing w/ orbit keys + ⚙ room sheet, create chat, share postcard + sync setup, join paper strip + keypad, personal chat + join by code)
 - [ ] Dashboard (shared + personal)
 - [ ] Add Expense (Quick ⇄ Items, slips, receipt print save)
@@ -46,3 +48,4 @@
 - 2026-10-01 · Design finalised on the canvas (all screens + motion system). Plan written.
 - 2026-10-01 · Phase 0 done. Test project splitease-test-2026; env split + live guard; dev server runs against test. Test preview builds: `npm run build:test` then `firebase deploy --config firebase.test.json --only hosting:… --project test` (preview channel: `firebase hosting:channel:deploy <name> --config firebase.test.json --project test`).
 - 2026-10-01 · Phase 1 done. Backup taken; live rules found fully open; anonymised copy of real rooms in test project, verified in the app (Test Room 3 shows balances).
+- 2026-10-01 · Phase 2 foundations built and checked in the browser (dark + light, sheet, toast, icons); old screens untouched (new styles are --se-* / .se-* only).

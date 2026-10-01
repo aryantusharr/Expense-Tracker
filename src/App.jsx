@@ -12,7 +12,13 @@ import AddExpense from './components/expenses/AddExpense';
 import ExpenseList from './components/expenses/ExpenseList';
 import SettingsPage from './components/settings/SettingsPage';
 
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
+
+// Redesign foundations preview — dev/test builds only (MODE is replaced at build time, so
+// the production bundle doesn't include it).
+const FoundationsPage = import.meta.env.MODE !== 'production'
+  ? lazy(() => import('./components/dev/FoundationsPage'))
+  : null;
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -57,6 +63,9 @@ function AppRoutes() {
           <Route path="/add" element={inRoom ? <AddExpense /> : <Navigate to="/" replace />} />
           <Route path="/history" element={inRoom ? <ExpenseList /> : <Navigate to="/" replace />} />
           <Route path="/settings" element={inRoom ? <SettingsPage /> : <Navigate to="/" replace />} />
+          {FoundationsPage && (
+            <Route path="/foundations" element={<Suspense fallback={null}><FoundationsPage /></Suspense>} />
+          )}
           {/* Catch-all */}
           <Route path="*" element={<Navigate to={inRoom ? '/dashboard' : '/'} replace />} />
         </Routes>
@@ -70,7 +79,7 @@ function AppRoutes() {
 function ShowNavGuard() {
   const location = useLocation();
   const { roomCode } = useRoomContext();
-  const hideOn = ['/share', '/create', '/join', '/personal'];
+  const hideOn = ['/share', '/create', '/join', '/personal', '/foundations'];
   // Guard 1: not inside a room yet
   if (!roomCode) return null;
   // Guard 2: setup/landing routes

@@ -1,0 +1,126 @@
+/* ========================================
+   SplitEase redesign — base components
+   Buttons · chips · glass · sheets · toasts · category icons.
+   Values copied from the Final app boards (dark + light).
+   ======================================== */
+
+/* Opt-in page base for redesigned screens */
+.se-page {
+  min-height: 100dvh;
+  background: var(--se-bg);
+  color: var(--se-text);
+  font-family: var(--se-font);
+  -webkit-font-smoothing: antialiased;
+  position: relative;
+  overflow-x: hidden;
+}
+.se-mono { font-family: var(--se-font-mono); }
+.se-display { font-family: var(--se-font-display); }
+.se-grad-text, .se-grad-text-r, .se-grad-text-neg {
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.se-grad-text { background-image: var(--se-grad-text); }
+.se-grad-text-r { background-image: var(--se-grad-text-r); }
+.se-grad-text-neg { background-image: var(--se-grad-text-neg); }
+
+/* Glass card */
+.se-glass {
+  background: var(--se-glass-bg);
+  border: 1px solid var(--se-glass-border);
+  box-shadow: var(--se-glass-shadow);
+  backdrop-filter: blur(26px) saturate(150%);
+  -webkit-backdrop-filter: blur(26px) saturate(150%);
+}
+
+/* ---- Buttons ---- */
+.se-btn {
+  font-family: inherit; color: inherit; background: none; border: 0; margin: 0; padding: 0 22px;
+  cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  height: 48px; min-width: 44px; border-radius: var(--se-r-pill);
+  font-size: 14px; font-weight: 700; white-space: nowrap;
+  transition: transform .3s var(--se-ease-strong), opacity var(--se-dur-quick);
+}
+.se-btn:active { transform: scale(.93); }
+.se-btn:disabled { opacity: .45; cursor: default; transform: none; }
+.se-btn:focus-visible { outline: 2px solid var(--se-violet); outline-offset: 3px; }
+.se-btn--lg { height: 52px; font-size: 15px; }
+.se-btn--sm { height: 40px; padding: 0 16px; font-size: 13px; border-radius: var(--se-r-sm); }
+.se-btn--block { width: 100%; }
+.se-btn--primary { background: var(--se-grad-primary); color: var(--se-on-accent); }
+.se-btn--secondary { border: 1px solid var(--se-line-2); font-weight: 600; }
+.se-btn--ghost { background: var(--se-fill-1); font-weight: 600; }
+.se-btn--soft { background: var(--se-teal-fill); color: var(--se-teal-ink); }
+.se-btn--danger { background: color-mix(in srgb, var(--se-pink) 16%, transparent); color: var(--se-pink-2); }
+.se-icon-btn {
+  width: 44px; height: 44px; padding: 0; border-radius: var(--se-r-pill);
+  display: inline-grid; place-items: center; background: var(--se-fill-1);
+  border: 0; color: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent;
+  transition: transform .3s var(--se-ease-strong);
+}
+.se-icon-btn:active { transform: scale(.9); }
+
+/* ---- Chips ---- */
+.se-chip {
+  font-family: inherit; color: var(--se-text-2); border: 1px solid var(--se-glass-border); margin: 0;
+  background: var(--se-glass-bg); cursor: pointer; -webkit-tap-highlight-color: transparent;
+  display: inline-flex; align-items: center; gap: 7px;
+  height: 36px; padding: 0 14px; border-radius: var(--se-r-pill);
+  font-size: 13px; font-weight: 600; white-space: nowrap;
+  transition: transform .3s var(--se-ease-strong), background var(--se-dur-quick), color var(--se-dur-quick), border-color var(--se-dur-quick);
+}
+.se-chip:active { transform: scale(.93); }
+.se-chip[aria-pressed='true'], .se-chip--on {
+  color: var(--se-text);
+  background: linear-gradient(135deg, rgba(139, 124, 255, 0.35), rgba(95, 212, 196, 0.28));
+  border-color: transparent;
+  box-shadow: 0 4px 16px rgba(139, 124, 255, 0.28);
+}
+.se-chip:focus-visible { outline: 2px solid var(--se-violet); outline-offset: 2px; }
+.se-chip__dot { width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; font-size: 10px; font-weight: 700; color: var(--se-on-accent); }
+
+/* ---- Bottom sheet ---- */
+.se-scrim {
+  position: fixed; inset: 0; z-index: 900; background: var(--se-scrim);
+  border: 0; padding: 0; margin: 0; cursor: default;
+}
+.se-sheet-wrap { position: fixed; left: 0; right: 0; bottom: 0; z-index: 901; }
+.se-sheet {
+  max-height: 92dvh; outline: none; overflow-y: auto; overscroll-behavior: contain;
+  border-radius: var(--se-r-sheet) var(--se-r-sheet) 0 0;
+  background: var(--se-sheet); color: var(--se-text); font-family: var(--se-font);
+  border-top: 1px solid var(--se-line);
+  padding: 10px 18px calc(24px + env(safe-area-inset-bottom));
+  display: flex; flex-direction: column; gap: 12px;
+}
+.se-sheet__handle { align-self: center; width: 40px; height: 5px; border-radius: 3px; background: var(--se-handle); flex-shrink: 0; }
+.se-sheet__title { font-size: 17px; font-weight: 700; margin: 0; }
+
+/* ---- Toasts ---- */
+.se-toasts {
+  position: fixed; left: 16px; right: 16px; z-index: 950;
+  bottom: calc(96px + env(safe-area-inset-bottom));
+  display: flex; flex-direction: column; gap: 8px; pointer-events: none;
+}
+.se-toast {
+  pointer-events: auto;
+  border-radius: var(--se-r-lg); background: var(--se-float); color: var(--se-text);
+  border: 1px solid var(--se-line); box-shadow: var(--se-shadow-float);
+  padding: 12px 10px 12px 16px; min-height: 40px;
+  display: flex; align-items: center; gap: 12px; font-family: var(--se-font);
+}
+.se-toast__body { flex: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.se-toast__msg { font-size: 13px; }
+.se-toast__sub { font-size: 11px; color: var(--se-text-3); }
+.se-toast--error .se-toast__sub, .se-toast--error .se-toast__msg b { color: var(--se-pink-2); }
+.se-toast--success .se-toast__msg b { color: var(--se-teal-2); }
+
+/* ---- Category icon tile (Icons · A line board: 52px tile, 17px radius, 1.75 stroke) ---- */
+.se-cat {
+  display: inline-grid; place-items: center; flex-shrink: 0; box-sizing: border-box;
+  width: var(--size, 52px); height: var(--size, 52px); border-radius: calc(var(--size, 52px) * .327);
+  color: var(--c);
+  background: color-mix(in srgb, var(--c) 18%, var(--se-surface));
+  border: 1px solid color-mix(in srgb, var(--c) 45%, transparent);
+}
+.se-cat svg { width: 46%; height: 46%; }

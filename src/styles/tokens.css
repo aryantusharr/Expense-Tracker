@@ -1,0 +1,140 @@
+/* ========================================
+   SplitEase redesign — design tokens
+   Source: Claude Design canvas "Final app" + Motion system board.
+   Prefixed --se-* so they live alongside the old index.css variables
+   until every screen is rebuilt.
+   Dark is the default; [data-theme="light"] on <html> switches (ThemeContext).
+   ======================================== */
+
+@import '@fontsource/sora/400.css';
+@import '@fontsource/sora/500.css';
+@import '@fontsource/sora/600.css';
+@import '@fontsource/sora/700.css';
+@import '@fontsource/unbounded/600.css';
+@import '@fontsource/unbounded/700.css';
+@import '@fontsource/unbounded/800.css';
+@import '@fontsource/jetbrains-mono/500.css';
+@import '@fontsource/jetbrains-mono/700.css';
+
+:root {
+  /* ---- Type ---- */
+  --se-font: 'Sora', system-ui, -apple-system, sans-serif;            /* body + UI */
+  --se-font-display: 'Unbounded', 'Sora', system-ui, sans-serif;      /* big numbers, titles */
+  --se-font-mono: 'JetBrains Mono', ui-monospace, monospace;          /* amounts, receipts, codes */
+
+  /* ---- Radius ---- */
+  --se-r-xs: 6px;      /* paper receipts */
+  --se-r-sm: 12px;     /* small buttons (Undo) */
+  --se-r-md: 14px;     /* list rows */
+  --se-r-lg: 18px;     /* toasts */
+  --se-r-xl: 22px;     /* cards */
+  --se-r-2xl: 26px;    /* hero cards */
+  --se-r-sheet: 30px;  /* bottom sheets (top corners) */
+  --se-r-pill: 999px;  /* buttons, chips */
+
+  /* ---- Motion (Motion system M1b–M5a) ---- */
+  --se-dur-quick: .2s;    /* taps, toggles, press scale, sheet close */
+  --se-dur-medium: .45s;  /* sheets, cards, pops, stamps, tears */
+  --se-dur-slow: .9s;     /* receipt print, bill print, count-ups */
+  --se-dur-moment: 1.4s;  /* celebrations: ADMIT, SYNC ON, N IMPORTED, flip */
+  --se-ease-soft: cubic-bezier(.34, 1.3, .64, 1);   /* gentle bounce — sheets, lists, prints, flips */
+  --se-ease-strong: cubic-bezier(.34, 1.6, .64, 1); /* strong bounce — stamps, pops, keys */
+  --se-ease-out: cubic-bezier(.4, 0, .2, 1);        /* no bounce — leaving, tears, shakes */
+  --se-motion: full;
+
+  /* ---- Colour · dark (default) ---- */
+  --se-bg: #07071A;
+  --se-surface: #0E0D22;
+  --se-surface-2: #17162C;
+  --se-sheet: #0B0A20;
+  --se-float: rgba(28, 27, 54, 0.97);      /* toasts, floating panels */
+  --se-scrim: rgba(4, 4, 14, 0.55);
+
+  --se-text: #F4F3FF;
+  --se-text-2: #B9B6DA;
+  --se-text-3: #9E9BC0;
+  --se-text-4: #6E6B92;
+  --se-on-accent: #07071A;                  /* text on the violet→teal gradient */
+
+  --se-violet: #8B7CFF;
+  --se-violet-2: #B3A8FF;
+  --se-violet-deep: #3A2CA8;
+  --se-teal: #5FD4C4;
+  --se-teal-2: #9BEADF;
+  --se-pink: #FF8FB5;
+  --se-pink-2: #FFA3C2;
+  --se-pink-deep: #C75A8A;
+  --se-amber: rgb(255, 170, 40);
+
+  --se-positive: var(--se-teal);            /* "gets back" */
+  --se-negative: var(--se-pink);            /* "owes" */
+
+  --se-glass-bg: rgba(255, 255, 255, 0.06);
+  --se-glass-border: rgba(255, 255, 255, 0.12);
+  --se-glass-shadow: none;
+  --se-line: rgba(255, 255, 255, 0.14);     /* hairlines, sheet top */
+  --se-line-2: rgba(255, 255, 255, 0.22);   /* outline buttons */
+  --se-handle: rgba(255, 255, 255, 0.25);
+  --se-fill-1: rgba(255, 255, 255, 0.05);
+  --se-fill-2: rgba(255, 255, 255, 0.10);
+  --se-teal-fill: rgba(155, 234, 223, 0.16);
+  --se-teal-ink: #9BEADF;
+  --se-shadow-float: 0 14px 30px rgba(0, 0, 0, .5);
+
+  --se-grad-primary: linear-gradient(135deg, #8B7CFF, #5FD4C4);
+  --se-grad-text: linear-gradient(100deg, #B3A8FF, #8B7CFF 40%, #5FD4C4);
+  --se-grad-text-r: linear-gradient(100deg, #5FD4C4, #8B7CFF 40%, #B3A8FF);
+  --se-grad-text-neg: linear-gradient(100deg, #FFC2D6, #FF8FB5 50%, #E8699A);
+
+  /* Category icon palette (8 hues, repeat in this order) */
+  --se-cat-1: #8B7CFF; --se-cat-2: #5FD4C4; --se-cat-3: #FF8FB5; --se-cat-4: #F5C26B;
+  --se-cat-5: #6EC1FF; --se-cat-6: #A8E06B; --se-cat-7: #FF9A76; --se-cat-8: #C9A7FF;
+
+  color-scheme: dark;
+}
+
+:root[data-theme='light'] {
+  --se-bg: #F4F4F8;
+  --se-surface: #FFFFFF;
+  --se-surface-2: #FBFAFF;
+  --se-sheet: #F4F4F8;
+  --se-float: rgb(255 255 255 / 0.97);
+  --se-scrim: rgba(4, 4, 14, 0.55);
+
+  --se-text: #15142B;
+  --se-text-2: #5C5B75;
+  --se-text-3: #6F6E88;
+  --se-text-4: #6F6E88;
+  --se-on-accent: #07071A;
+
+  --se-violet: #6D5DF5;
+  --se-violet-2: #5B4BD6;
+  --se-teal: #0A8577;
+  --se-teal-2: #0A8577;
+  --se-pink: #D23B72;
+  --se-pink-2: #C22F66;
+  --se-pink-deep: #A8285A;
+
+  --se-glass-bg: rgba(255, 255, 255, 0.82);
+  --se-glass-border: rgba(21, 20, 43, 0.07);
+  --se-glass-shadow: 0 1px 2px rgba(21, 20, 43, 0.04), 0 10px 30px rgba(21, 20, 43, 0.06);
+  --se-line: rgba(21, 20, 43, 0.11);
+  --se-line-2: rgba(21, 20, 43, 0.16);
+  --se-handle: rgba(21, 20, 43, 0.20);
+  --se-fill-1: rgba(21, 20, 43, 0.04);
+  --se-fill-2: rgba(21, 20, 43, 0.08);
+  --se-teal-fill: rgba(155, 234, 223, 0.16);
+  --se-teal-ink: #0A8577;
+  --se-shadow-float: 0 14px 30px rgba(21, 20, 43, 0.14);
+
+  --se-grad-text: linear-gradient(100deg, #5B4BD6, #6D5DF5 40%, #0A8577);
+  --se-grad-text-r: linear-gradient(100deg, #0A8577, #6D5DF5 40%, #5B4BD6);
+  --se-grad-text-neg: linear-gradient(100deg, #E0527F, #D23B72 50%, #A8285A);
+
+  color-scheme: light;
+}
+
+/* Reduce motion (M4b): one switch every component reads. */
+@media (prefers-reduced-motion: reduce) {
+  :root { --se-motion: reduced; }
+}
