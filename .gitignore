@@ -33,3 +33,8 @@ firebase-debug.log
 
 # Local Firestore backups
 backups/
+
+# Temporary private keys (service accounts) — never commit
+.secrets/
+*serviceAccount*.json
+*-firebase-adminsdk-*.json
