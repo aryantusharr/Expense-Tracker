@@ -28,7 +28,7 @@
 - [~] Add Expense — built in 3 chunks (new code in `src/components/add/`; logic in `useAddController.js`, helpers moved unchanged to `addHelpers.js`; old `expenses/AddExpense.jsx` stays until Items is ported, then delete)
   - [x] Chunk 1 · Quick mode: amount card with odometer, custom keypad (expressions), +₹ chips, recurring chips, slips strip (payer flip, seats, ₹ slips), description, categories (AUTO), date strip, slide-to-add with validation, Quick⇄Items pill + swipe, personal variant, dark + light. Nav hidden on /add (close button added). Items tab is a placeholder for now.
   - [x] Chunk 2 · Items mode (`ItemsPane.jsx`): NEW BILL receipt paper (zigzag edge, dotted leaders, ink stamps, initials), Bill name + Total (+ recent bill-name chips, payer/seats strip), item panel (auto-category, remaining pre-filled), Print to receipt, LEFT TO SPLIT / FULLY SPLIT, slide to add via `addItemisedExpenseGroup`. One payer per bill (her decision). Old `expenses/AddExpense.jsx` deleted. Checked personal MB739V (saved a 2-item test bill) + shared D4NYY3 setup screen, dark. Not yet: light mode check, on-phone check
-  - [ ] Chunk 3 · Save moment: printer slot buzz → stutter print → receipt flies to History, nav bounce, "+1" (needs the nav on /add or a History target)
+  - [x] Chunk 3 · Save moment (`SaveMoment.jsx`, portal overlay, used by Quick + Items): slot buzz → 4-stop stutter print (3s) → receipt flies to bottom-centre → "+1" → fresh form. Tap skips the print. No nav bounce / History pop yet (nav hidden on /add) — wire when History exists. Checked on test room D4NYY3 Items flow; Quick path uses the same component (not clicked through)
 - [ ] History (month stack, search/filters, printing bills, tear delete + undo, receipt edit)
 - [ ] Settings (room card, sync pill, join-code receipt, categories, pull-cord theme, export, import wizard, budget)
 - [ ] Exports: PDF magazine report (embed fonts for ₹), styled Excel (xlsx-js-style), toasts instead of alert()
@@ -57,3 +57,4 @@
 - 2026-10-01 · Dashboard rebuilt (shared + personal) + floating nav; 36 category icons.
 - 2026-10-01 · Add Expense chunk 1 (Quick mode) built + checked on test rooms D4NYY3 (shared) / MB739V (personal), dark + light. Saved a real test expense OK. Category starts unpicked (per spec); recent-description chips kept under the field.
 - 2026-10-01 · Add Expense chunk 2 (Items mode) built; old AddExpense.jsx removed. Stamps on receipt lines reuse the line-icon glyph in ink (not the worn feTurbulence stamp yet).
+- 2026-10-01 · Add Expense chunk 3 (save moment) built. Add Expense is feature-complete; remaining: her phone check + light mode.

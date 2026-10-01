@@ -7,6 +7,7 @@ import { resolveCategoryIcon } from '../../design/categoryIcons';
 import { initialOf, localDateStr, shortDay } from '../dashboard/dashboardData';
 import SlipsStrip from './SlipsStrip';
 import SlideToAdd from './SlideToAdd';
+import SaveMoment from './SaveMoment';
 import { HINGLISH_MAP, findMatchingCategory, evaluateMathExpression } from './addHelpers';
 
 const fmtN = n => n.toLocaleString('en-IN', { maximumFractionDigits: 2 });
@@ -65,6 +66,7 @@ export default function ItemsPane({ c }) {
   const [auto, setAuto] = useState(false);
   const [shake, setShake] = useState(0);
   const [slideShake, setSlideShake] = useState(0);
+  const [saved, setSaved] = useState(null);
 
   const total = parseFloat(c.billTotal) || 0;
   const ready = total > 0 && c.billName.trim() && (isPersonal || form.paidBy);
@@ -116,17 +118,15 @@ export default function ItemsPane({ c }) {
   const confirm = async () => {
     const res = await c.submitBill();
     if (!res.ok) { toast({ kind: 'error', message: <b>{res.message}</b> }); setSlideShake(s => s + 1); return; }
-    // Print-to-receipt animation arrives in chunk 3; for now a toast + fresh bill.
-    toast({ kind: 'success', message: <><b>₹{fmtN(res.total)}</b> bill added · {res.name}</> });
-    c.resetBill();
-    setStage('setup');
-    setDrafting(false);
+    setSaved({ title: res.name, lines: c.rows.map(r => ({ name: r.description, amount: parseFloat(r.amount) })), total: res.total, date: form.date });
   };
+  const finish = () => { setSaved(null); c.resetBill(); setStage('setup'); setDrafting(false); };
 
   const names = c.itemisedGroupNamesList.map(g => g.groupName);
 
   return (
     <div className="add-quick ib">
+      {saved && <SaveMoment {...saved} onDone={finish} />}
       <Receipt
         name={c.billName.trim()} total={total} rows={c.rows} remaining={c.remaining}
         members={members} categories={cats} isPersonal={isPersonal} date={form.date}

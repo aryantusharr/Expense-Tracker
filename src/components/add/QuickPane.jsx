@@ -8,6 +8,7 @@ import AmountOdometer from './AmountOdometer';
 import Keypad from './Keypad';
 import SlipsStrip from './SlipsStrip';
 import SlideToAdd from './SlideToAdd';
+import SaveMoment from './SaveMoment';
 import { evalExpr, hasOperator, pressKey } from './amountExpr';
 
 const QUICK_ADDS = [50, 100, 200, 500];
@@ -47,6 +48,7 @@ export default function QuickPane({ c }) {
   const [expr, setExpr] = useState('');
   const [shake, setShake] = useState(0);
   const [amountShake, setAmountShake] = useState(0);
+  const [saved, setSaved] = useState(null);
   const amount = parseFloat(form.amount) || 0;
   const catStrip = useRef(null);
 
@@ -80,12 +82,9 @@ export default function QuickPane({ c }) {
   const confirm = async () => {
     const res = await c.submitQuick();
     if (!res.ok) { toast({ kind: 'error', message: <b>{res.message}</b> }); setShake(s => s + 1); return; }
-    // Print-to-receipt animation arrives in chunk 3; for now a toast + fresh form.
-    toast({ kind: 'success', message: <><b>₹{fmtN(res.amount)}</b> added · {res.description}</> });
-    c.resetQuick();
-    setExpr('');
-    setView('amount');
+    setSaved({ title: res.description, lines: [{ name: res.description, amount: res.amount }], total: res.amount, date: form.date });
   };
+  const finish = () => { setSaved(null); c.resetQuick(); setExpr(''); setView('amount'); };
 
   // Date strip: today / yesterday / 2 days ago + a picker.
   const dates = useMemo(() => [0, 1, 2].map(n => { const d = new Date(); d.setDate(d.getDate() - n); return localDateStr(d); }), []);
@@ -95,6 +94,7 @@ export default function QuickPane({ c }) {
 
   return (
     <div className="add-quick">
+      {saved && <SaveMoment {...saved} onDone={finish} />}
       <div key={amountShake} className={amountShake ? 'se-shake' : ''}>
         <AmountCard amount={amount} expr={expr} isPersonal={isPersonal} count={count} onEdit={view === 'form' ? () => setView('amount') : null} />
       </div>

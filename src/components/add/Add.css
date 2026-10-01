@@ -247,3 +247,41 @@
 .ib-btn--dim { opacity: .45; }
 .ib-link { background: none; border: 0; color: var(--se-text-3); font: 600 13px var(--se-font); padding: 8px; cursor: pointer; align-self: center; }
 .ib-paper.se-print { animation-fill-mode: backwards; }   /* keep the zigzag edge un-clipped after printing */
+
+/* ========================================
+   Save moment — slot buzz, stutter print, fly away, +1
+   ======================================== */
+.sm {
+  position: fixed; inset: 0; z-index: 60; display: flex; flex-direction: column; align-items: center;
+  padding-top: max(110px, calc(env(safe-area-inset-top) + 70px)); background: color-mix(in srgb, var(--se-bg) 93%, transparent);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); animation: se-fade .25s ease both;
+}
+.sm-slot {
+  position: relative; z-index: 2; width: min(320px, 82vw); height: 16px; border-radius: 10px;
+  background: #0A0918; border: 1px solid var(--se-glass-border); box-shadow: 0 6px 24px rgba(139, 124, 255, 0.35);
+  animation: sm-buzz .09s linear 6;
+}
+.sm-slot span { position: absolute; left: 10px; right: 10px; top: 6px; height: 3px; border-radius: 2px; background: var(--se-grad-primary); }
+@keyframes sm-buzz { 50% { transform: translate(1.5px, -1px); } }
+.sm-paper { width: min(300px, 78vw); margin-top: -6px; z-index: 1; padding-bottom: 28px; transform-origin: 50% 100%; }
+.sm-paper--print { animation: sm-print 3s steps(4, jump-end) .4s both, sm-flicker .25s linear 12 .4s; clip-path: inset(0 0 100% 0); }
+@keyframes sm-print {
+  from { clip-path: inset(0 0 100% 0); transform: translateY(-3px); }
+  25% { transform: translate(1px, 1px); }
+  50% { transform: translate(-1px, 2px); }
+  75% { transform: translate(2px, 0); }
+  to { clip-path: inset(0 0 -14px 0); transform: none; }
+}
+@keyframes sm-flicker { 50% { filter: brightness(1.08); } }
+.sm-paper--fly { animation: sm-fly .85s cubic-bezier(.5, 0, .75, .4) both; clip-path: none; }
+@keyframes sm-fly { to { transform: translate(0, 62vh) scale(.14) rotate(8deg); opacity: .2; } }
+.sm-dest { position: fixed; left: 50%; bottom: calc(40px + env(safe-area-inset-bottom)); transform: translateX(-50%); }
+.sm-plus {
+  display: block; font: 700 22px var(--se-font-display); padding: 8px 18px; border-radius: 999px;
+  color: var(--se-teal-ink); background: var(--se-teal-fill); border: 1px solid color-mix(in srgb, var(--se-teal) 50%, transparent);
+  box-shadow: 0 0 30px color-mix(in srgb, var(--se-teal) 40%, transparent);
+}
+@media (prefers-reduced-motion: reduce) {
+  .sm-slot, .sm-paper--print { animation: none; clip-path: none; }
+  .sm-paper--fly { animation: se-fade .2s ease reverse forwards; }
+}
