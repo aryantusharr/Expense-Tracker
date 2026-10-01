@@ -64,7 +64,7 @@ export function useExpenseForm(initialValues = {}, users = [], defaultPayerId = 
 
   const allGradient = users.length >= 2
     ? `linear-gradient(135deg, ${users.map((u, i) => `${u.color} ${(i / (users.length - 1)) * 100}%`).join(', ')})`
-    : users[0]?.color || 'var(--accent)';
+    : users[0]?.color || '#6c5ce7';
 
   const form = { description, amount, paidBy, splitAmong, categoryId, date };
 
