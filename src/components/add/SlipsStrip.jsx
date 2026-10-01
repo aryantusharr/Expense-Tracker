@@ -9,7 +9,7 @@ const nameOf = m => (m?.name || '').replace(/^test[\s_-]+/i, '') || m?.name || '
  * (old name flips away, new one springs in); tap a seat to include / leave out — included seats get
  * a ₹ slip that slides out, left-out seats grey out and their slip tucks back.
  */
-export default function SlipsStrip({ members, paidBy, splitAmong, amount, onPayer, onToggle }) {
+export default function SlipsStrip({ members, paidBy, splitAmong, amount, onPayer, onToggle, hidePayer = false }) {
   const payer = members.find(m => m.id === paidBy) || members[0];
   const [prev, setPrev] = useState(null);
   const lastPayer = useRef(payer?.id);
@@ -33,17 +33,17 @@ export default function SlipsStrip({ members, paidBy, splitAmong, amount, onPaye
 
   return (
     <div className="add-slips se-glass" data-noswipe>
-      <button type="button" className="add-bill" style={{ '--c': payer.color }} onClick={() => { haptic('choose'); nextPayer(); }} aria-label={`Paid by ${nameOf(payer)}. Tap to change`}>
+      {!hidePayer && <button type="button" className="add-bill" style={{ '--c': payer.color }} onClick={() => { haptic('choose'); nextPayer(); }} aria-label={`Paid by ${nameOf(payer)}. Tap to change`}>
         <span className="add-bill__label">PAID BY</span>
         <span className="add-bill__name">
           {prev && <span key={`o${prev.id}`} className="add-bill__out" style={{ color: prev.color }}>{nameOf(prev)}</span>}
           <span key={payer.id} className={prev ? 'add-bill__in' : ''} style={{ color: payer.color }}>{nameOf(payer)}</span>
         </span>
         <span className="add-bill__total">₹{fmt(amount)}</span>
-      </button>
+      </button>}
       <div className="add-slips__col">
         <div className="add-slips__head">
-          <span>PAID BY · SPLIT</span>
+          <span>{hidePayer ? 'SPLIT' : 'PAID BY · SPLIT'}</span>
           <em>{count > 0 ? `₹${fmt(each)} EACH · ${count}` : 'PICK SOMEONE'}</em>
         </div>
         <div className="add-seats" role="group" aria-label="Split with">
@@ -60,7 +60,7 @@ export default function SlipsStrip({ members, paidBy, splitAmong, amount, onPaye
                 aria-label={`${on ? 'Leave out' : 'Include'} ${nameOf(m)}${isPayer ? ' (paid)' : ''}`}
                 onClick={() => { haptic('choose'); onToggle(m.id); }}
               >
-                <Monogram member={m} size={38} className={isPayer ? 'add-mono--payer' : ''} />
+                <Monogram member={m} size={38} className={isPayer && !hidePayer ? 'add-mono--payer' : ''} />
                 <span className="add-slip" aria-hidden="true">₹{fmt(each)}</span>
               </button>
             );

@@ -191,7 +191,7 @@ export default function ItemsPane({ c }) {
             </div>
           </div>
           {!isPersonal && (
-            <SlipsStrip members={members} paidBy={form.paidBy} splitAmong={draft.splitAmong} amount={draftAmt} onPayer={id => setField.paidBy(id)} onToggle={toggleSeat} />
+            <SlipsStrip members={members} paidBy={form.paidBy} splitAmong={draft.splitAmong} amount={draftAmt} onPayer={id => setField.paidBy(id)} onToggle={toggleSeat} hidePayer />
           )}
           <div key={`d${shake}`} className={shake ? 'se-shake' : ''}>
             <Button block size="lg" className={draftProblem ? 'ib-btn--dim' : ''} onClick={print}>Print to receipt</Button>
