@@ -1,5 +1,7 @@
 {
   "projects": {
-    "default": "splitease-7bb6c"
+    "default": "splitease-test-2026",
+    "test": "splitease-test-2026",
+    "live": "splitease-7bb6c"
   }
 }

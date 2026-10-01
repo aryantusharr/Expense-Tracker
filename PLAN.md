@@ -1,18 +1,20 @@
 # SplitEase redesign — build plan (living document; propose changes freely)
 
-## Phase 0 · Setup
-- [ ] Clear leftover .git/index.lock (from the old tool); `git status` clean
-- [ ] Install tools: Homebrew (if missing), Node LTS, firebase-tools, gh (optional)
-- [ ] Confirm GitHub push works (she's logged in on this Mac)
-- [ ] Firebase sign-in via `firebase login --no-localhost` (URL + code, opened in the built-in browser) — or a service-account key if that's smoother
-- [ ] `npm install`, `npm run dev` works locally
+## Phase 0 · Setup ✅
+- [x] Cleared leftover .git/index.lock; `redesign` branch created
+- [x] Tools: Homebrew + Node 24 were present; firebase-tools 15.32 installed (gh skipped until PR time)
+- [x] GitHub push works (account aryantusharr = hers)
+- [x] Firebase CLI signed in as himanshu12.hk@gmail.com (she confirmed this is the account to use)
+- [x] `.env` untracked (was public on GitHub); live settings now in `.env.production.local` (git-ignored, used only by `npm run build`)
+- [x] Test project `splitease-test-2026` created: web app, Firestore (nam5/US — live is asia-south2; fine for testing), open test rules expiring 2027-01-01 (`firestore.test.rules`, deployed via `firebase.test.json`)
+- [x] `.firebaserc`: default + `test` → test project; live only via `--project live`
+- [x] `.env.development.local` / `.env.test.local` → test project; `vite.config.js` guard refuses dev/test mode pointed at live
+- [x] `npm install`, `npm run dev -- --host` works (launch config `splitease-dev`), verified it talks only to the test project
 
 ## Phase 1 · Safety net
 - [ ] Local JSON backup of all live Firestore collections (read-only script) → backups/ (git-ignored)
 - [ ] Check live Firestore security rules (not in repo — no auth in app) and report risks
-- [ ] Create test Firebase project (e.g. splitease-test), web app, Firestore; `.env.test`; `.firebaserc` alias `test`
 - [ ] Copy backup into the test project so real-shaped data can be tested
-- [ ] `redesign` branch
 
 ## Phase 2 · Build (order is a suggestion)
 - [ ] Foundations: CSS tokens (colours dark/light, type: Sora / Unbounded / JetBrains Mono, radius, glass), 32 A-line icons, motion tokens + reduced motion, buttons/chips/sheets/toasts
@@ -33,10 +35,11 @@
 - [ ] Real-shaped data in test project renders correctly: balances, settlements, synced entries, itemised groups, budgets
 
 ## Phase 5 · Go live (only with her explicit yes)
-- [ ] Fresh backup → merge to main → bump SW cache → `firebase deploy --only hosting` to splitease-7bb6c
+- [ ] Fresh backup → merge to main → bump SW cache → `firebase deploy --only hosting --project live`
 - [ ] Verify on her phone; tell the other 2 users to close + reopen the app
 - [ ] Rollback ready: `firebase hosting:rollback` / re-deploy previous release
 - [ ] Ask her, then delete the test Firebase project
 
 ## Log
 - 2026-10-01 · Design finalised on the canvas (all screens + motion system). Plan written.
+- 2026-10-01 · Phase 0 done. Test project splitease-test-2026; env split + live guard; dev server runs against test. Test preview builds: `npm run build:test` then `firebase deploy --config firebase.test.json --only hosting:… --project test` (preview channel: `firebase hosting:channel:deploy <name> --config firebase.test.json --project test`).
