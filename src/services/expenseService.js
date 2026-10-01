@@ -171,7 +171,12 @@ export async function removeSyncedExpensesFromPersonalRooms(sharedRoomCode, pers
       where('syncedFromRoomCode', '==', sharedRoomCode)
     );
     const snap = await getDocs(q);
-    await Promise.all(snap.docs.map(d => deleteDoc(d.ref)));
+    // Batched deletes (400 per commit) — one-by-one deletes of ~800 copies took over a minute.
+    for (let i = 0; i < snap.docs.length; i += 400) {
+      const batch = writeBatch(db);
+      snap.docs.slice(i, i + 400).forEach(d => batch.delete(d.ref));
+      await batch.commit();
+    }
   });
 
   await Promise.allSettled(deletePromises);

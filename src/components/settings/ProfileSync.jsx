@@ -30,6 +30,7 @@ export default function ProfileSync({ room, roomCode, users, expenses, userIdent
   const [target, setTarget] = useState('');
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(0);
+  const [progress, setProgress] = useState(null);   // { done, total } while past expenses are copied
 
   const personal = useMemo(() => savedRooms.filter(r => r.isPersonal), [savedRooms]);
   const me = users.find(u => u.id === userIdentity);
@@ -74,7 +75,10 @@ export default function ProfileSync({ room, roomCode, users, expenses, userIdent
     if (!who || !target || busy) return;
     setBusy(true);
     try {
-      await removeSyncedExpensesFromPersonalRooms(roomCode, personal.map(r => r.code));
+      // Only this member's old personal room (the target is updated in place) — never other members' rooms on this phone.
+      const oldCode = users.find(u => u.id === who)?.personalRoomCode;
+      setProgress({ done: 0, total: 0 });
+      await removeSyncedExpensesFromPersonalRooms(roomCode, [oldCode].filter(c => c && c !== target));
       const next = users.map(u => {
         if (u.id === who) return { ...u, personalRoomCode: target };
         if (u.personalRoomCode === target || u.id === userIdentity) return { ...u, personalRoomCode: null, _lastPersonalRoomCode: u.personalRoomCode };
@@ -82,12 +86,13 @@ export default function ProfileSync({ room, roomCode, users, expenses, userIdent
       });
       await updateRoom(roomCode, { users: next });
       setUserIdentity(who);
-      syncExistingSharedExpenses(roomCode, roomName, target, who).catch(() => { /* copies in the background */ });
+      const n = await syncExistingSharedExpenses(roomCode, roomName, target, who, (done, total) => setProgress({ done, total }));
       haptic('success');
-      setCopied(preview.n);
+      setCopied(n);
       setView('done');
       setTimeout(() => setView(v => (v === 'done' ? null : v)), 2600);
     } catch { haptic('error'); say('Couldn’t set up sync — try again', 'error'); }
+    setProgress(null);
     setBusy(false);
   };
 
@@ -187,7 +192,7 @@ export default function ProfileSync({ room, roomCode, users, expenses, userIdent
                   <b>{(whoUser?.name || '').toUpperCase()} → {targetName.toUpperCase()}</b>
                   <span className="ps-receipt__rule" />
                   <span><span>PAST EXPENSES</span><span>{preview.n}</span></span>
-                  <span><span>YOUR SHARE</span><b>{preview.share.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</b></span>
+                  <span><span>YOUR SHARE</span><b>₹{Math.round(preview.share).toLocaleString('en-IN')}</b></span>
                   <small>COPIES ARE READ-ONLY · STAMPED “COPY”</small>
                 </div>
               </>
@@ -195,7 +200,7 @@ export default function ProfileSync({ room, roomCode, users, expenses, userIdent
             <div className="st-btnrow">
               <button type="button" className="se-btn se-btn--secondary se-press" onClick={back}>Back</button>
               <button type="button" className="se-btn se-btn--primary se-press" disabled={busy || (step === 0 && !who) || (step === 1 && !target)} onClick={next}>
-                {step === 2 ? (busy ? 'Syncing…' : 'Turn on sync') : 'Next'}
+                {step === 2 ? (busy ? (progress?.total ? `Copying ${progress.done} / ${progress.total}` : 'Syncing…') : 'Turn on sync') : 'Next'}
               </button>
             </div>
           </>

@@ -23,6 +23,7 @@ export default function ShareScreen() {
   const [roomIdx, setRoomIdx] = useState(0);
   const [busy, setBusy] = useState(false);
   const [making, setMaking] = useState(false);
+  const [progress, setProgress] = useState(null);
 
   const users = useMemo(() => room?.users || [], [room?.users]);
   const roomName = room?.name || savedRooms.find(r => r.code === code)?.name || 'your room';
@@ -58,17 +59,19 @@ export default function ShareScreen() {
     if (!pickedUser || !pickedRoom || busy) return;
     setBusy(true);
     try {
-      await removeSyncedExpensesFromPersonalRooms(code, personal.map(r => r.code));
+      // Only this member's old personal room (the target is updated in place) — never other members' rooms on this phone.
+      await removeSyncedExpensesFromPersonalRooms(code, [pickedUser.personalRoomCode].filter(c => c && c !== pickedRoom.code));
       const updatedUsers = users.map(u => (u.id === pickedUser.id ? { ...u, personalRoomCode: pickedRoom.code } : u));
       await updateRoom(code, { users: updatedUsers });
       setUserIdentity(pickedUser.id);
-      syncExistingSharedExpenses(code, roomName, pickedRoom.code, pickedUser.id).catch(() => { /* background copy; Settings can redo it */ });
+      await syncExistingSharedExpenses(code, roomName, pickedRoom.code, pickedUser.id, (done, total) => setProgress({ done, total }));
       haptic('success');
       setSync(3);
     } catch (err) {
       haptic('error');
       toast({ message: 'Couldn’t set up sync', sub: String(err?.message || err), kind: 'error', top: true });
     }
+    setProgress(null);
     setBusy(false);
   };
   // No personal room on this phone yet: make one for the picked member right here (no dead end).
@@ -173,7 +176,7 @@ export default function ShareScreen() {
             <div className="ob-btnrow">
               <button type="button" className="se-btn se-btn--secondary se-press" onClick={() => setSync(1)}>Back</button>
               <button type="button" className="se-btn se-btn--primary se-press" disabled={!pickedRoom || busy} onClick={doSync}>
-                {busy ? 'Syncing…' : `Sync ${pickedUser?.name || ''} → ${pickedRoom?.name || ''}`}
+                {busy ? (progress?.total ? `Copying ${progress.done} / ${progress.total}` : 'Syncing…') : `Sync ${pickedUser?.name || ''} → ${pickedRoom?.name || ''}`}
               </button>
             </div>
           </>

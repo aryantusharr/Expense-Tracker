@@ -19,43 +19,40 @@ async function getPersonalUserId(personalRoomCode) {
 }
 
 /**
- * Ensures the expense's categoryId exists in the personal room.
- * If missing, silently copies the category object from the shared room into
- * the personal room's categories array.
- *
- * This runs for both new expenses (addExpense) and updates (updateExpense)
- * since both paths call syncExpenseToPersonalRooms.
- *
- * @param {string} personalRoomCode
- * @param {string} categoryId - The categoryId carried by the shared expense.
- * @param {Array}  sharedCategories - The shared room's categories array.
+ * Pick the personal-room category a synced copy should use.
+ * Category ids are only unique per room (both rooms can have a "cat-4" meaning different things),
+ * so match by name first, then by id only if the names agree; otherwise copy the shared category
+ * in (keeping its id when that id is free in the personal room).
+ * Returns { id, add } — `add` is a category object to append to the personal room, or null.
  */
-async function ensureCategoryInPersonalRoom(personalRoomCode, categoryId, sharedCategories) {
-  if (!categoryId || !personalRoomCode) return;
+export function resolvePersonalCategory(personalCategories, sharedCategory, sharedRoomCode) {
+  if (!sharedCategory) return { id: null, add: null };
+  const name = (sharedCategory.name || '').trim().toLowerCase();
+  const byName = personalCategories.find(c => (c.name || '').trim().toLowerCase() === name);
+  if (byName) return { id: byName.id, add: null };
+  const idTaken = personalCategories.some(c => c.id === sharedCategory.id);
+  const id = idTaken ? `${sharedCategory.id}-${sharedRoomCode}` : sharedCategory.id;
+  return { id, add: { id, name: sharedCategory.name, icon: sharedCategory.icon || '📦' } };
+}
 
+/**
+ * Make sure the shared expense's category exists in the personal room (matched by name) and
+ * return the personal room's id for it. Runs on every add AND edit of a shared expense.
+ */
+async function ensureCategoryInPersonalRoom(personalRoomCode, sharedRoomCode, categoryId, sharedCategories) {
+  if (!categoryId || !personalRoomCode) return categoryId;
+  const sharedCategory = sharedCategories?.find(c => c.id === categoryId);
+  if (!sharedCategory) return categoryId;
   try {
     const roomSnap = await getDoc(doc(db, 'rooms', personalRoomCode));
-    if (!roomSnap.exists()) return;
-
-    const personalCategories = roomSnap.data().categories || [];
-    const alreadyExists = personalCategories.some(c => c.id === categoryId);
-    if (alreadyExists) return;
-
-    // Find the category in the shared room
-    const categoryToSync = sharedCategories?.find(c => c.id === categoryId);
-    if (!categoryToSync) return; // category not found in shared room either — skip
-
-    // Copy category (name, icon, id preserved) into personal room via arrayUnion
-    await updateDoc(doc(db, 'rooms', personalRoomCode), {
-      categories: arrayUnion({
-        id: categoryToSync.id,
-        name: categoryToSync.name,
-        icon: categoryToSync.icon || '📦',
-      }),
-    });
+    if (!roomSnap.exists()) return categoryId;
+    const { id, add } = resolvePersonalCategory(roomSnap.data().categories || [], sharedCategory, sharedRoomCode);
+    if (add) await updateDoc(doc(db, 'rooms', personalRoomCode), { categories: arrayUnion(add) });
+    return id || categoryId;
   } catch (err) {
     // Non-critical — never block the sync path
     console.warn('[SyncCategory] Failed to copy category to personal room:', err?.message);
+    return categoryId;
   }
 }
 
@@ -89,8 +86,9 @@ export async function syncExpenseToPersonalRooms(roomCode, roomData, expenseId, 
 
       // Ensure the category exists in the personal room before writing the expense.
       // Handles both new syncs and category edits in the shared room.
-      await ensureCategoryInPersonalRoom(
+      const personalCategoryId = await ensureCategoryInPersonalRoom(
         user.personalRoomCode,
+        roomCode,
         expense.categoryId,
         roomData.categories,
       );
@@ -99,7 +97,7 @@ export async function syncExpenseToPersonalRooms(roomCode, roomData, expenseId, 
       const syncedData = {
         description: expense.description,
         amount: share,
-        categoryId: expense.categoryId,
+        categoryId: personalCategoryId,
         date: expense.date,
         paidBy: personalUserId,
         splitAmong: [personalUserId],
