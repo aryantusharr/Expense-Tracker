@@ -6,7 +6,7 @@ import { haptic } from '../../utils/haptics';
 import { LineIcon } from '../ui/CategoryIcon';
 import Sheet from '../ui/Sheet';
 import { useToast } from '../ui/Toast';
-import ImportCSVModal from './ImportCSVModal';
+import ImportWizard from './ImportWizard';
 
 const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
@@ -173,7 +173,7 @@ export default function DataSection({ expenses, users, categories, room, roomCod
         </div>
       </Sheet>
 
-      <ImportCSVModal isOpen={importOpen} onClose={() => { setImportOpen(false); setTick(t => t + 1); }} />
+      {importOpen && <ImportWizard onClose={() => { setImportOpen(false); setTick(t => t + 1); }} />}
     </>
   );
 }
