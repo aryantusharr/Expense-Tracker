@@ -69,7 +69,7 @@ async function dumpCollection(parent, collectionId, out) {
 
 const docs = {}
 const topLevel = await call(`${base}:listCollectionIds`, { pageSize: 100 })
-  .then(r => r.collectionIds || []).catch(() => ['rooms'])
+  .then(r => r.collectionIds || []).catch(() => ['rooms', 'learned_patterns'])  // listing ids needs a key; these are the known ones
 for (const c of topLevel) await dumpCollection('', c, docs)
 
 const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
