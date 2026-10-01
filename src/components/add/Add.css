@@ -177,7 +177,7 @@
 .add-input::placeholder { color: var(--se-text-4); font-weight: 500; }
 .add-input:focus { border-color: var(--se-violet); box-shadow: 0 0 0 3px color-mix(in srgb, var(--se-violet) 25%, transparent); }
 
-.add-cats { display: flex; gap: 8px; overflow-x: auto; margin: 0 -20px; padding: 4px 20px 6px; scrollbar-width: none; }
+.add-cats { display: flex; gap: 8px; overflow-x: auto; margin: -14px -20px -16px; padding: 14px 20px 16px; scrollbar-width: none; }
 .add-cats::-webkit-scrollbar { display: none; }
 .add-cat {
   flex-shrink: 0; display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 14px 0 8px; border-radius: 999px;
@@ -188,7 +188,7 @@
 .add-cat:active { transform: scale(.93); }
 .add-cat--on {
   color: var(--se-text); border-color: transparent;
-  background: linear-gradient(135deg, rgba(139, 124, 255, 0.35), rgba(95, 212, 196, 0.28)); box-shadow: 0 4px 18px rgba(139, 124, 255, 0.4);
+  background: linear-gradient(135deg, rgba(139, 124, 255, 0.35), rgba(95, 212, 196, 0.28)); box-shadow: 0 3px 12px rgba(139, 124, 255, 0.32);
 }
 .add-cat__auto { font: 700 9px var(--se-font-mono); letter-spacing: .1em; color: var(--se-teal-ink); background: var(--se-teal-fill); padding: 2px 6px; border-radius: 999px; }
 
