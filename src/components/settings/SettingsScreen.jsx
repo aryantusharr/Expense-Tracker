@@ -10,7 +10,6 @@ import { useToast } from '../ui/Toast';
 import CategoriesSection from './CategoriesSection';
 import ProfileSync from './ProfileSync';
 import DataSection from './DataSection';
-import './Settings.css';
 import './SettingsScreen.css';
 
 const P = {
