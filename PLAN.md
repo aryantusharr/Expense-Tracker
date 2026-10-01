@@ -35,7 +35,10 @@
 - [x] History (`src/components/history/`: `HistoryScreen.jsx`, `MonthStack.jsx`, `Rows.jsx` (TearRow / ExpenseCard / BillCard), `EditSheet.jsx`, `EmptyHistory.jsx`, `historyData.js`, `History.css`). Old `expenses/ExpenseList` + `EditExpenseModal` + `SwipeableItem` deleted (`expenses/Expenses.css` kept — `ConfirmModal` still imports it; remove with the cleanup phase).
   - Built from boards App-History / -Personal / Hist-Empty / 4f / 6b / 8b. Month stack (tap → fan → pick), sticky bar on scroll, search grows + filter chips (payer / category) with orb tint + dimming, tear delete with Undo (real Firestore delete waits ~4.7s so Undo never recreates a doc; flushed on leaving the screen), receipt-style edit sheet, bills print downward (2.4s, 4 stops), synced rows in personal rooms are locked (COPY stamp, shake + toast), empty state.
   - Not done / decisions: editing a bill line opens the same receipt sheet (with a BILL name line) — NOT the Add Items screen pre-filled as the spec says (would need Add changes; propose later). Month net = paid − share for the person chosen on this phone (hidden if no identity picked). Personal rooms hide PAID BY / SPLIT in the edit sheet.
-- [ ] Settings (room card, sync pill, join-code receipt, categories, pull-cord theme, export, import wizard, budget)
+- [~] Settings — built in 3 chunks (`src/components/settings/SettingsScreen.jsx`, `CategoriesSection.jsx`, `SettingsScreen.css`)
+  - [x] Chunk 1 · room ID card (members, personal budget bar → budget sheet), join-code receipt (COPIED stamp + toast), Categories (counts, bin → inline confirm → tear, ⋮⋮ lift/swap, add/edit sheet with the 36 icons, stored as `line:<key>`), Appearance pull-cord + circular wipe, Room rows (switch room, rename sheet). Old `SettingsPage` + `CategoryManager` deleted. NOT tested yet. Deleting a category does NOT rewrite expenses (same as before) — they show under Other; the board says "move to Other" (decide if a real move is wanted).
+  - [ ] Chunk 2 · Profile sync pill (in the room card) + S3 sheets (info/change/turn off, 3-step setup). Until then the OLD `SyncSettings` card still shows under the join code.
+  - [ ] Chunk 3 · Data: export scope → report receipt print → PDF/Excel (with Exports phase), import wizard (S6). Until then the OLD `DataManagement` still shows.
 - [ ] Exports: PDF magazine report (embed fonts for ₹), styled Excel (xlsx-js-style), toasts instead of alert()
 - [ ] Cleanup: dead code, emoji iconography, a11y labels
 
@@ -71,3 +74,4 @@
 
 - 2026-10-01 · Onboarding chunk 1 built (Landing + Join), untested by design. Create/Share/Personal still the old screens until chunk 2.
 - 2026-10-01 · Onboarding chunk 2 built (Create, Share + sync, Personal); old setup/ screens removed. Untested by design — her test pass next.
+- 2026-10-01 · Settings chunk 1 built (untested by design). Old sync + data cards still in place, restyled in chunks 2–3.

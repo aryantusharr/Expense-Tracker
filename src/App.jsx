@@ -10,7 +10,7 @@ import PersonalScreen from './components/onboarding/PersonalScreen';
 import DashboardScreen from './components/dashboard/DashboardScreen';
 import AddScreen from './components/add/AddScreen';
 import HistoryScreen from './components/history/HistoryScreen';
-import SettingsPage from './components/settings/SettingsPage';
+import SettingsScreen from './components/settings/SettingsScreen';
 
 import { lazy, Suspense, useEffect } from 'react';
 
@@ -61,7 +61,7 @@ function AppRoutes() {
           <Route path="/dashboard" element={inRoom ? <DashboardScreen /> : <Navigate to="/" replace />} />
           <Route path="/add" element={inRoom ? <AddScreen /> : <Navigate to="/" replace />} />
           <Route path="/history" element={inRoom ? <HistoryScreen /> : <Navigate to="/" replace />} />
-          <Route path="/settings" element={inRoom ? <SettingsPage /> : <Navigate to="/" replace />} />
+          <Route path="/settings" element={inRoom ? <SettingsScreen /> : <Navigate to="/" replace />} />
           {FoundationsPage && (
             <Route path="/foundations" element={<Suspense fallback={null}><FoundationsPage /></Suspense>} />
           )}

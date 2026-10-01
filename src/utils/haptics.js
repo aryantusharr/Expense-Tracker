@@ -5,6 +5,7 @@ const PATTERNS = {
   choose: 12,             // choose payer, category, room, member, theme cord
   success: [10, 40, 10],  // Saved, ADMIT, SYNC ON, N IMPORTED, COPIED
   error: [30, 30, 30],    // NO ROOM, TAKEN, missing field, delete confirm
+  cord: [6, 20, 14],      // theme pull-cord click
 };
 
 export function haptic(kind = 'tap') {
