@@ -18,6 +18,10 @@ function Receipt({ name, total, rows, remaining, members, categories, isPersonal
   const stamp = id => resolveCategoryIcon(categories.find(c => c.id === id));
   const who = split => (split.length === members.length ? 'ALL' : members.filter(m => split.includes(m.id)).map(m => initialOf(m.name)).join(''));
   return (
+    <>
+    <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true">
+      <filter id="ib-worn"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="4" result="n" /><feDisplacementMap in="SourceGraphic" in2="n" scale="1.6" /></filter>
+    </svg>
     <div className={`ib-paper se-print ${muted ? 'ib-paper--muted' : ''}`}>
       <div className="ib-paper__head">
         <span className="ib-paper__brand">NEW BILL</span>
@@ -54,6 +58,7 @@ function Receipt({ name, total, rows, remaining, members, categories, isPersonal
       )}
       <span className="ib-zig" aria-hidden="true" />
     </div>
+    </>
   );
 }
 

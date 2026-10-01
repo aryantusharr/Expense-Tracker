@@ -58,3 +58,4 @@
 - 2026-10-01 · Add Expense chunk 1 (Quick mode) built + checked on test rooms D4NYY3 (shared) / MB739V (personal), dark + light. Saved a real test expense OK. Category starts unpicked (per spec); recent-description chips kept under the field.
 - 2026-10-01 · Add Expense chunk 2 (Items mode) built; old AddExpense.jsx removed. Stamps on receipt lines reuse the line-icon glyph in ink (not the worn feTurbulence stamp yet).
 - 2026-10-01 · Add Expense chunk 3 (save moment) built. Add Expense is feature-complete; remaining: her phone check + light mode.
+- 2026-10-01 · Add polish pass: worn-edge stamps (feTurbulence) on receipt lines, 'Who paid?' sheet when a room has 5+ people (3–4 still flip), light mode checked on Items. Payer sheet not exercised (test rooms have 3 people).
