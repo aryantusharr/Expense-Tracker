@@ -1,0 +1,55 @@
+rules_version = '2';
+// SplitEase Firestore rules — "the room code is the key".
+// The app has no sign-in, so access works like an unlisted link: you can only open a room if you know its
+// 6-character code. Nothing can be listed or searched (rooms, names, other collections), so a stranger cannot
+// browse rooms, and the old unused learned_patterns collection is locked. Writes are shape-checked.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function validCode(code) { return code.matches('^[A-Z2-9]{6}$'); }
+
+    function validRoom(code, d) {
+      return d.code == code
+        && d.name is string && d.name.size() > 0 && d.name.size() <= 80
+        && d.users is list && d.users.size() <= 30
+        && d.categories is list && d.categories.size() <= 200;
+    }
+
+    function validExpense(d) {
+      return (d.amount is int || d.amount is float) && d.amount >= 0 && d.amount < 100000000
+        && d.paidBy is string && d.paidBy.size() <= 80
+        && d.splitAmong is list && d.splitAmong.size() <= 30
+        && d.description is string && d.description.size() <= 300
+        && d.date is string && d.date.size() <= 40;
+    }
+
+    // Rooms: open by code only. No listing.
+    match /rooms/{code} {
+      allow get: if validCode(code);
+      allow list: if false;
+      allow create, update: if validCode(code) && validRoom(code, request.resource.data);
+      allow delete: if validCode(code);
+
+      match /expenses/{expenseId} {
+        // Reading a room's expenses needs the room code in the path; this path cannot be used to find rooms.
+        allow get, list: if validCode(code);
+        allow create, update: if validCode(code) && validExpense(request.resource.data);
+        allow delete: if validCode(code);
+      }
+    }
+
+    // Name registry: "is this room name taken?" — single get by exact name, never a list. Holds no codes.
+    match /roomNames/{key} {
+      allow get: if true;
+      allow list: if false;
+      allow create, update: if request.resource.data.keys().hasOnly(['name'])
+        && request.resource.data.name is string && request.resource.data.name.size() <= 80;
+      allow delete: if true;
+    }
+
+    // Everything else (learned_patterns, anything new) is closed.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

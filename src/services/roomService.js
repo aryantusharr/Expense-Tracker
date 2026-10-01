@@ -2,7 +2,7 @@
 import { db } from './firebase';
 import {
   doc, setDoc, getDoc, updateDoc, deleteDoc, arrayUnion, onSnapshot,
-  collection, query, where, getDocs
+  collection, getDocs
 } from 'firebase/firestore';
 
 // Generate a 6-character room code
@@ -15,24 +15,26 @@ export function generateRoomCode() {
   return code;
 }
 
+// Name registry: roomNames/<normalised name> = { name }. Lets the app ask "is this name taken?" with a single
+// get — the rules never allow listing the rooms collection, so rooms can only be opened by their code.
+const nameKey = (name) => String(name || '').trim().toLowerCase().replace(/\s+/g, ' ').replace(/\//g, '_').slice(0, 120);
+const nameRef = (name) => doc(db, 'roomNames', nameKey(name));
+const registerName = (name) => setDoc(nameRef(name), { name: String(name).trim() }).catch(() => { /* best effort */ });
+const releaseName = (name) => deleteDoc(nameRef(name)).catch(() => { /* best effort */ });
+
 /**
  * Check if a room with the given name already exists.
  * Uses a 5-second timeout to prevent hanging on slow networks.
  */
 export async function checkRoomNameExists(roomName) {
   try {
-    const roomsRef = collection(db, 'rooms');
-    const q = query(roomsRef, where('name', '==', roomName.trim()));
-    
-    // Race the query against a timeout so it never hangs
     const result = await Promise.race([
-      getDocs(q),
+      getDoc(nameRef(roomName)),
       new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
     ]);
-    return !result.empty;
+    return result.exists();
   } catch {
     // On timeout or network error, allow creation (the setDoc will fail if offline anyway)
-    // Fallback on error
     return false;
   }
 }
@@ -116,6 +118,7 @@ export async function createRoom(roomName, userNames) {
   };
 
   await setDoc(doc(db, 'rooms', roomCode), roomData);
+  registerName(roomName);
 
   return { roomCode, roomData };
 }
@@ -222,13 +225,25 @@ export async function updateCategories(roomCode, categories) {
  */
 export async function updateRoomData(roomCode, updates) {
   const roomRef = doc(db, 'rooms', roomCode);
+  let oldName = null;
+  if (typeof updates.name === 'string') {
+    const snap = await getDoc(roomRef).catch(() => null);
+    const d = snap?.exists() ? snap.data() : null;
+    if (d && !d.isPersonal) oldName = d.name;
+  }
   await updateDoc(roomRef, updates);
+  if (oldName != null && nameKey(oldName) !== nameKey(updates.name)) {
+    releaseName(oldName);
+    registerName(updates.name);
+  }
 }
 
 /**
  * Permanently delete a room and all its expenses from Firestore
  */
 export async function deleteRoom(roomCode) {
+  const before = await getDoc(doc(db, 'rooms', roomCode)).catch(() => null);
+  const prev = before?.exists() ? before.data() : null;
   // 1. Delete the main room document first so other clients are immediately notified
   const deleteRoomDocPromise = deleteDoc(doc(db, 'rooms', roomCode));
 
@@ -249,4 +264,5 @@ export async function deleteRoom(roomCode) {
 
   // Await the room document deletion to confirm it's gone
   await deleteRoomDocPromise;
+  if (prev && !prev.isPersonal) releaseName(prev.name);
 }
