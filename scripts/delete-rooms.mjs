@@ -9,7 +9,7 @@ const args = process.argv.slice(2)
 const go = args.includes('--yes')
 const envAt = args.indexOf('--env')
 const envFile = envAt >= 0 ? args[envAt + 1] : '.env.production.local'
-const [backupFile, ...codes] = args.filter((a, i) => a !== '--yes' && i !== envAt && i !== envAt + 1)
+const [backupFile, ...codes] = args.filter((a, i) => a !== '--yes' && (envAt < 0 || (i !== envAt && i !== envAt + 1)))
 if (!backupFile || !codes.length) throw new Error('Usage: node scripts/delete-rooms.mjs <backup firestore.json> CODE [CODE…] [--env envFile] [--yes]')
 
 const env = Object.fromEntries(
