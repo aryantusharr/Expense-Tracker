@@ -4,8 +4,8 @@
   "description": "Track and split expenses with your roommates",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0a0a0f",
-  "theme_color": "#6c5ce7",
+  "background_color": "#07071A",
+  "theme_color": "#07071A",
   "orientation": "portrait",
   "icons": [
     {

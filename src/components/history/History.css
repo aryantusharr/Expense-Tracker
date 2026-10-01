@@ -174,7 +174,7 @@
 }
 .he__title { text-align: center; font-weight: 700; letter-spacing: .14em; font-size: 12px; padding-bottom: 6px; border-bottom: 1px dashed #B9B6DA; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .he__rule { display: none; }
-.he__line { width: 100%; text-align: left; display: flex; gap: 6px; align-items: baseline; padding: 5px 6px; border-radius: 5px; border: 0; background: transparent; font: 400 11px var(--se-font-mono); color: #15142B; cursor: pointer; transition: background .25s; outline: 0 dashed transparent; }
+.he__line { width: 100%; text-align: left; display: flex; gap: 6px; align-items: baseline; padding: 8px 6px; border-radius: 5px; border: 0; background: transparent; font: 400 11px var(--se-font-mono); color: #15142B; cursor: pointer; transition: background .25s; outline: 0 dashed transparent; }
 .he__line.is-on { background: rgba(139, 124, 255, 0.14); outline: 1.5px dashed #8B7CFF; }
 .he__lab { color: #6F6E88; flex-shrink: 0; }
 .he__dots { flex-grow: 1; border-bottom: 1px dotted #B9B6DA; transform: translateY(-3px); min-width: 8px; }

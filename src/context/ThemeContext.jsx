@@ -13,7 +13,7 @@ export function ThemeProvider({ children }) {
     // Update theme-color meta tag
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta) {
-      meta.content = theme === 'dark' ? '#0a0a0f' : '#f2f2f7';
+      meta.content = theme === 'dark' ? '#07071A' : '#F4F4F8';
     }
   }, [theme]);
 

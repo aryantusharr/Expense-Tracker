@@ -243,3 +243,10 @@
 .iw-stampwrap { display: flex; justify-content: center; padding: 6px 0; }
 .iw-skipbox { border-radius: 16px; padding: 12px; background: rgba(255, 111, 160, .08); border: 1px solid rgba(255, 163, 194, .4); display: flex; flex-direction: column; gap: 6px; font-size: 12px; }
 .iw-skipbox span { color: var(--se-text-2); }
+
+/* Bigger invisible tap areas (~44pt) — no visual change. */
+.st-cat__main { align-self: stretch; margin: -9px 0; padding: 9px 0; }
+.st-cat__btn { position: relative; }
+.st-cat__btn::after { content: ''; position: absolute; inset: -8px -4px; }
+.st-cord::after { content: ''; position: absolute; inset: 0 -12px; }
+.iw-blocked { margin: 10px 0 -2px; text-align: center; font-size: 12px; color: var(--se-pink-2); }

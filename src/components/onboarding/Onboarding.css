@@ -189,3 +189,9 @@
 .ob-receipt__dim { color: #6F6E88; }
 .ob-stamp--syncon { right: -14px; top: -14px; padding: 3px 12px; font-size: 13px; letter-spacing: .2em; animation-delay: .5s; }
 .ob-receipt-scr .se-btn { max-width: 360px; }
+
+/* Bigger invisible tap areas (~44pt) — no visual change. */
+.ob-room__main { align-self: stretch; margin: -9px 0; padding: 9px 0; }
+.ob-gear, .ob-back { position: relative; }
+.ob-gear::after { content: ''; position: absolute; inset: -5px; }
+.ob-back::after { content: ''; position: absolute; inset: -4px; }

@@ -27,6 +27,14 @@ function Pick({ value, onChange, placeholder, options }) {
 }
 
 /** Import CSV wizard (board S6): step bar → before you start → upload → people → groups → categories → preview → importing → N IMPORTED. */
+// Why Next is greyed out (iPhone web has no haptics, so the dimmed button alone says nothing).
+const BLOCKED = {
+  pre: 'Tick the box above to continue',
+  ppl: 'Match every name to a member to continue',
+  grp: 'Tick at least one person in every group',
+  cat: 'Pick a category for every row to continue',
+};
+
 /** Mounted only while open, so every import starts from a clean state. */
 export default function ImportWizard({ onClose }) {
   const { room, roomCode, users, categories } = useRoomContext();
@@ -65,6 +73,19 @@ export default function ImportWizard({ onClose }) {
       const r = await parseCSVForMapping(f, isPersonal);
       setRaw(r.rawRows); setSkipped(r.skipped);
       setUniq({ cats: r.uniqueCategories, paid: r.uniquePaidBy, splits: r.uniqueSplits });
+      // Pre-pick obvious matches (same name, any case) where nothing is saved yet — still editable.
+      const norm = x => String(x || '').trim().toLowerCase();
+      setMaps(m => {
+        const categoryMap = { ...m.categoryMap };
+        r.uniqueCategories.forEach(c => { if (!categoryMap[c]) { const hit = categories.find(k => norm(k.name) === norm(c)); if (hit) categoryMap[c] = hit.id; } });
+        const peopleMap = { ...m.peopleMap };
+        r.uniquePaidBy.forEach(n => {
+          if (peopleMap[n]) return;
+          const hit = users.find(u => norm(u.name) === norm(n)) || users.filter(u => norm(u.name).split(/\s+/)[0] === norm(n)).find((u, _, a) => a.length === 1);
+          if (hit) peopleMap[n] = hit.id;
+        });
+        return { ...m, categoryMap, peopleMap };
+      });
       haptic('success');
       setStep(steps[steps.indexOf('up') + 1]);
     } catch (e) { haptic('error'); setErr(e.message); setFile(null); }
@@ -88,6 +109,19 @@ export default function ImportWizard({ onClose }) {
     if (!complete()) { haptic('error'); return; }
     haptic('tap');
     if (step === 'cat') goPreview();
+    if (step === 'ppl') {
+      // Pre-tick split groups from the people just matched: "All"/"Everyone" → everyone, "Ravi + Asha" → those two.
+      setMaps(m => {
+        const splitMap = { ...m.splitMap };
+        uniq.splits.forEach(sp => {
+          if (splitMap[sp]?.length) return;
+          if (/^(all|everyone)$/i.test(sp.trim())) { splitMap[sp] = users.map(u => u.id); return; }
+          const ids = sp.split(/\s*(?:\+|&|,|\band\b)\s*/i).map(t => m.peopleMap[t.trim()] || m.peopleMap[Object.keys(m.peopleMap).find(k => k.toLowerCase() === t.trim().toLowerCase())]).filter(Boolean);
+          if (ids.length) splitMap[sp] = [...new Set(ids)];
+        });
+        return { ...m, splitMap };
+      });
+    }
     if (step === 'prev') { runImport(); return; }
     setStep(steps[idx + 1]);
   };
@@ -266,7 +300,7 @@ export default function ImportWizard({ onClose }) {
           <div className="iw-stampwrap"><span id="iw-title" className="ps-stamp ps-stamp--big">{result?.imported || 0} IMPORTED</span></div>
           {(allSkipped.length > 0 || result?.errors?.length > 0) && (
             <div className="iw-skipbox">
-              <b>{allSkipped.length + (result?.errors?.length || 0)} rows skipped</b>
+              <b>{allSkipped.length + (result?.errors?.length || 0)} {allSkipped.length + (result?.errors?.length || 0) === 1 ? 'row' : 'rows'} skipped</b>
               {[...allSkipped.map(s => `Row ${s.rowNum} · ${s.reason}`), ...(result?.errors || []).map(e => `Row ${e.rowIndex} · ${e.error}`)].slice(0, 4).map(t => <span key={t}>{t}</span>)}
             </div>
           )}
@@ -276,6 +310,7 @@ export default function ImportWizard({ onClose }) {
         </div>
       )}
 
+      {step !== 'run' && step !== 'done' && step !== 'up' && !complete() && BLOCKED[step] && <p className="iw-blocked" role="status">{BLOCKED[step]}</p>}
       {step !== 'run' && (
         <div className="st-btnrow">
           {step === 'done' ? (
@@ -284,7 +319,7 @@ export default function ImportWizard({ onClose }) {
             <>
               <button type="button" className="se-btn se-btn--secondary se-press" onClick={step === 'pre' ? onClose : back}>{step === 'pre' ? 'Cancel' : 'Back'}</button>
               {step !== 'up' && (
-                <button type="button" className="se-btn se-btn--primary se-press" style={{ opacity: complete() ? 1 : 0.4 }} onClick={next}>{nextLabel}</button>
+                <button type="button" className="se-btn se-btn--primary se-press" style={{ opacity: complete() ? 1 : 0.4 }} aria-disabled={!complete()} onClick={next}>{nextLabel}</button>
               )}
             </>
           )}
