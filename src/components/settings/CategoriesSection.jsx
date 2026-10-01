@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react';
 import { updateCategories } from '../../services/roomService';
+import { useRoomContext } from '../../context/RoomContext';
+import { addCategoryToSyncedRooms } from '../../utils/syncExpenseToPersonal';
 import { generateId } from '../../utils/helpers';
 import { haptic } from '../../utils/haptics';
 import { CATEGORY_ICONS, resolveCategoryIcon } from '../../design/categoryIcons';
@@ -13,8 +15,9 @@ const TEAR_MS = 600;
 /** Categories card (boards S4a + S4c): icon rows with counts, bin + ⋮⋮ lift/swap, add/edit sheet. */
 export default function CategoriesSection({ roomCode, categories, expenses }) {
   const toast = useToast();
+  const { room } = useRoomContext();
   const [lift, setLift] = useState(null);       // id of the lifted category
-  const [asking, setAsking] = useState(null);   // id showing the inline delete confirm
+  const [asking, setAsking] = useState(null);   // { id, step: 1|2 } while the two-step delete confirm shows
   const [tearing, setTearing] = useState(null); // id mid-tear
   const [fresh, setFresh] = useState(null);     // id of a just-added category (NEW tag)
   const [sheet, setSheet] = useState(null);     // null | { id|null, name, key }
@@ -68,6 +71,7 @@ export default function CategoriesSection({ roomCode, categories, expenses }) {
       const id = generateId();
       await persist([...categories, { id, name, icon }]);
       setFresh(id);
+      if (room && !room.isPersonal) addCategoryToSyncedRooms(roomCode, room, { id, name, icon }).catch(() => {});
     }
     haptic('success');
     setSaving(false);
@@ -86,7 +90,7 @@ export default function CategoriesSection({ roomCode, categories, expenses }) {
           </span>
         </button>
         <button type="button" className="st-cat__btn st-pink se-press" aria-label={`Delete ${cat.name}`}
-          onClick={() => { haptic('tap'); setAsking(asking === cat.id ? null : cat.id); }}>
+          onClick={() => { haptic('tap'); setAsking(asking?.id === cat.id ? null : { id: cat.id, step: 1 }); }}>
           <LineIcon path={BIN} size={15} strokeWidth={1.9} />
         </button>
         <button type="button" className="st-cat__btn st-cat__grip se-press" aria-label="Reorder" onClick={() => tapLift(cat)}>⋮⋮</button>
@@ -107,14 +111,27 @@ export default function CategoriesSection({ roomCode, categories, expenses }) {
                 <div className="st-cat__half st-cat__half--bot" aria-hidden="true">{row(cat)}</div>
               </>
             ) : row(cat)}
-            {asking === cat.id && (
-              <div className="st-confirm se-pop">
-                <b>Delete {cat.name}?</b>
-                <span>{counts[cat.id] ? `${counts[cat.id]} expenses will show under Other.` : 'No expenses use it.'}</span>
-                <div className="st-confirm__btns">
-                  <button type="button" className="se-btn se-btn--secondary se-btn--sm se-press" onClick={() => setAsking(null)}>Keep it</button>
-                  <button type="button" className="se-btn se-btn--sm st-del se-press" onClick={() => tearOff(cat)}>Tear it off</button>
-                </div>
+            {asking?.id === cat.id && (
+              <div className="st-confirm se-pop" key={asking.step}>
+                {asking.step === 1 ? (
+                  <>
+                    <b>Delete {cat.name}?</b>
+                    <span>{counts[cat.id] ? `${counts[cat.id]} expenses use it.` : 'No expenses use it.'}</span>
+                    <div className="st-confirm__btns">
+                      <button type="button" className="se-btn se-btn--secondary se-btn--sm se-press" onClick={() => setAsking(null)}>Keep it</button>
+                      <button type="button" className="se-btn se-btn--sm st-del se-press" onClick={() => setAsking({ id: cat.id, step: 2 })}>Continue</button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <b>Really delete {cat.name}?</b>
+                    <span>{counts[cat.id] ? `Its ${counts[cat.id]} expenses will show under Other and this can’t be undone.` : 'This can’t be undone.'}</span>
+                    <div className="st-confirm__btns">
+                      <button type="button" className="se-btn se-btn--secondary se-btn--sm se-press" onClick={() => setAsking(null)}>No, keep it</button>
+                      <button type="button" className="se-btn se-btn--sm st-del se-press" onClick={() => tearOff(cat)}>Yes, tear it off</button>
+                    </div>
+                  </>
+                )}
               </div>
             )}
           </div>

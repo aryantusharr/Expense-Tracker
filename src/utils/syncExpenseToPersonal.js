@@ -122,3 +122,17 @@ export async function syncExpenseToPersonalRooms(roomCode, roomData, expenseId, 
 
   await Promise.allSettled(syncPromises);
 }
+
+/**
+ * A category was added in a shared room: create it (matched by name) in every synced member's
+ * personal room right away, so later copies find it. Fire-and-forget.
+ */
+export async function addCategoryToSyncedRooms(sharedRoomCode, roomData, category) {
+  const codes = [...new Set((roomData?.users || []).map(u => u.personalRoomCode).filter(Boolean))];
+  await Promise.allSettled(codes.map(async code => {
+    const snap = await getDoc(doc(db, 'rooms', code));
+    if (!snap.exists()) return;
+    const { add } = resolvePersonalCategory(snap.data().categories || [], category, sharedRoomCode);
+    if (add) await updateDoc(doc(db, 'rooms', code), { categories: arrayUnion(add) });
+  }));
+}

@@ -392,3 +392,11 @@
   .dsh-flip { transition: opacity .2s; }
   .dsh-deck, .dsh-deck__card, .dsh-ring__arc { transition: none !important; }
 }
+
+/* unmapped-category fallback sheet */
+.dsh-unm__lead { font-size: 13px; color: var(--se-text-2); margin: -4px 0 12px; }
+.dsh-unm { display: flex; flex-direction: column; gap: 10px; padding: 12px 0; border-top: 1px solid var(--se-hairline, rgba(128,128,128,.18)); }
+.dsh-unm__head { display: flex; align-items: center; gap: 10px; }
+.dsh-unm__head span { margin-left: auto; font-size: 12px; color: var(--se-text-3); }
+.dsh-unm__or { font-family: var(--se-font-mono); font-size: 9px; letter-spacing: .12em; color: var(--se-text-3); }
+.dsh-unm__chips { display: flex; flex-wrap: wrap; gap: 6px; }

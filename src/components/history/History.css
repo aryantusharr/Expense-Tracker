@@ -243,3 +243,7 @@ body.hist-empty .fnav__ind { background: rgba(95, 212, 196, 0.14); border: 1px d
   .hr__half--top, .hr__half--bot { animation-duration: .2s; }
   .hb__paper { animation: none !important; }
 }
+
+/* 44pt hit area without changing the receipt look */
+.he__line { position: relative; }
+.he__line::after { content: ""; position: absolute; inset: -6px 0; }

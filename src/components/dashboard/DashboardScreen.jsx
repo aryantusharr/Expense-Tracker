@@ -8,6 +8,7 @@ import {
 import { HeroCard, NudgeStrip, Settlements, IdentitySheet, Mono } from './parts/Shared';
 import BalanceDeck from './parts/BalanceDeck';
 import { MonthCard, SpendingMatrix, LifetimeSpend } from './parts/MonthAndMatrix';
+import UnmappedCategories from './parts/UnmappedCategories';
 import { Ticker, BudgetCard, LastPaid } from './parts/Personal';
 import './DashboardScreen.css';
 
@@ -22,7 +23,7 @@ function useOnline() {
 }
 
 export default function DashboardScreen() {
-  const { room, expenses, users, categories, userIdentity, setUserIdentity } = useRoomContext();
+  const { room, roomCode, expenses, users, categories, userIdentity, setUserIdentity } = useRoomContext();
   const { theme } = useTheme();
   const online = useOnline();
   const isPersonal = room?.isPersonal === true;
@@ -115,6 +116,7 @@ export default function DashboardScreen() {
         )}
       </main>
 
+      {isPersonal && <UnmappedCategories roomCode={roomCode} expenses={expenses} categories={categories} />}
       {!isPersonal && (
         <IdentitySheet
           open={pickerOpen}
