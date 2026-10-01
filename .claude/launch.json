@@ -25,6 +25,20 @@
         "5199"
       ],
       "port": 5199
+    },
+    {
+      "name": "splitease-learn",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--",
+        "--host",
+        "--force",
+        "--port",
+        "5211"
+      ],
+      "port": 5211
     }
   ]
 }
