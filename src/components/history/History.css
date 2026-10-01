@@ -187,7 +187,7 @@
 .he__input { height: 44px; box-sizing: border-box; border-radius: 14px; border: 1px solid var(--se-line-2); background: var(--se-fill-1); color: var(--se-text); font: 500 16px var(--se-font-mono); padding: 0 14px; outline: none; }
 .he__input:focus { border-color: var(--se-violet); }
 .he__input--wide { width: 100%; }
-.he__strip { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding: 2px 1px; }
+.he__strip { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding: 12px 10px; margin: -10px; }
 .he__strip::-webkit-scrollbar { display: none; }
 .he__cat { flex-shrink: 0; min-height: 42px; padding: 0 14px; border-radius: 14px; display: flex; align-items: center; gap: 7px; font: 400 12px var(--se-font); color: var(--se-text-2); border: 1px solid var(--se-line-2); background: none; cursor: pointer; }
 .he__cat:has(.se-cat) { padding-left: 8px; }

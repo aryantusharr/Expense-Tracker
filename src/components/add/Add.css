@@ -106,7 +106,7 @@
 
 /* Chips rows */
 .add-chips { display: flex; gap: 8px; flex-wrap: wrap; }
-.add-chips--scroll { flex-wrap: nowrap; overflow-x: auto; margin: 0 -20px; padding: 2px 20px; scrollbar-width: none; }
+.add-chips--scroll { flex-wrap: nowrap; overflow-x: auto; margin: -10px -20px; padding: 12px 20px; scrollbar-width: none; }
 .add-chips--scroll::-webkit-scrollbar { display: none; }
 .add-chips .se-chip { flex-shrink: 0; }
 .add-rec { color: var(--se-teal-ink); }
@@ -144,7 +144,7 @@
 .add-slips__col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
 .add-slips__head { display: flex; justify-content: space-between; align-items: baseline; font: 400 10px var(--se-font-mono); letter-spacing: .12em; color: var(--se-text-3); white-space: nowrap; }
 .add-slips__head em { font-style: normal; font-size: 9px; letter-spacing: .04em; color: var(--se-teal-ink); }
-.add-seats { display: flex; justify-content: space-between; gap: 6px; overflow-x: auto; scrollbar-width: none; padding: 6px; margin: -6px; }
+.add-seats { display: flex; justify-content: space-between; gap: 6px; overflow-x: auto; scrollbar-width: none; padding: 18px; margin: -18px; }
 .add-seats::-webkit-scrollbar { display: none; }
 .add-seat { display: flex; align-items: center; gap: 3px; background: none; border: 0; padding: 0; cursor: pointer; font-family: inherit; flex-shrink: 0; -webkit-tap-highlight-color: transparent; transition: transform .3s var(--se-ease-strong); }
 .add-seat:active { transform: scale(.93); }

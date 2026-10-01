@@ -173,7 +173,7 @@
 .ob-flow__line { flex: 1; height: 2px; background: repeating-linear-gradient(90deg, #5FD4C4 0 6px, transparent 6px 10px); background-size: 10px 2px; animation: ob-flowx 1s linear infinite; }
 @keyframes ob-flowx { to { background-position: 10px 0; } }
 .ob-flow__lbl { font-family: var(--se-font-mono); font-size: 10px; color: var(--se-teal-ink); }
-.ob-who { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding: 2px; }
+.ob-who { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding: 12px; margin: -10px; }
 .ob-who__b { flex: 1 0 84px; height: 92px; border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; border: 1.5px solid var(--se-line) !important; font-size: 13px; font-weight: 600; }
 .ob-who__b.is-on { background: color-mix(in srgb, var(--c) 18%, transparent) !important; border-color: var(--c) !important; }
 .ob-who__m { width: 36px; height: 36px; border-radius: 12px; background: color-mix(in srgb, var(--c) 22%, var(--se-surface)); border: 1px solid var(--c); color: var(--c); display: flex; align-items: center; justify-content: center; font-family: var(--se-font-display); font-weight: 700; }
