@@ -162,7 +162,7 @@
 /* net bars */
 .dsh-nets { position: relative; display: flex; flex-direction: column; gap: 4px; }
 .dsh-nets__axis { display: flex; justify-content: space-between; font-family: var(--se-font-mono); font-size: 10px; letter-spacing: .1em; color: var(--se-text-3); }
-.dsh-net { display: grid; grid-template-columns: 58px 1fr 72px; align-items: center; gap: 10px; height: 34px; }
+.dsh-net { display: grid; grid-template-columns: 88px 1fr 72px; align-items: center; gap: 10px; height: 34px; }
 .dsh-net__name { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dsh-net__track { position: relative; height: 34px; }
 .dsh-net__track::before { content: ''; position: absolute; left: 50%; top: 0; bottom: 0; border-left: 1px dashed var(--dsh-chip-border); }

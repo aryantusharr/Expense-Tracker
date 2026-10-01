@@ -76,3 +76,11 @@ export function useToast() {
   if (!ctx) throw new Error('useToast must be used within ToastProvider');
   return ctx.show;
 }
+
+/** Close a toast early by the id toast() returned. */
+// eslint-disable-next-line react-refresh/only-export-components
+export function useToastDismiss() {
+  const ctx = useContext(ToastContext);
+  if (!ctx) throw new Error('useToastDismiss must be used within ToastProvider');
+  return ctx.dismiss;
+}

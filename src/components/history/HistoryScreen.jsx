@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRoomContext } from '../../context/RoomContext';
-import { useToast } from '../ui/Toast';
+import { useToast, useToastDismiss } from '../ui/Toast';
 import { haptic } from '../../utils/haptics';
 import { resolveCategoryIcon } from '../../design/categoryIcons';
 import { memberStyle, fmt } from '../dashboard/dashboardData';
@@ -17,6 +17,7 @@ const UNDO_MS = 4500;
 export default function HistoryScreen() {
   const { roomCode, room, expenses, users, categories, userIdentity } = useRoomContext();
   const toast = useToast();
+  const dismissToast = useToastDismiss();
   const isPersonal = room?.isPersonal === true;
   const budget = Number(room?.budget) || 0;
   const meId = isPersonal ? (users[0]?.id ?? null) : (userIdentity || null);
@@ -67,7 +68,9 @@ export default function HistoryScreen() {
     const hay = `${e.description || ''} ${e.groupName || ''} ${catOf(e)?.name || ''} ${users.find(u => u.id === e.paidBy)?.name || ''} ${e.amount}`.toLowerCase();
     return hay.includes(ql.replace(/[₹,]/g, ''));
   };
-  const entryDim = en => ((filter || ql) ? ((en.kind === 'bill' ? en.items.some(itemMatches) : itemMatches(en.e)) ? 1 : 0.25) : 1);
+  const searching = Boolean(filter || ql);
+  const matchEn = en => (en.kind === 'bill' ? en.items.some(itemMatches) : itemMatches(en.e));
+  const entryDim = en => (searching ? (matchEn(en) ? 1 : 0.25) : 1);
 
   // ---- tear delete with Undo (the real delete waits until the toast is gone) ----
   const [hidden, setHidden] = useState(() => new Set());
@@ -77,6 +80,7 @@ export default function HistoryScreen() {
     if (!p) return;
     clearTimeout(p.timer);
     pending.current.delete(key);
+    if (p.toastId) dismissToast(p.toastId); // Undo is no longer possible — don't leave the button up
     p.ids.forEach(id => deleteExpense(roomCode, id, room).catch(() => {}));
   };
   const flushAll = () => [...pending.current.keys()].forEach(commit);
@@ -93,9 +97,10 @@ export default function HistoryScreen() {
     const e = en.e;
     setHidden(h => new Set(h).add(key));
     const others = isPersonal ? [] : users.filter(u => u.id !== meId && u.personalRoomCode && (e.splitAmong || []).includes(u.id)).map(u => u.name);
-    pending.current.set(key, { ids, timer: setTimeout(() => commit(key), UNDO_MS + 200) });
+    const p = { ids, timer: setTimeout(() => commit(key), UNDO_MS + 200), toastId: null };
+    pending.current.set(key, p);
     haptic('success');
-    toast({
+    p.toastId = toast({
       message: <><b>{en.kind === 'bill' ? en.name : e.description}</b> torn off · ₹{fmt(en.kind === 'bill' ? en.total : e.amount)}</>,
       sub: others.length ? `Also removed from ${others.join(' and ')}’s personal ${others.length > 1 ? 'rooms' : 'room'}` : 'Removed from history',
       duration: UNDO_MS,
@@ -123,8 +128,37 @@ export default function HistoryScreen() {
   if (!expenses.length) return <EmptyHistory roomName={(room?.name || '').toUpperCase()} />;
 
   const side = month ? monthSide(month, { isPersonal, budget }) : null;
+
+  // While searching/filtering: the month on screen dims non-matches (board 4f); matches from every
+  // other month are listed underneath so older expenses can still be found.
+  const OTHER_CAP = 60;
+  const hereHits = searching && month ? month.days.reduce((s, d) => s + d.entries.filter(matchEn).length, 0) : 0;
+  const otherDays = searching ? months.flatMap((m, i) => (i === selIdx ? [] : m.days
+    .map(d => ({ key: `${m.key}-${d.key}`, label: d.label, year: (m.short || "").split(" ")[1] || "", entries: d.entries.filter(matchEn) }))
+    .filter(d => d.entries.length))) : [];
+  const otherHits = otherDays.reduce((s, d) => s + d.entries.length, 0);
+  const otherShown = otherDays.reduce((acc, d) => {
+    const left = OTHER_CAP - acc.n;
+    if (left > 0) { const entries = d.entries.slice(0, left); acc.days.push({ ...d, entries }); acc.n += entries.length; }
+    return acc;
+  }, { days: [], n: 0 }).days;
   const listExtra = (open && suggestions.length) || filter ? 38 : 0;
   const tint = filter ? `color-mix(in srgb, ${filter.color} 50%, transparent)` : undefined;
+
+  const renderEntry = (en, dim) => (en.kind === 'bill' ? (
+    <BillCard
+      key={en.id} bill={en} catOf={catOf} users={users} meId={meId} isPersonal={isPersonal}
+      dim={dim} removed={hidden.has(en.id)}
+      onEditItem={it => setEditing(it)} onTear={() => tear(en)} onLocked={() => locked(en)}
+    />
+  ) : (
+    <TearRow
+      key={en.id} locked={isSyncedExp(en.e)} removed={hidden.has(en.id)} dim={dim}
+      onTap={() => (isSyncedExp(en.e) ? locked(en) : setEditing(en.e))} onTear={() => tear(en)} onLocked={() => locked(en)}
+    >
+      <ExpenseCard e={en.e} cat={catOf(en.e)} users={users} meId={meId} isPersonal={isPersonal} />
+    </TearRow>
+  ));
 
   return (
     <div className="se-page hist" style={{ '--extra': `${listExtra}px` }}>
@@ -177,28 +211,33 @@ export default function HistoryScreen() {
         {month && month.days.length === 0 && (
           <p className="hist__none se-mono">NOTHING IN {month.name} YET</p>
         )}
+        {searching && !fan && (
+          <p className="hist__hits se-mono" aria-live="polite">
+            {hereHits + otherHits === 0 ? 'NO MATCHES'
+              : `${hereHits} IN ${month?.short || 'THIS MONTH'}${otherHits ? ` · ${otherHits} IN OTHER MONTHS ↓` : ''}`}
+          </p>
+        )}
         {month && !fan && month.days.map(day => (
           <section key={`${month.key}-${day.key}`} className="hist__day se-pop" style={{ animationDuration: '.45s' }}>
             <div className="hist__dayhead">
               <span className="se-mono">{day.label}</span>
               <span className="se-mono hist__daytot">₹{fmt(day.total)}</span>
             </div>
-            {day.entries.map(en => en.kind === 'bill' ? (
-              <BillCard
-                key={en.id} bill={en} catOf={catOf} users={users} meId={meId} isPersonal={isPersonal}
-                dim={entryDim(en)} removed={hidden.has(en.id)}
-                onEditItem={it => setEditing(it)} onTear={() => tear(en)} onLocked={() => locked(en)}
-              />
-            ) : (
-              <TearRow
-                key={en.id} locked={isSyncedExp(en.e)} removed={hidden.has(en.id)} dim={entryDim(en)}
-                onTap={() => (isSyncedExp(en.e) ? locked(en) : setEditing(en.e))} onTear={() => tear(en)} onLocked={() => locked(en)}
-              >
-                <ExpenseCard e={en.e} cat={catOf(en.e)} users={users} meId={meId} isPersonal={isPersonal} />
-              </TearRow>
-            ))}
+            {day.entries.map(en => renderEntry(en, entryDim(en)))}
           </section>
         ))}
+        {searching && !fan && otherShown.length > 0 && (
+          <>
+            <p className="hist__other se-mono">OTHER MONTHS</p>
+            {otherShown.map(day => (
+              <section key={day.key} className="hist__day">
+                <div className="hist__dayhead"><span className="se-mono">{day.label} {day.year}</span></div>
+                {day.entries.map(en => renderEntry(en, 1))}
+              </section>
+            ))}
+            {otherHits > OTHER_CAP && <p className="hist__none se-mono">+{otherHits - OTHER_CAP} MORE · NARROW THE SEARCH</p>}
+          </>
+        )}
         {fan && <p className="hist__none se-mono">PICK A MONTH</p>}
       </div>
 

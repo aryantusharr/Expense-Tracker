@@ -119,8 +119,10 @@ export function HeroCard({ model, me, onPickIdentity }) {
   const sub = state === 'neg' ? `Pay ${nameStr} to settle up`
     : state === 'pos' ? `${nameStr} ${names.length > 1 ? 'owe' : 'owes'} you`
       : 'Nothing to settle right now';
-  const ratio = me.all.share > 0 ? me.all.paid / me.all.share : 1;
-  const ringPct = `${Math.round(ratio * 100)}%`;
+  // Nothing logged yet → empty ring and "—", not "100% you paid".
+  const nothing = me.all.share <= 0 && me.all.paid <= 0;
+  const ratio = nothing ? 0 : me.all.share > 0 ? me.all.paid / me.all.share : 1;
+  const ringPct = nothing ? '—' : `${Math.round(ratio * 100)}%`;
   const off = (201.06 * (1 - Math.min(1, ringOn ? ratio : 0))).toFixed(1);
   const gradId = state === 'neg' ? 'dshRingNeg' : 'dshRingPos';
 
@@ -128,7 +130,7 @@ export function HeroCard({ model, me, onPickIdentity }) {
     <section className={`dsh-hero dsh-hero--${state} se-in`} style={{ animationDelay: '120ms' }}>
       <div className="dsh-hero__halo" />
       <div className="dsh-hero__top">
-        <div className="dsh-ring" role="img" aria-label={`You paid ${ringPct} of your share`}>
+        <div className="dsh-ring" role="img" aria-label={nothing ? 'Nothing paid yet' : `You paid ${ringPct} of your share`}>
           <svg width="76" height="76" viewBox="0 0 76 76" aria-hidden="true">
             <defs>
               <linearGradient id="dshRingPos" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="var(--se-violet)" /><stop offset="1" stopColor="var(--se-teal)" /></linearGradient>
