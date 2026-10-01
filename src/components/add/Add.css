@@ -206,3 +206,44 @@
   .add-track, .add-mode__ind { transition-duration: .2s; }
   .add-bill__in, .add-bill__out { animation-duration: .2s; }
 }
+
+/* ========================================
+   Items mode — receipt paper + item panel
+   ======================================== */
+.ib { gap: 16px; }
+.ib-paper {
+  --ink: #2A2350; --ink-2: rgba(42, 35, 80, 0.55);
+  position: relative; padding: 16px 18px 26px; background: #F6F2E8; color: var(--ink); border-radius: var(--se-r-xs) var(--se-r-xs) 0 0;
+  font-family: var(--se-font-mono); box-shadow: 0 14px 40px rgba(0, 0, 0, 0.28); transition: opacity .5s, filter .5s;
+}
+:root[data-theme='light'] .ib-paper { box-shadow: 0 12px 30px rgba(42, 35, 80, 0.16); }
+.ib-paper--muted { opacity: .55; filter: saturate(.6); }
+.ib-paper__head { display: flex; justify-content: space-between; align-items: center; font-size: 10px; letter-spacing: .16em; font-weight: 700; }
+.ib-paper__date { position: relative; color: var(--ink-2); cursor: pointer; padding: 4px 0 4px 10px; }
+.ib-paper__date input { position: absolute; inset: 0; opacity: 0; width: 100%; cursor: pointer; }
+.ib-rule { border-top: 1.5px dashed rgba(42, 35, 80, 0.3); margin: 10px 0; }
+.ib-paper__title { font: 700 18px var(--se-font-mono); word-break: break-word; }
+.ib-paper--muted .ib-paper__title { color: var(--ink-2); }
+.ib-line { display: flex; align-items: baseline; gap: 8px; font-size: 13px; margin-top: 8px; }
+.ib-line i { flex: 1; border-bottom: 2px dotted rgba(42, 35, 80, 0.35); transform: translateY(-3px); min-width: 12px; }
+.ib-line b { font-weight: 700; }
+.ib-line--total { font-size: 11px; letter-spacing: .12em; color: var(--ink-2); }
+.ib-line--total b { color: var(--ink); font-size: 14px; letter-spacing: 0; }
+.ib-item { align-items: center; }
+.ib-stamp {
+  flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center;
+  border: 1.5px solid var(--ink); box-shadow: 0 0 0 2px #F6F2E8, 0 0 0 3px rgba(42, 35, 80, 0.6); color: var(--ink); transform: rotate(-6deg); margin: 0 3px 0 4px;
+}
+.ib-item__name { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; }
+.ib-item__name em { font-style: normal; font-size: 9px; letter-spacing: .1em; color: var(--ink-2); border: 1px solid rgba(42, 35, 80, 0.3); border-radius: 4px; padding: 0 4px; align-self: flex-start; margin-top: 2px; }
+.ib-x { border: 0; background: none; color: var(--ink-2); font: 400 20px/1 var(--se-font); width: 28px; height: 28px; margin: -4px -6px -4px 0; cursor: pointer; }
+.ib-left { font-size: 11px; letter-spacing: .12em; font-weight: 700; color: #B8326A; }
+.ib-left--ok { color: #0A7D6E; }
+.ib-zig {
+  position: absolute; left: 0; right: 0; bottom: -9px; height: 10px; pointer-events: none;
+  background: linear-gradient(135deg, #F6F2E8 50%, transparent 50%) 0 0 / 14px 10px, linear-gradient(225deg, #F6F2E8 50%, transparent 50%) 0 0 / 14px 10px;
+}
+.ib-panel { padding-top: 6px; }
+.ib-btn--dim { opacity: .45; }
+.ib-link { background: none; border: 0; color: var(--se-text-3); font: 600 13px var(--se-font); padding: 8px; cursor: pointer; align-self: center; }
+.ib-paper.se-print { animation-fill-mode: backwards; }   /* keep the zigzag edge un-clipped after printing */

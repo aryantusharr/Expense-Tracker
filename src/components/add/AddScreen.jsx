@@ -4,6 +4,7 @@ import { IconButton } from '../ui/Button';
 import { haptic } from '../../utils/haptics';
 import { useAddController } from './useAddController';
 import QuickPane from './QuickPane';
+import ItemsPane from './ItemsPane';
 import './Add.css';
 
 const MODES = [['quick', 'Quick'], ['split', 'Items']];
@@ -57,7 +58,7 @@ export default function AddScreen() {
               <QuickPane c={c} />
             </section>
             <section className={`add-pane ${idx === 1 ? '' : 'add-pane--off'}`} aria-hidden={idx !== 1}>
-              <div className="add-soon">Items mode is being rebuilt — coming in the next step.</div>
+              <ItemsPane c={c} />
             </section>
           </div>
         </div>

@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useRoomContext } from '../../context/RoomContext';
 import { useExpenseForm } from '../../hooks/useExpenseForm';
-import { addExpense } from '../../services/expenseService';
+import { addExpense, addItemisedExpenseGroup } from '../../services/expenseService';
 import { validateExpense } from '../../utils/expenseFormHelpers';
 import { getLastUsedMode, setLastUsedMode, getLastUsedDefaults, setLastUsedDefaults } from '../../utils/lastUsedDefaults';
 import { addRecentDescription } from '../../utils/recentDescriptions';
@@ -256,11 +256,62 @@ export function useAddController() {
 
   const resetQuick = () => { resetForm(); setField.categoryId(''); setAutoCat(false); };
 
+  // ── Items mode: one bill (group) with one payer, several printed lines ──
+  const [billName, setBillName] = useState('');
+  const [billTotal, setBillTotal] = useState('');
+  const [rows, setRows] = useState([]);   // printed lines, oldest first
+
+  const totalNum = parseFloat(billTotal) || 0;
+  const sumOfRows = rows.reduce((sum, r) => sum + (parseFloat(r.amount) || 0), 0);
+  const remaining = parseFloat((totalNum - sumOfRows).toFixed(2));
+
+  const addRow = row => setRows(prev => [...prev, { ...row, id: 'item_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9) }]);
+  const removeRow = id => setRows(prev => prev.filter(r => r.id !== id));
+
+  const billProblem =
+    totalNum <= 0 ? 'Enter a total'
+      : !billName.trim() ? 'Add a bill name'
+        : (!isPersonal && !form.paidBy) ? 'Choose who paid'
+          : rows.length === 0 ? 'Add an item'
+            : Math.abs(remaining) >= 0.01 ? (remaining > 0 ? `₹${remaining.toLocaleString('en-IN')} still to split` : `₹${Math.abs(remaining).toLocaleString('en-IN')} over the total`)
+              : '';
+
+  /** Saves the bill via addItemisedExpenseGroup (same documents as before). */
+  const submitBill = async () => {
+    if (billProblem) return { ok: false, message: billProblem };
+    setSaving(true);
+    try {
+      const payerId = isPersonal ? (users[0]?.id || '') : form.paidBy;
+      const items = rows.map(row => ({
+        description: row.description.trim() || billName.trim(),
+        amount: parseFloat(row.amount),
+        categoryId: row.categoryId,
+        splitAmong: isPersonal ? [payerId] : row.splitAmong,
+      }));
+      await addItemisedExpenseGroup(roomCode, billName.trim(), items, { paidBy: payerId, date: form.date }, room);
+      const last = rows[rows.length - 1];
+      setLastUsedDefaults(roomCode, {
+        categoryId: last.categoryId,
+        paidBy: isPersonal ? null : form.paidBy,
+        splitAmong: isPersonal ? null : last.splitAmong,
+      });
+      rows.forEach(r => { if (r.description.trim()) addRecentDescription(roomCode, r.description); });
+      return { ok: true, total: totalNum, name: billName.trim(), count: rows.length };
+    } catch (err) {
+      return { ok: false, message: err.message || 'Failed to add bill' };
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const resetBill = () => { setBillName(''); setBillTotal(''); setRows([]); };
+
   return {
     roomCode, room, isPersonal, members, userIdentity,
     mode, setMode,
     form, setField, toggleSplit, setDescription, pickCategory, autoCat,
     sortedCategories, filteredChips, recurringExpensesList, itemisedGroupNamesList,
     applyRecurring, problem, submitQuick, resetQuick, saving,
+    billName, setBillName, billTotal, setBillTotal, rows, addRow, removeRow, remaining, billProblem, submitBill, resetBill,
   };
 }
