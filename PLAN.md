@@ -60,7 +60,9 @@ Decisions (her "do whatever is best" → Claude's picks): category delete keeps 
 ## Phase 3 · iPhone testing
 - Day-to-day: `npm run dev -- --host` → open http://<mac-ip>:5173 on the iPhone (same Wi-Fi), pointed at the TEST project. Instant reloads; no PWA install/offline/clipboard (needs HTTPS).
 - Full PWA check: deploy to a Firebase preview channel on the TEST project → HTTPS link, Add to Home Screen, offline, copy/share.
-- [ ] Her test pass: every screen, dark + light, shared + personal, offline
+- [x] Her Wi-Fi test pass done (2 Oct): fixes in 9215c90 + glow-clipping commits
+- [x] New home-screen icon set (S logo) installed, SW cache v2
+- [ ] HTTPS preview pass: Add to Home Screen icon, offline, copy/share, PDF/Excel save
 
 ## Phase 4 · Data check
 - [ ] Real-shaped data in test project renders correctly: balances, settlements, synced entries, itemised groups, budgets
@@ -101,3 +103,5 @@ Decisions (her "do whatever is best" → Claude's picks): category delete keeps 
 - 2026-10-02 · Cleanup done in 4 commits (packages, dead components, dead CSS, index.css trim). Second dev server config `splitease-verify` (port 5199, --force) added because the 5173 server kept stale deps after the uninstall — restart `splitease-dev` before her phone pass. Next: reset test data (restore-to-test.mjs, wipe + restore) → Phase 3 phone test.
 - 2026-10-02 · Test data reset: new `scripts/wipe-test.mjs --yes` (test project only, refuses live) + `restore-to-test.mjs <anon backup>` → 10 rooms / 5,476 expenses identical to the backup (verified per room). Tested on clean data: category added in shared room appears in all 3 synced personal rooms; shared expense with a category missing in the personal room creates it (collision-free id) and the copy points to it; fallback sheet shows missing categories on opening a personal room (Create / move) — both actions verified; light mode checked; IndexedDB offline cache present. Rooms D4NYY3 (shared) + W6LTVB/N4EWMU/MB739V (its synced personal rooms). Dev server on 5173 needs a restart (stale deps); `splitease-verify` = port 5199.
 - 2026-10-02 · Phase 2.6 built (src/utils/categoryGuess.js; old HINGLISH_MAP + categoryRegex.js removed). 31 logic checks pass; tested on the test project in room "Test Learned" (code ADVACX): learned picks (5+ in 30 days, shared across members), 4x / >30-day cases don't learn, learned beats word list, manual tap wins (Quick + Items), save writes the same document, recurring chip OK, Dashboard/History/Settings load with no new errors. Dev config `splitease-learn` (port 5211) added because 5173/5199 were used by other chats. Next: Phase 3 phone test.
+
+- 2026-10-02 · Phone pass 1 fixes (Settings padding reset, join-code stamp, sync pulse ring, tap-through payer bill, sync receipt clip, matrix % colours, clipped glows in scroll strips). New icons from SplitEase/icons wired in (manifest, favicon, apple-touch), sw.js cache → splitease-v2. Test-project preview channel `phone-test` deployed (expires 2026-10-08): https://splitease-test-2026--phone-test-1jiy4laa.web.app
