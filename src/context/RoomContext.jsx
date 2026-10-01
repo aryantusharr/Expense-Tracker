@@ -226,6 +226,11 @@ export function RoomProvider({ children }) {
     }
   }, [roomCode]);
 
+  // Add a room to this phone's list without opening it (e.g. a personal room made during sync setup).
+  const rememberRoom = useCallback((entry) => {
+    setSavedRooms(prev => (prev.some(r => r.code === entry.code) ? prev : [...prev, entry]));
+  }, []);
+
   const setUserIdentityInRoom = useCallback((userId) => {
     if (roomCode) {
       localStorage.setItem(`splitease_identity_${roomCode}`, userId);
@@ -243,6 +248,7 @@ export function RoomProvider({ children }) {
     joinRoomSession,
     switchRoom,
     forgetRoom,
+    rememberRoom,
     updateRoom: updateRoomData,
     savedRooms,
     users: room?.users || [],

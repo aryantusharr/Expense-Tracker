@@ -43,6 +43,13 @@
 - [x] Exports (built, NOT tested): styled Excel via `xlsx-js-style` (violet frozen header, filter, ₹ format, bold Total row, tab = Expenses or month; `xlsx` removed); PDF magazine report in `src/utils/pdfExport.js` — now `async generateExpenseReport({ expenses, users, roomName, categories, month, isPersonal, budget })`: cover (huge total, delta vs previous month, member balances or budget bar, biggest category, settle up, lifetime, 6-month bars), expenses per month (serif month heading, share columns, balance row), "Where it went" matrix with ▲/▼ % vs previous month, page footers. Subset fonts (Sora, JetBrains Mono, Unbounded, Source Serif italic ≈180 KB) in `public/fonts/pdf/`, fetched on first export and cached; if they can't load it falls back to Helvetica + "Rs.". Toasts replace every alert() (saved · filename / nothing to export / no expenses in month / couldn't export). Remember: bump the SW cache version at release.
 - [ ] Cleanup: dead code, emoji iconography, a11y labels
 
+## Phase 2.5 · Test → fix → cleanup (approved 1 Oct, run in one chat)
+Her rules: Claude tests everything (no phone pass by her; iPhone web has no haptics anyway). Save credits: text checks (read_page / JS) first, screenshots only for visual bugs, small scale. Priority: UI, performance, animation. Viewport: iPhone 13 Pro 390×844 only (bigger phones are fine by layout). Local commits only — no push to GitHub.
+Decisions (her "do whatever is best" → Claude's picks): category delete keeps expenses (show under Other, reword sheet copy); "Start tracking" → Dashboard; bill line edit keeps receipt sheet; light orbs decided by side-by-side; PDF non-Latin names checked against backup first; "Delete for everyone" stays allowed in the go-live rules (single room).
+- [x] A1 Onboarding · A2 Dashboard/Add/History · A3 Settings/exports/import · A4 perf + animation audit → ranked list in `docs/QA.md` (waiting for her approval)
+- [ ] Fix pass (her approval of the list first)
+- [ ] Cleanup (chart.js, Expenses.css, index.css vars, emoji, a11y, lint)
+
 ## Phase 3 · iPhone testing
 - Day-to-day: `npm run dev -- --host` → open http://<mac-ip>:5173 on the iPhone (same Wi-Fi), pointed at the TEST project. Instant reloads; no PWA install/offline/clipboard (needs HTTPS).
 - Full PWA check: deploy to a Firebase preview channel on the TEST project → HTTPS link, Add to Home Screen, offline, copy/share.
@@ -80,3 +87,4 @@
 - 2026-10-01 · Settings chunk 3a built (Data rows + export sheet), untested by design.
 - 2026-10-01 · Settings chunk 3b built (import wizard), untested by design.
 - 2026-10-01 · Exports built (styled Excel + magazine PDF with embedded fonts), untested by design. Settings is now feature-complete pending her test pass.
+- 2026-10-01 · QA pass 1 done in the browser (390×844, dark + light): 15 bugs + 12 polish items in docs/QA.md. Biggest: onboarding button styles lost, PDF matrix numbers in wrong column, PDF cover month span, leftover old animated background, slow profile-sync copy, History search only within one month.

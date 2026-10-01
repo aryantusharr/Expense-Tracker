@@ -113,8 +113,8 @@ export default function JoinScreen() {
   const hint = ok
     ? `${found.name} · ${personal ? 'personal' : `${found.members} ${found.members === 1 ? 'member' : 'members'}`}`
     : bad
-      ? badKind === 'shared' ? `${found.code} is ${found.name}, a shared room — join it from the home screen.`
-        : badKind === 'personal' ? 'That’s a personal tracker — use “Personal → I already have a code”.'
+      ? badKind === 'shared' ? `${found.code} is ${found.name}, a shared room.`
+        : badKind === 'personal' ? `${found.code} is ${found.name}, a personal tracker.`
         : badKind === 'offline' ? 'Couldn’t reach the server — check your connection and try again'
         : 'No room with that code — check it and try again'
       : phase === 'checking' ? 'Checking the code…'
@@ -146,6 +146,11 @@ export default function JoinScreen() {
             {ok && <span className="ob-stamp ob-stamp--ok">ADMIT</span>}
           </div>
           <span className={`ob-hint ${bad ? 'ob-hint--bad' : ok ? 'ob-hint--ok' : ''}`} aria-live="polite">{hint}</span>
+          {bad && (badKind === 'shared' || badKind === 'personal') && found && (
+            <div className="ob-enter">
+              <button type="button" className="se-btn se-btn--secondary se-btn--lg se-press" onClick={enter}>Open {found.name} anyway →</button>
+            </div>
+          )}
           {ok && (
             <div className="ob-enter">
               <button type="button" className="se-btn se-btn--primary se-btn--lg se-press" onClick={enter}>Enter {found.name} →</button>

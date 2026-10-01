@@ -39,15 +39,33 @@ export default function CreateScreen() {
     try { taken = await checkRoomNameExists(name); } catch { taken = false; }
     if (taken) {
       haptic('error'); markLastBad();
-      await chat.wait(550);
-      await bot(`${name} already exists. Try another — or join it with its code.`);
-      setData(d => ({ ...d, taken: name }));
+      // Offer up to two free variations as tap chips (board E3: bot suggests others).
+      const ideas = [`${name} 2`, `${name} Home`, `${name} Flat`];
+      const free = [];
+      for (const idea of ideas) {
+        if (free.length === 2) break;
+        try { if (!(await checkRoomNameExists(idea))) free.push(idea); } catch { /* skip */ }
+      }
+      await chat.wait(300);
+      await bot(free.length
+        ? `${name} already exists. Try ${free.join(' or ')} — or join it with its code.`
+        : `${name} already exists. Try another — or join it with its code.`);
+      setData(d => ({ ...d, taken: name, ideas: free }));
       setStep('room');
       return;
     }
     setData(d => ({ ...d, room: name, taken: '' }));
     await bot('And what should roommates call you?');
     setStep('you');
+  };
+
+  // Two members with the same name would be impossible to tell apart in "Who are you?".
+  const isDuplicate = (name, others) => others.some(o => o.trim().toLowerCase() === name.trim().toLowerCase());
+  const rejectDuplicate = async (name, prev) => {
+    setStep('wait'); say(name); haptic('error'); markLastBad();
+    await chat.wait(450);
+    await bot(`${name} is already in this room — add a different name.`);
+    setStep(prev);
   };
 
   const submitYou = async name => {
@@ -59,6 +77,7 @@ export default function CreateScreen() {
   };
 
   const submitMate = async name => {
+    if (isDuplicate(name, [data.you, ...data.mates])) { await rejectDuplicate(name, 'mates'); return; }
     const mates = [...data.mates, name];
     say(name);
     setData(d => ({ ...d, mates }));
@@ -91,7 +110,10 @@ export default function CreateScreen() {
     options = [2, 3, 4, 5, 6].map(n => ({ t: String(n), fn: () => pickCount(n) }));
   } else if (step === 'room') {
     input = { placeholder: 'Room name', onSubmit: submitRoom };
-    if (data.taken) options = [{ t: `Join ${data.taken} instead`, kind: 'tint', fn: () => navigate('/join') }];
+    if (data.taken) options = [
+      ...(data.ideas || []).map(idea => ({ t: idea, fn: () => submitRoom(idea) })),
+      { t: `Join ${data.taken} instead`, kind: 'tint', fn: () => navigate('/join') },
+    ];
   } else if (step === 'you') {
     input = { placeholder: 'Your name', onSubmit: submitYou };
   } else if (step === 'mates') {

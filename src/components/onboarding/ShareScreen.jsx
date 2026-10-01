@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useRoomContext } from '../../context/RoomContext';
 import { copyToClipboard, shareRoom } from '../../utils/helpers';
 import { syncExistingSharedExpenses, removeSyncedExpensesFromPersonalRooms } from '../../services/expenseService';
+import { createPersonalTracker } from '../../services/roomService';
 import { haptic } from '../../utils/haptics';
 import Sheet from '../ui/Sheet';
 import { useToast } from '../ui/Toast';
@@ -15,12 +16,13 @@ export default function ShareScreen() {
   const { code } = useParams();
   const navigate = useNavigate();
   const toast = useToast();
-  const { room, savedRooms, updateRoom, setUserIdentity, userIdentity } = useRoomContext();
+  const { room, savedRooms, updateRoom, setUserIdentity, userIdentity, rememberRoom } = useRoomContext();
   const [stamp, setStamp] = useState(0);              // bump to replay the COPIED stamp
   const [sync, setSync] = useState(0);                // 0 closed · 1 ask · 2 pick · 3 receipt
   const [meIdx, setMeIdx] = useState(0);
   const [roomIdx, setRoomIdx] = useState(0);
   const [busy, setBusy] = useState(false);
+  const [making, setMaking] = useState(false);
 
   const users = useMemo(() => room?.users || [], [room?.users]);
   const roomName = room?.name || savedRooms.find(r => r.code === code)?.name || 'your room';
@@ -68,6 +70,21 @@ export default function ShareScreen() {
       toast({ message: 'Couldn’t set up sync', sub: String(err?.message || err), kind: 'error', top: true });
     }
     setBusy(false);
+  };
+  // No personal room on this phone yet: make one for the picked member right here (no dead end).
+  const makePersonal = async () => {
+    if (!pickedUser || making) return;
+    haptic('tap'); setMaking(true);
+    try {
+      const { roomCode, roomData } = await createPersonalTracker(pickedUser.name, 0);
+      rememberRoom({ code: roomCode, name: roomData.name, isPersonal: true, memberCount: 1 });
+      setRoomIdx(0);
+      haptic('success');
+    } catch (err) {
+      haptic('error');
+      toast({ message: 'Couldn’t create a personal room', sub: String(err?.message || err), kind: 'error', top: true });
+    }
+    setMaking(false);
   };
   const finish = () => {
     setSync(0);
@@ -139,7 +156,12 @@ export default function ShareScreen() {
             </div>
             <span className="ob-label" style={{ marginTop: 4 }}>Step 2 of 2 · Sync into</span>
             {personal.length === 0 ? (
-              <p className="ob-sync__warn">No personal room on this device yet — start one from the home screen, then set up sync in Settings.</p>
+              <>
+                <p className="ob-sync__warn">No personal room on this phone yet.</p>
+                <button type="button" className="se-btn se-btn--secondary se-btn--block se-press" disabled={making} onClick={makePersonal}>
+                  {making ? 'Creating…' : `Create one for ${pickedUser?.name || 'me'}`}
+                </button>
+              </>
             ) : personal.map((r, i) => (
               <button key={r.code} type="button" className={`ob-prow se-press ${roomIdx === i ? 'is-on' : ''}`} onClick={() => { haptic('choose'); setRoomIdx(i); }}>
                 <span className="ob-room__dot" style={{ '--c': ROOM_DOTS[(i + 1) % 3], width: 10, height: 10, boxShadow: 'none' }} />
