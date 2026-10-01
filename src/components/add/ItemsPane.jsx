@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { haptic } from '../../utils/haptics';
 import { useToast } from '../ui/Toast';
@@ -130,7 +131,8 @@ export default function ItemsPane({ c }) {
       lines: c.rows.map(r => ({ name: r.description, amount: parseFloat(r.amount), iconPath: resolveCategoryIcon(cats.find(x => x.id === r.categoryId)).path })),
     });
   };
-  const finish = () => { setSaved(null); c.resetBill(); setStage('setup'); setDrafting(false); };
+  const navigate = useNavigate();
+  const finish = () => { navigate('/history', { state: { landed: true } }); setSaved(null); c.resetBill(); setStage('setup'); setDrafting(false); };
 
   const names = c.itemisedGroupNamesList.map(g => g.groupName);
 

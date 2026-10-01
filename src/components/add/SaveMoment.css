@@ -6,7 +6,8 @@
   position: fixed; inset: 0; z-index: 90; background: rgba(4, 4, 14, 0.62);
   backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); animation: se-fade .2s ease both;
 }
-:root[data-theme='light'] .sm { background: rgba(21, 20, 43, 0.5); }
+:root[data-theme='light'] .sm { background: rgba(21, 20, 43, 0.28); }
+:root[data-theme='light'] .sm-paper { box-shadow: 0 -6px 24px rgba(21, 20, 43, 0.14); }
 .sm .fnav { pointer-events: none; animation: none !important; }
 .sm-nav--print .fnav { opacity: 0; }
 .sm-nav--fly .fnav { animation: sm-navin .45s cubic-bezier(.34, 1.4, .64, 1) both !important; }

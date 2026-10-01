@@ -9,7 +9,7 @@ import ShareRoom from './components/setup/ShareRoom';
 import PersonalSetup from './components/setup/PersonalSetup';
 import DashboardScreen from './components/dashboard/DashboardScreen';
 import AddScreen from './components/add/AddScreen';
-import ExpenseList from './components/expenses/ExpenseList';
+import HistoryScreen from './components/history/HistoryScreen';
 import SettingsPage from './components/settings/SettingsPage';
 
 import { lazy, Suspense, useEffect, useState } from 'react';
@@ -61,7 +61,7 @@ function AppRoutes() {
           {/* App routes (with bottom nav) — redirect to landing if not in room */}
           <Route path="/dashboard" element={inRoom ? <DashboardScreen /> : <Navigate to="/" replace />} />
           <Route path="/add" element={inRoom ? <AddScreen /> : <Navigate to="/" replace />} />
-          <Route path="/history" element={inRoom ? <ExpenseList /> : <Navigate to="/" replace />} />
+          <Route path="/history" element={inRoom ? <HistoryScreen /> : <Navigate to="/" replace />} />
           <Route path="/settings" element={inRoom ? <SettingsPage /> : <Navigate to="/" replace />} />
           {FoundationsPage && (
             <Route path="/foundations" element={<Suspense fallback={null}><FoundationsPage /></Suspense>} />

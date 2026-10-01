@@ -10,12 +10,13 @@ const TABS = [
 ];
 
 export default function FloatingNav() {
-  const { pathname } = useLocation();
+  const { pathname, state } = useLocation();
+  const landed = !!state?.landed; // arriving from the Add save moment: the overlay's nav is already on screen
   const navigate = useNavigate();
   const active = TABS.findIndex(t => pathname.startsWith(t.path));
 
   return (
-    <nav className="fnav se-in" aria-label="Main" style={{ animationDelay: '520ms' }}>
+    <nav className={`fnav ${landed ? '' : 'se-in'}`} aria-label="Main" style={landed ? undefined : { animationDelay: '520ms' }}>
       <div className="fnav__bar se-glass">
         {active >= 0 && <span className="fnav__ind" style={{ '--i': active }} aria-hidden="true" />}
         <div className="fnav__tabs">

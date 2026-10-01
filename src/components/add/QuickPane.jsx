@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { haptic } from '../../utils/haptics';
 import { useToast } from '../ui/Toast';
@@ -94,7 +95,8 @@ export default function QuickPane({ c }) {
       rows: isPersonal || n < 1 ? [] : [{ a: `SPLIT ${n} WAYS`, b: `${n} × ${fmtN(Math.round(res.amount / n * 100) / 100)}` }],
     });
   };
-  const finish = () => { setSaved(null); c.resetQuick(); setExpr(''); setView('amount'); };
+  const navigate = useNavigate();
+  const finish = () => { navigate('/history', { state: { landed: true } }); setSaved(null); c.resetQuick(); setExpr(''); setView('amount'); };
 
   // Date strip: today / yesterday / 2 days ago + a picker.
   const dates = useMemo(() => [0, 1, 2].map(n => { const d = new Date(); d.setDate(d.getDate() - n); return localDateStr(d); }), []);
