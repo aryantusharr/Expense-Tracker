@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
 import { generateExpenseReport } from '../../utils/pdfExport';
 import { exportToExcel, exportToExcelMonthly } from '../../utils/excelExport';
-import { calculateBalances } from '../../utils/splitCalculator';
 import { haptic } from '../../utils/haptics';
 import { LineIcon } from '../ui/CategoryIcon';
 import Sheet from '../ui/Sheet';
@@ -97,13 +96,15 @@ export default function DataSection({ expenses, users, categories, room, roomCod
     if (!scoped.length) { haptic('error'); say(monthObj ? `No expenses in ${monthObj.label}` : 'Nothing to export yet', 'warn', monthObj ? 'Pick another month' : 'Add an expense first — then export any time'); return; }
     try {
       const name = room?.name || 'SplitEase';
-      const file = kind === 'pdf'
-        ? generateExpenseReport(scoped, users, calculateBalances(scoped, users), room?.name || 'Room', categories, monthObj || undefined)
-        : monthObj ? exportToExcelMonthly(expenses, categories, name, monthObj) : exportToExcel(expenses, categories, name);
+      let file; let extra = `${scoped.length} rows`;
+      if (kind === 'pdf') {
+        const r = await generateExpenseReport({ expenses, users, roomName: name, categories, month: monthObj, isPersonal: room?.isPersonal === true, budget: Number(room?.budget) || 0 });
+        file = r.filename; extra = `${r.pages} pages`;
+      } else file = monthObj ? exportToExcelMonthly(expenses, categories, name, monthObj) : exportToExcel(expenses, categories, name);
       haptic('success');
       setExportOpen(false);
-      say(<>{kind === 'pdf' ? 'PDF' : 'Excel'} saved</>, 'success', `${file} · ${scoped.length} ${kind === 'pdf' ? 'expenses' : 'rows'}`);
-    } catch (err) {
+      say(<>{kind === 'pdf' ? 'PDF' : 'Excel'} saved</>, 'success', `${file} · ${extra}`);
+    } catch {
       haptic('error');
       say('Couldn’t export the file', 'error', 'Try again · your data is safe');
     }
