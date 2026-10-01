@@ -26,7 +26,8 @@ export default function SlipsStrip({ members, paidBy, splitAmong, amount, onPaye
 
   if (!payer) return null;
   const count = splitAmong.length;
-  const share = count > 0 && amount > 0 ? amount / count : 0;
+  const each = count > 0 && amount > 0 ? Math.round(amount / count) : 0;
+  const fmt = n => n.toLocaleString('en-IN', { maximumFractionDigits: 0 });
   const nextPayer = () => {
     const i = members.findIndex(m => m.id === payer.id);
     onPayer(members[(i + 1) % members.length].id);
@@ -40,26 +41,33 @@ export default function SlipsStrip({ members, paidBy, splitAmong, amount, onPaye
           {prev && <span key={`o${prev.id}`} className="add-bill__out" style={{ color: prev.color }}>{nameOf(prev)}</span>}
           <span key={payer.id} className={prev ? 'add-bill__in' : ''} style={{ color: payer.color }}>{nameOf(payer)}</span>
         </span>
+        <span className="add-bill__total">₹{fmt(amount)}</span>
       </button>
-      <div className="add-seats" role="group" aria-label="Split with">
-        {members.map(m => {
-          const on = splitAmong.includes(m.id);
-          const isPayer = m.id === payer.id;
-          return (
-            <button
-              key={m.id}
-              type="button"
-              className={`add-seat ${on ? 'add-seat--on' : ''}`}
-              style={{ '--c': m.color }}
-              aria-pressed={on}
-              aria-label={`${nameOf(m)}${isPayer ? ' (paid)' : ''}`}
-              onClick={() => { haptic('choose'); onToggle(m.id); }}
-            >
-              <Monogram member={m} size={36} className={isPayer ? 'add-mono--payer' : ''} />
-              <span className="add-slip" aria-hidden={!on}>₹{share.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</span>
-            </button>
-          );
-        })}
+      <div className="add-slips__col">
+        <div className="add-slips__head">
+          <span>PAID BY · SPLIT</span>
+          <em>{count > 0 ? `₹${fmt(each)} EACH · ${count}` : 'PICK SOMEONE'}</em>
+        </div>
+        <div className="add-seats" role="group" aria-label="Split with">
+          {members.map(m => {
+            const on = splitAmong.includes(m.id);
+            const isPayer = m.id === payer.id;
+            return (
+              <button
+                key={m.id}
+                type="button"
+                className={`add-seat ${on ? 'add-seat--on' : ''}`}
+                style={{ '--c': m.color }}
+                aria-pressed={on}
+                aria-label={`${on ? 'Leave out' : 'Include'} ${nameOf(m)}${isPayer ? ' (paid)' : ''}`}
+                onClick={() => { haptic('choose'); onToggle(m.id); }}
+              >
+                <Monogram member={m} size={38} className={isPayer ? 'add-mono--payer' : ''} />
+                <span className="add-slip" aria-hidden="true">₹{fmt(each)}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
       <Sheet open={picking} onClose={() => setPicking(false)} title="Who paid?">
         <div className="add-payers">

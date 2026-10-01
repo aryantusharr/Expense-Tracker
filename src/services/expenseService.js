@@ -69,15 +69,18 @@ async function getRoomData(roomCode, roomData) {
 /**
  * Add an expense. Sync to personal rooms happens in the background.
  */
-export async function addExpense(roomCode, expense, roomData = null) {
+export async function addExpense(roomCode, expense, roomData = null, knownExpenses = null) {
   const rData = await getRoomData(roomCode, roomData).catch(() => null);
 
   // Soft-validate categoryId — fall back to 'Others' if ID doesn't exist in room
   const safeCategoryId = resolveSafeCategoryId(expense.categoryId, rData);
 
   const expensesRef = collection(db, 'rooms', roomCode, 'expenses');
-  const snap = await getDocs(expensesRef).catch(() => null);
-  const existingExpenses = snap ? snap.docs.map(d => ({ id: d.id, ...d.data() })) : [];
+  let existingExpenses = knownExpenses;
+  if (!existingExpenses) {
+    const snap = await getDocs(expensesRef).catch(() => null);
+    existingExpenses = snap ? snap.docs.map(d => ({ id: d.id, ...d.data() })) : [];
+  }
 
   const expenseData = {
     ...expense,
@@ -191,12 +194,15 @@ export function subscribeToExpenses(roomCode, callback) {
  * Add a group of itemised expenses in a single batch under one groupId.
  * All items share the same groupId, groupName, and isItemised flag.
  */
-export async function addItemisedExpenseGroup(roomCode, groupName, items, commonFields, roomData = null) {
+export async function addItemisedExpenseGroup(roomCode, groupName, items, commonFields, roomData = null, knownExpenses = null) {
   const groupId = `grp-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`;
   const createdAt = new Date().toISOString();
   const expensesRef = collection(db, 'rooms', roomCode, 'expenses');
-  const snap = await getDocs(expensesRef).catch(() => null);
-  const existingExpenses = snap ? snap.docs.map(d => ({ id: d.id, ...d.data() })) : [];
+  let existingExpenses = knownExpenses ? [...knownExpenses] : null;
+  if (!existingExpenses) {
+    const snap = await getDocs(expensesRef).catch(() => null);
+    existingExpenses = snap ? snap.docs.map(d => ({ id: d.id, ...d.data() })) : [];
+  }
   const savedItems = [];
 
   for (const item of items) {

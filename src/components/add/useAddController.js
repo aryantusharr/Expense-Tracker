@@ -13,6 +13,11 @@ import { HINGLISH_MAP, findMatchingCategory, getSortedCategories } from './addHe
  * Logic for the redesigned Add screen. Save payload, validation and defaults are the same
  * as the old AddExpense.jsx — only the UI on top changed.
  */
+// A Firestore write can wait forever on a bad connection (it queues locally and syncs later).
+// Don't leave the slider stuck on "Adding…": after a while treat it as saved and let it sync.
+const SAVE_WAIT_MS = 8000;
+const withTimeout = p => Promise.race([p, new Promise(res => setTimeout(() => res('timeout'), SAVE_WAIT_MS))]);
+
 export function useAddController() {
   const { roomCode, room, expenses, users, categories, userIdentity } = useRoomContext();
   const isPersonal = room?.isPersonal === true;
@@ -232,14 +237,16 @@ export function useAddController() {
     if (validationError) return { ok: false, message: validationError };
     setSaving(true);
     try {
-      await addExpense(roomCode, {
+      const done = addExpense(roomCode, {
         description: form.description.trim(),
         amount: parseFloat(form.amount),
         paidBy: isPersonal ? (users[0]?.id || '') : form.paidBy,
         splitAmong: isPersonal ? [users[0]?.id || ''] : form.splitAmong,
         categoryId: form.categoryId,
         date: form.date,
-      }, room);
+      }, room, expenses.length ? expenses : null);
+      done.catch(err => console.error('Save failed after timeout', err));
+      await withTimeout(done);
       setLastUsedDefaults(roomCode, {
         categoryId: form.categoryId,
         paidBy: isPersonal ? null : form.paidBy,
@@ -288,7 +295,9 @@ export function useAddController() {
         categoryId: row.categoryId,
         splitAmong: isPersonal ? [payerId] : row.splitAmong,
       }));
-      await addItemisedExpenseGroup(roomCode, billName.trim(), items, { paidBy: payerId, date: form.date }, room);
+      const done = addItemisedExpenseGroup(roomCode, billName.trim(), items, { paidBy: payerId, date: form.date }, room, expenses.length ? expenses : null);
+      done.catch(err => console.error('Save failed after timeout', err));
+      await withTimeout(done);
       const last = rows[rows.length - 1];
       setLastUsedDefaults(roomCode, {
         categoryId: last.categoryId,

@@ -3,7 +3,7 @@ import { haptic } from '../../utils/haptics';
 
 /**
  * Slide to add. Dimmed with the missing-field hint until the form is complete; an early slide / tap
- * shakes the bar and calls onBlocked (pink hint toast). Enter / Space on the thumb works too.
+ * shakes the bar and calls onBlocked (pink hint toast). Saving needs a full slide (or Enter / Space on the thumb).
  */
 export default function SlideToAdd({ problem, busy, shakeKey, onBlocked, onConfirm }) {
   const trackRef = useRef(null);
@@ -28,8 +28,9 @@ export default function SlideToAdd({ problem, busy, shakeKey, onBlocked, onConfi
     setDragging(false);
     const done = x > maxX() * 0.85;
     setX(0);
+    // Only a real slide confirms. A tap just explains what's missing (never saves by accident).
     if (done) attempt();
-    else if (x < 6) attempt(); // a plain tap counts as an attempt
+    else if (x < 6 && problem) attempt();
   };
 
   return (
