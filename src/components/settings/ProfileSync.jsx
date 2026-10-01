@@ -1,0 +1,212 @@
+import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { syncExistingSharedExpenses, removeSyncedExpensesFromPersonalRooms } from '../../services/expenseService';
+import { haptic } from '../../utils/haptics';
+import { memberStyle, initialOf, fmt } from '../dashboard/dashboardData';
+import Sheet from '../ui/Sheet';
+import { useToast } from '../ui/Toast';
+
+const SLIPS = [['₹40', '0s'], ['₹120', '1s'], ['₹266', '2s']];
+const Arrow = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" className="ps-arrow">
+    <path d="M4 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+const cachedBudget = code => {
+  try { return Number(JSON.parse(localStorage.getItem(`splitease_room_cache_${code}`) || 'null')?.budget) || 0; } catch { return 0; }
+};
+
+/**
+ * Profile sync (boards S3g + S3d): the pill that lives in the room card, and its sheet —
+ * info / turn off / 3-step setup / SYNC ON. Same data operations as the old SyncSettings.
+ */
+export default function ProfileSync({ room, roomCode, users, expenses, userIdentity, setUserIdentity, savedRooms, updateRoom }) {
+  const navigate = useNavigate();
+  const toast = useToast();
+  const [view, setView] = useState(null);          // null | on | off | confirmOff | setup | done
+  const [step, setStep] = useState(0);
+  const [who, setWho] = useState('');
+  const [target, setTarget] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [copied, setCopied] = useState(0);
+
+  const personal = useMemo(() => savedRooms.filter(r => r.isPersonal), [savedRooms]);
+  const me = users.find(u => u.id === userIdentity);
+  const linked = me?.personalRoomCode ? savedRooms.find(r => r.code === me.personalRoomCode) : null;
+  const active = Boolean(me?.personalRoomCode);
+  const roomName = room?.name || 'this room';
+  const linkedName = linked?.name || 'your personal room';
+
+  const whoUser = users.find(u => u.id === who);
+  const preview = useMemo(() => {
+    let n = 0; let share = 0;
+    for (const e of expenses) {
+      const split = e.splitAmong || [];
+      if (who && split.includes(who)) { n += 1; share += (parseFloat(e.amount) || 0) / split.length; }
+    }
+    return { n, share };
+  }, [expenses, who]);
+
+  const openSheet = () => { haptic('tap'); setView(active ? 'on' : 'off'); };
+  const beginSetup = () => {
+    haptic('tap');
+    setWho(userIdentity || '');
+    setTarget(me?.personalRoomCode || '');
+    setStep(0);
+    setView('setup');
+  };
+  const close = () => setView(null);
+  const say = (message, kind) => toast({ message, kind, top: true, duration: 3200 });
+
+  const turnOff = async () => {
+    setBusy(true);
+    try {
+      await updateRoom(roomCode, { users: users.map(u => (u.id === userIdentity ? { ...u, personalRoomCode: null } : u)) });
+      haptic('choose');
+      close();
+      say('Sync is off · new expenses won’t be copied');
+    } catch { haptic('error'); say('Couldn’t turn sync off — try again', 'error'); }
+    setBusy(false);
+  };
+
+  const finish = async () => {
+    if (!who || !target || busy) return;
+    setBusy(true);
+    try {
+      await removeSyncedExpensesFromPersonalRooms(roomCode, personal.map(r => r.code));
+      const next = users.map(u => {
+        if (u.id === who) return { ...u, personalRoomCode: target };
+        if (u.personalRoomCode === target || u.id === userIdentity) return { ...u, personalRoomCode: null, _lastPersonalRoomCode: u.personalRoomCode };
+        return u;
+      });
+      await updateRoom(roomCode, { users: next });
+      setUserIdentity(who);
+      syncExistingSharedExpenses(roomCode, roomName, target, who).catch(() => { /* copies in the background */ });
+      haptic('success');
+      setCopied(preview.n);
+      setView('done');
+      setTimeout(() => setView(v => (v === 'done' ? null : v)), 2600);
+    } catch { haptic('error'); say('Couldn’t set up sync — try again', 'error'); }
+    setBusy(false);
+  };
+
+  const next = () => {
+    if (step === 0 && who) { haptic('tap'); setStep(1); }
+    else if (step === 1 && target) { haptic('tap'); setStep(2); }
+    else if (step === 2) finish();
+  };
+  const back = () => { if (step === 0) setView(active ? 'on' : 'off'); else setStep(step - 1); };
+  const targetName = savedRooms.find(r => r.code === target)?.name || '';
+
+  return (
+    <>
+      <button type="button" className={`ps-pill se-press ${active ? 'is-on' : ''}`} onClick={openSheet}>
+        {active && (
+          <span className="ps-pipe" aria-hidden="true">
+            {SLIPS.map(([t, d]) => <span key={t} className="ps-slip" style={{ animationDelay: d }}>{t}</span>)}
+          </span>
+        )}
+        <span className="ps-dot" />
+        <span className="ps-txt">{active ? `SYNCING TO ${linkedName.toUpperCase()}` : 'SYNC OFF · TAP TO SET UP'}</span>
+        <span>›</span>
+      </button>
+
+      <Sheet open={!!view} onClose={close} labelledBy="ps-title">
+        {view === 'on' && (
+          <>
+            <div className="ps-head"><h2 className="se-sheet__title" id="ps-title">Profile sync</h2><span className="ps-stamp">SYNC ON</span></div>
+            <div className="ps-link se-glass">
+              <span className="st-mono-m" style={{ '--c': memberStyle(Math.max(0, users.findIndex(u => u.id === userIdentity))).color, width: 34, height: 34 }}>{initialOf(me?.name)}</span>
+              <Arrow />
+              <div className="ps-link__t"><b>{linkedName}</b><span className="st-mono">YOUR SHARE OF EVERY EXPENSE</span></div>
+            </div>
+            <div className="ps-rules">• Copies are read-only and carry the COPY stamp<br />• Edits and deletes here update the copy<br />• If your share drops to ₹0, the copy is removed</div>
+            <div className="st-btnrow">
+              <button type="button" className="se-btn se-btn--secondary se-press" onClick={beginSetup}>Change</button>
+              <button type="button" className="se-btn se-btn--danger se-press" onClick={() => { haptic('error'); setView('confirmOff'); }}>Turn off</button>
+            </div>
+          </>
+        )}
+        {view === 'confirmOff' && (
+          <>
+            <h2 className="se-sheet__title" id="ps-title">Turn off sync?</h2>
+            <p className="ps-body">New expenses in {roomName} won’t be copied to <b>{linkedName}</b>. Copies already there stay.</p>
+            <div className="st-btnrow">
+              <button type="button" className="se-btn se-btn--secondary se-press" onClick={() => setView('on')}>Keep on</button>
+              <button type="button" className="se-btn st-del se-press" disabled={busy} onClick={turnOff}>Turn off</button>
+            </div>
+          </>
+        )}
+        {view === 'off' && (
+          <>
+            <div className="ps-head"><h2 className="se-sheet__title" id="ps-title">Profile sync</h2><span className="ps-stamp ps-stamp--off">SYNC OFF</span></div>
+            <p className="ps-body">Copy your share of {roomName} expenses into one of your personal rooms automatically.</p>
+            <button type="button" className="se-btn se-btn--primary se-btn--block se-press" onClick={beginSetup}>Set up sync</button>
+          </>
+        )}
+        {view === 'setup' && (
+          <>
+            <div className="ps-steps">{[0, 1, 2].map(i => <span key={i} className={i <= step ? 'is-on' : ''} />)}</div>
+            {step === 0 && (
+              <>
+                <h2 className="se-sheet__title" id="ps-title">Who are you in {roomName}?</h2>
+                <div className="ob-who">
+                  {users.map((u, i) => (
+                    <button key={u.id} type="button" className={`ob-who__b se-press ${who === u.id ? 'is-on' : ''}`} style={{ '--c': memberStyle(i).color }}
+                      onClick={() => { haptic('choose'); setWho(u.id); }}>
+                      <span className="ob-who__m">{initialOf(u.name)}</span><span>{u.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+            {step === 1 && (
+              <>
+                <h2 className="se-sheet__title" id="ps-title">Copy into which personal room?</h2>
+                {personal.length === 0 ? (
+                  <>
+                    <p className="ps-body">There’s no personal room on this device yet.</p>
+                    <button type="button" className="se-btn se-btn--secondary se-btn--block se-press" onClick={() => { close(); navigate('/personal'); }}>Create a personal room</button>
+                  </>
+                ) : personal.map(r => {
+                  const b = cachedBudget(r.code);
+                  return (
+                    <button key={r.code} type="button" className={`ps-room se-press ${target === r.code ? 'is-on' : ''}`} onClick={() => { haptic('choose'); setTarget(r.code); }}>
+                      <span><b>{r.name}</b><span className="st-mono">PERSONAL · {b > 0 ? `BUDGET ₹${fmt(b)}` : 'NO BUDGET'}</span></span>
+                      <span className="ps-room__tick">✓</span>
+                    </button>
+                  );
+                })}
+              </>
+            )}
+            {step === 2 && (
+              <>
+                <h2 className="se-sheet__title" id="ps-title">Copy past expenses too?</h2>
+                <div className="ps-receipt">
+                  <b>{(whoUser?.name || '').toUpperCase()} → {targetName.toUpperCase()}</b>
+                  <span className="ps-receipt__rule" />
+                  <span><span>PAST EXPENSES</span><span>{preview.n}</span></span>
+                  <span><span>YOUR SHARE</span><b>{preview.share.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</b></span>
+                  <small>COPIES ARE READ-ONLY · STAMPED “COPY”</small>
+                </div>
+              </>
+            )}
+            <div className="st-btnrow">
+              <button type="button" className="se-btn se-btn--secondary se-press" onClick={back}>Back</button>
+              <button type="button" className="se-btn se-btn--primary se-press" disabled={busy || (step === 0 && !who) || (step === 1 && !target)} onClick={next}>
+                {step === 2 ? (busy ? 'Syncing…' : 'Turn on sync') : 'Next'}
+              </button>
+            </div>
+          </>
+        )}
+        {view === 'done' && (
+          <div className="ps-done">
+            <span className="ps-stamp ps-stamp--big" id="ps-title">SYNC ON</span>
+            <span className="ps-body">{copied} past {copied === 1 ? 'expense' : 'expenses'} copied to {targetName}</span>
+          </div>
+        )}
+      </Sheet>
+    </>
+  );
+}

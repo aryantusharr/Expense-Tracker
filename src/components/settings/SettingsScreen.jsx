@@ -8,7 +8,7 @@ import { LineIcon } from '../ui/CategoryIcon';
 import Sheet from '../ui/Sheet';
 import { useToast } from '../ui/Toast';
 import CategoriesSection from './CategoriesSection';
-import SyncSettings from './SyncSettings';
+import ProfileSync from './ProfileSync';
 import DataManagement from './DataManagement';
 import './Settings.css';
 import './SettingsScreen.css';
@@ -105,6 +105,10 @@ export default function SettingsScreen() {
               })}
             </div>
           </div>
+          {!isPersonal && (
+            <ProfileSync room={room} roomCode={roomCode} users={users} expenses={expenses} userIdentity={userIdentity}
+              setUserIdentity={setUserIdentity} savedRooms={savedRooms} updateRoom={updateRoom} />
+          )}
           {isPersonal && (
             <button type="button" className="st-bud se-press" onClick={openBudget}>
               <span className="st-bud__top">
@@ -124,12 +128,6 @@ export default function SettingsScreen() {
           <span className="st-code__s">{isPersonal ? 'TAP TO COPY · OPEN ON ANOTHER DEVICE' : 'TAP TO COPY · SHARE WITH ROOMMATES'}</span>
           {copied > 0 && <span key={copied} className="st-copied">COPIED</span>}
         </button>
-
-        {/* Profile sync — still the old card until the S3 sheets are rebuilt */}
-        {!isPersonal && (
-          <SyncSettings room={room} roomCode={roomCode} users={users} userIdentity={userIdentity}
-            setUserIdentity={setUserIdentity} savedRooms={savedRooms} updateRoom={updateRoom} />
-        )}
 
         <Pill icon={P.tag}>Categories</Pill>
         <CategoriesSection roomCode={roomCode} categories={categories} expenses={expenses} />

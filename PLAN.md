@@ -37,7 +37,7 @@
   - Not done / decisions: editing a bill line opens the same receipt sheet (with a BILL name line) — NOT the Add Items screen pre-filled as the spec says (would need Add changes; propose later). Month net = paid − share for the person chosen on this phone (hidden if no identity picked). Personal rooms hide PAID BY / SPLIT in the edit sheet.
 - [~] Settings — built in 3 chunks (`src/components/settings/SettingsScreen.jsx`, `CategoriesSection.jsx`, `SettingsScreen.css`)
   - [x] Chunk 1 · room ID card (members, personal budget bar → budget sheet), join-code receipt (COPIED stamp + toast), Categories (counts, bin → inline confirm → tear, ⋮⋮ lift/swap, add/edit sheet with the 36 icons, stored as `line:<key>`), Appearance pull-cord + circular wipe, Room rows (switch room, rename sheet). Old `SettingsPage` + `CategoryManager` deleted. NOT tested yet. Deleting a category does NOT rewrite expenses (same as before) — they show under Other; the board says "move to Other" (decide if a real move is wanted).
-  - [ ] Chunk 2 · Profile sync pill (in the room card) + S3 sheets (info/change/turn off, 3-step setup). Until then the OLD `SyncSettings` card still shows under the join code.
+  - [x] Chunk 2 · `ProfileSync.jsx`: pill in the shared room card (SYNCING TO … with flowing ₹ slips / grey SYNC OFF) + sheet: info (SYNC ON stamp, rules, Change / Turn off + confirm), 3-step setup (who → personal room, or 'Create a personal room' → receipt preview with past count + your share → SYNC ON stamp). Same data operations as the old SyncSettings (deleted). Reuses `.ob-who` styles from Onboarding.css. NOT tested yet. The receipt always copies past expenses (as the old app did); board title reads like a choice.
   - [ ] Chunk 3 · Data: export scope → report receipt print → PDF/Excel (with Exports phase), import wizard (S6). Until then the OLD `DataManagement` still shows.
 - [ ] Exports: PDF magazine report (embed fonts for ₹), styled Excel (xlsx-js-style), toasts instead of alert()
 - [ ] Cleanup: dead code, emoji iconography, a11y labels
@@ -75,3 +75,4 @@
 - 2026-10-01 · Onboarding chunk 1 built (Landing + Join), untested by design. Create/Share/Personal still the old screens until chunk 2.
 - 2026-10-01 · Onboarding chunk 2 built (Create, Share + sync, Personal); old setup/ screens removed. Untested by design — her test pass next.
 - 2026-10-01 · Settings chunk 1 built (untested by design). Old sync + data cards still in place, restyled in chunks 2–3.
+- 2026-10-01 · Settings chunk 2 built (profile sync pill + sheets), untested by design.

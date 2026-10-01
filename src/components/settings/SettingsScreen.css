@@ -123,3 +123,44 @@
 }
 @keyframes st-fade { from { opacity: 0; } to { opacity: 1; } }
 @keyframes st-fade-out { to { opacity: 0; } }
+
+/* ---------- Profile sync pill + sheet ---------- */
+.ps-pill { position: relative; overflow: hidden; height: 42px; border-radius: 999px; display: flex; align-items: center; gap: 8px; padding: 0 14px; text-align: left; width: 100%;
+  background: var(--se-fill-1); border: 1px solid var(--se-line-2); color: var(--se-text-3); }
+.ps-pill.is-on { background: rgba(95, 212, 196, .12); border-color: rgba(95, 212, 196, .45); color: var(--se-teal-2); }
+:root[data-theme='light'] .ps-pill.is-on { background: rgba(10, 133, 119, .1); color: #0A8577; }
+.ps-dot { position: relative; top: -4px; width: 8px; height: 8px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+.ps-pill.is-on .ps-dot { box-shadow: 0 0 8px currentColor; animation: se-live 1.4s ease-in-out infinite; }
+.ps-txt { position: relative; top: -4px; flex: 1; min-width: 0; font-family: var(--se-font-mono); font-size: 10px; letter-spacing: .14em; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ps-pipe { position: absolute; left: 14px; right: 14px; bottom: 3px; height: 9px; border-radius: 5px; background: rgba(95, 212, 196, .16); overflow: hidden; }
+.ps-slip { position: absolute; left: 0; top: 0; padding: 0 3px; height: 9px; border-radius: 2px; background: #FBFAFF; color: #15142B; font-family: var(--se-font-mono); font-size: 6px; line-height: 9px; animation: ps-slip 3s linear infinite; }
+@keyframes ps-slip { 0% { transform: translateX(-30px); opacity: 0; } 12% { opacity: 1; } 88% { opacity: 1; } 100% { transform: translateX(330px); opacity: 0; } }
+.ps-head { display: flex; justify-content: space-between; align-items: center; }
+.ps-stamp { padding: 4px 12px; border: 2.5px solid #5FD4C4; border-radius: 8px; color: #5FD4C4; font-family: var(--se-font-mono); font-size: 13px; font-weight: 800; letter-spacing: .2em; transform: rotate(-6deg); }
+:root[data-theme='light'] .ps-stamp { color: #0A8577; border-color: #0A8577; }
+.ps-stamp--off { color: #6E6B92 !important; border-color: #6E6B92 !important; transform: rotate(4deg); }
+.ps-stamp--big { padding: 8px 20px; font-size: 22px; letter-spacing: .24em; border-width: 3px; border-radius: 10px; animation: st-stamp .5s var(--se-ease-strong) both; }
+.ps-link { border-radius: 20px; padding: 14px; display: flex; align-items: center; gap: 10px; }
+.ps-arrow { color: var(--se-teal); flex-shrink: 0; }
+.ps-link__t { display: flex; flex-direction: column; min-width: 0; }
+.ps-link__t b { font-size: 14px; }
+.ps-rules { font-size: 11px; line-height: 1.6; color: var(--se-text-3); }
+.ps-body { margin: 0; font-size: 13px; color: var(--se-text-2); line-height: 1.5; }
+.ps-steps { display: flex; gap: 6px; }
+.ps-steps span { flex: 1; height: 4px; border-radius: 2px; background: var(--se-fill-2); transition: background .3s; }
+.ps-steps span.is-on { background: var(--se-grad-primary); }
+.ps-room { width: 100%; text-align: left; border-radius: 16px; padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; border: 1px solid var(--se-line-2) !important; }
+.ps-room > span:first-child { display: flex; flex-direction: column; }
+.ps-room b { font-size: 14px; font-weight: 600; }
+.ps-room.is-on { background: rgba(95, 212, 196, .1) !important; border-color: var(--se-teal) !important; }
+.ps-room__tick { color: var(--se-teal-2); opacity: 0; }
+.ps-room.is-on .ps-room__tick { opacity: 1; }
+.ps-receipt { position: relative; background: #FBFAFF; color: #15142B; font-family: var(--se-font-mono); font-size: 11px; padding: 14px 14px 22px; border-radius: 6px 6px 0 0; display: flex; flex-direction: column; gap: 6px;
+  -webkit-mask: radial-gradient(circle 5px at 50% 100%, transparent 4.5px, #000 5px) 0 0 / 10px 100% repeat-x, linear-gradient(#000, #000) 0 0 / 100% calc(100% - 5px) no-repeat;
+  mask: radial-gradient(circle 5px at 50% 100%, transparent 4.5px, #000 5px) 0 0 / 10px 100% repeat-x, linear-gradient(#000, #000) 0 0 / 100% calc(100% - 5px) no-repeat; }
+.ps-receipt > b:first-child { letter-spacing: .14em; text-align: center; }
+.ps-receipt__rule { border-top: 1px dashed #B9B6DA; }
+.ps-receipt > span:not(.ps-receipt__rule) { display: flex; justify-content: space-between; }
+.ps-receipt small { color: #6F6E88; font-size: 9px; }
+.ps-done { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 20px 0; }
+.st-room > .ps-pill { margin-top: 0; }
