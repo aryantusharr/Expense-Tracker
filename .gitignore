@@ -26,3 +26,10 @@ dist-ssr
 # Firebase
 .firebase/
 firebase-debug.log
+
+# Environment files (live + test Firebase settings) — never commit
+.env
+.env.*
+
+# Local Firestore backups
+backups/
