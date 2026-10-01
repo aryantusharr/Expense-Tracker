@@ -3,10 +3,10 @@ import { AnimatePresence } from 'framer-motion';
 import { useRoomContext } from './context/RoomContext';
 import FloatingNav from './components/layout/FloatingNav';
 import LandingScreen from './components/onboarding/LandingScreen';
-import CreateRoom from './components/setup/CreateRoom';
+import CreateScreen from './components/onboarding/CreateScreen';
 import JoinScreen from './components/onboarding/JoinScreen';
-import ShareRoom from './components/setup/ShareRoom';
-import PersonalSetup from './components/setup/PersonalSetup';
+import ShareScreen from './components/onboarding/ShareScreen';
+import PersonalScreen from './components/onboarding/PersonalScreen';
 import DashboardScreen from './components/dashboard/DashboardScreen';
 import AddScreen from './components/add/AddScreen';
 import HistoryScreen from './components/history/HistoryScreen';
@@ -33,11 +33,10 @@ function AppRoutes() {
 
   if (loading) {
     return (
-      <div className="setup-page">
-        <div className="setup-container text-center">
-          <div style={{ fontSize: '3rem', marginBottom: '16px' }}>💰</div>
-          <p className="text-secondary">Loading...</p>
-        </div>
+      <div className="se-page" style={{ display: 'grid', placeItems: 'center' }}>
+        <span style={{ fontFamily: 'var(--se-font-display)', fontWeight: 800, fontSize: 30, letterSpacing: '-.03em' }}>
+          Split<span className="se-grad-text">Ease</span>
+        </span>
       </div>
     );
   }
@@ -53,10 +52,10 @@ function AppRoutes() {
         <Routes>
           {/* Setup routes (no bottom nav) */}
           <Route path="/" element={inRoom ? <Navigate to="/dashboard" replace /> : <LandingScreen />} />
-          <Route path="/create" element={<CreateRoom />} />
+          <Route path="/create" element={<CreateScreen />} />
           <Route path="/join/:code?" element={<JoinScreen />} />
-          <Route path="/personal" element={<PersonalSetup />} />
-          <Route path="/share/:code" element={inRoom ? <ShareRoom /> : <Navigate to="/" replace />} />
+          <Route path="/personal" element={<PersonalScreen />} />
+          <Route path="/share/:code" element={inRoom ? <ShareScreen /> : <Navigate to="/" replace />} />
 
           {/* App routes (with bottom nav) — redirect to landing if not in room */}
           <Route path="/dashboard" element={inRoom ? <DashboardScreen /> : <Navigate to="/" replace />} />
