@@ -8,7 +8,7 @@ import { initialOf, localDateStr, shortDay } from '../dashboard/dashboardData';
 import SlipsStrip from './SlipsStrip';
 import SlideToAdd from './SlideToAdd';
 import SaveMoment from './SaveMoment';
-import { HINGLISH_MAP, findMatchingCategory, evaluateMathExpression } from './addHelpers';
+import { evaluateMathExpression } from './addHelpers';
 
 const fmtN = n => n.toLocaleString('en-IN', { maximumFractionDigits: 2 });
 
@@ -69,6 +69,7 @@ export default function ItemsPane({ c }) {
   const [drafting, setDrafting] = useState(false);
   const [draft, setDraft] = useState({ description: '', amount: '', categoryId: '', splitAmong: [] });
   const [auto, setAuto] = useState(false);
+  const [manual, setManual] = useState(false); // tapped a category for this line — don't auto-change it
   const [shake, setShake] = useState(0);
   const [slideShake, setSlideShake] = useState(0);
   const [saved, setSaved] = useState(null);
@@ -98,15 +99,12 @@ export default function ItemsPane({ c }) {
       splitAmong: isPersonal ? [] : (last?.splitAmong || form.splitAmong),
     });
     setAuto(false);
+    setManual(false);
     setDrafting(true);
   };
 
   const setDesc = val => {
-    const lower = val.toLowerCase();
-    let next = null;
-    for (const [kw, catName] of Object.entries(HINGLISH_MAP)) {
-      if (lower.includes(kw)) { next = findMatchingCategory(catName, cats)?.id || null; break; }
-    }
+    const next = manual ? null : c.guessCat(val);
     setDraft(d => ({ ...d, description: val, ...(next ? { categoryId: next } : {}) }));
     if (next) setAuto(true);
   };
@@ -183,7 +181,7 @@ export default function ItemsPane({ c }) {
               {cats.map(cat => {
                 const on = draft.categoryId === cat.id;
                 return (
-                  <button key={cat.id} type="button" className={`add-cat ${on ? 'add-cat--on' : ''}`} aria-pressed={on} onClick={() => { haptic('choose'); setAuto(false); setDraft(d => ({ ...d, categoryId: cat.id })); }}>
+                  <button key={cat.id} type="button" className={`add-cat ${on ? 'add-cat--on' : ''}`} aria-pressed={on} onClick={() => { haptic('choose'); setAuto(false); setManual(true); setDraft(d => ({ ...d, categoryId: cat.id })); }}>
                     <CategoryIcon category={cat} size={28} />
                     <span>{cat.name}</span>
                     {on && auto && <b className="add-cat__auto">AUTO</b>}

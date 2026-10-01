@@ -10,9 +10,8 @@ import { getUsageFieldsForNewExpense, getUsageFieldsForUpdatedExpense } from '..
 // Re-export for backward compatibility
 export { syncExistingSharedExpenses } from '../utils/syncExistingExpenses';
 
-// DEPRECATED: learnPatternFromExpense removed. No code should reference
-// 'learned' or 'regex' pattern storage. Category auto-select uses
-// Hinglish keyword mapping only (see utils/categoryRegex.js BASE_CATEGORY_REGEX).
+// No stored 'learned patterns': category auto-pick is computed on the device from the room's
+// expenses + a keyword list (see utils/categoryGuess.js).
 
 /**
  * Resolves a safe categoryId for a given expense.

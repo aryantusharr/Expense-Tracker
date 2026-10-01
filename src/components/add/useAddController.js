@@ -7,7 +7,8 @@ import { getLastUsedMode, setLastUsedMode, getLastUsedDefaults, setLastUsedDefau
 import { addRecentDescription } from '../../utils/recentDescriptions';
 import { detectRecurringExpenses } from '../../utils/recurringExpenses';
 import { memberStyle } from '../dashboard/dashboardData';
-import { HINGLISH_MAP, findMatchingCategory, getSortedCategories } from './addHelpers';
+import { getSortedCategories } from './addHelpers';
+import { guessCategory, learnPatterns } from '../../utils/categoryGuess';
 
 /**
  * Logic for the redesigned Add screen. Save payload, validation and defaults are the same
@@ -33,10 +34,14 @@ export function useAddController() {
   );
 
   const [autoCat, setAutoCat] = useState(false);   // category was picked from the description
+  const [manualCat, setManualCat] = useState(false); // user tapped a category — never auto-change it after that
   const [saving, setSaving] = useState(false);
 
   const members = useMemo(() => users.map((u, i) => ({ ...u, ...memberStyle(i) })), [users]);
   const sortedCategories = useMemo(() => getSortedCategories(categories, expenses), [categories, expenses]);
+  // Learned from everyone's expenses in this room (incl. synced copies in a personal room).
+  const learned = useMemo(() => learnPatterns(expenses, categories), [expenses, categories]);
+  const guessCat = useCallback(text => guessCategory(text, learned, categories), [learned, categories]);
 
   // Quick mode: live-filtered description suggestions based on 45-day usage count
   const descriptionChips = useMemo(() => {
@@ -184,35 +189,21 @@ export function useAddController() {
       .slice(0, 10);
   }, [expenses, isPersonal]);
 
-  const autoPickCategory = useCallback(text => {
-    const lower = (text || '').toLowerCase();
-    for (const [keyword, categoryName] of Object.entries(HINGLISH_MAP)) {
-      if (lower.includes(keyword)) {
-        const match = findMatchingCategory(categoryName, categories);
-        if (match) {
-          setField.categoryId(match.id);
-          setAutoCat(true);
-          return true;
-        }
-        break;
-      }
-    }
-    return false;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [categories]);
-
   const setDescription = useCallback(val => {
     setField.description(val);
-    autoPickCategory(val);
+    if (manualCat) return;
+    const id = guessCat(val);
+    if (id) { setField.categoryId(id); setAutoCat(true); }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoPickCategory]);
+  }, [guessCat, manualCat]);
 
-  const pickCategory = useCallback(id => { setField.categoryId(id); setAutoCat(false); }, [setField]);
+  const pickCategory = useCallback(id => { setField.categoryId(id); setAutoCat(false); setManualCat(true); }, [setField]);
 
   const applyRecurring = chip => {
     setField.description(chip.description);
-    setField.categoryId(chip.categoryId || '');
-    setAutoCat(false);
+    const learnedId = chip.categoryId ? null : guessCat(chip.description);
+    setField.categoryId(chip.categoryId || learnedId || '');
+    setAutoCat(!!learnedId);
     setField.amount(String(chip.lastAmount));
     if (!isPersonal) {
       if (chip.lastPaidBy) setField.paidBy(chip.lastPaidBy);
@@ -261,7 +252,7 @@ export function useAddController() {
     }
   };
 
-  const resetQuick = () => { resetForm(); setField.categoryId(''); setAutoCat(false); };
+  const resetQuick = () => { resetForm(); setField.categoryId(''); setAutoCat(false); setManualCat(false); };
 
   // ── Items mode: one bill (group) with one payer, several printed lines ──
   const [billName, setBillName] = useState('');
@@ -318,7 +309,7 @@ export function useAddController() {
   return {
     roomCode, room, isPersonal, members, userIdentity,
     mode, setMode,
-    form, setField, toggleSplit, setDescription, pickCategory, autoCat,
+    form, setField, toggleSplit, setDescription, pickCategory, autoCat, guessCat,
     sortedCategories, filteredChips, recurringExpensesList, itemisedGroupNamesList,
     applyRecurring, problem, submitQuick, resetQuick, saving,
     billName, setBillName, billTotal, setBillTotal, rows, addRow, removeRow, remaining, billProblem, submitBill, resetBill,
