@@ -23,7 +23,7 @@ export function addRecentDescription(roomCode, description) {
     // Keep max 10
     list = list.slice(0, 10);
     localStorage.setItem(`splitease_recent_desc_${roomCode}`, JSON.stringify(list));
-  } catch (e) {
+  } catch {
     // Fail silently
   }
 }

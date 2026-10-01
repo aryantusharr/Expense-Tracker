@@ -268,10 +268,7 @@ export async function importToFirestore(roomId, rows, onProgress) {
     chunk.forEach((row) => {
       const docRef = doc(collectionRef); // auto-ID
       // Strip out raw mapping fields before saving
-// eslint-disable-next-line no-unused-vars
-// eslint-disable-next-line no-unused-vars
-// eslint-disable-next-line no-unused-vars
-// eslint-disable-next-line no-unused-vars
+      // eslint-disable-next-line no-unused-vars
       const { categoryRaw, paidByRaw, splitRaw, rowNum, ...cleanRow } = row;
       const expenseData = {
         ...cleanRow,
