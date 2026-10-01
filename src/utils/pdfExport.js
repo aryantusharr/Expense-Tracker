@@ -53,7 +53,7 @@ const num = n => Math.round(Math.abs(n || 0)).toLocaleString('en-IN');
 
 export async function generateExpenseReport({ expenses, users, roomName, categories, month = null, isPersonal = false, budget = 0 }) {
   let fonts = true;
-  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4', compress: true });
   try {
     const data = await fetchFonts();
     FONT_FILES.forEach(([file, family, style]) => { doc.addFileToVFS(file, data[file]); doc.addFont(file, family, style); });
@@ -68,21 +68,26 @@ export async function generateExpenseReport({ expenses, users, roomName, categor
 
   /** ₹ + number, ₹ always in Unbounded so it exists in every font; returns drawn width (mm). */
   const money = (n, x, y, { size = 9, family = 'Sora', style = 'normal', align = 'left', color = INK, sign = '' } = {}) => {
-    const body = (sign ? sign : '') + num(n);
+    // Sign goes before the ₹ ("−₹3,295"), drawn in the body font.
+    const body = num(n);
     const sym = fonts ? '₹' : 'Rs.';
     doc.setFontSize(size);
+    F(family, style); const signW = sign ? doc.getTextWidth(clean(sign)) : 0; const bodyW = doc.getTextWidth(body);
     F('Unbounded', 'bold'); const symW = doc.getTextWidth(sym) + size * PT * 0.12;
-    F(family, style); const bodyW = doc.getTextWidth(body);
-    const total = symW + bodyW;
+    const total = signW + symW + bodyW;
     const x0 = align === 'right' ? x - total : align === 'center' ? x - total / 2 : x;
     doc.setTextColor(...color);
-    F('Unbounded', 'bold'); doc.text(sym, x0, y);
-    F(family, style); doc.text(body, x0 + symW, y);
+    if (sign) { F(family, style); doc.text(clean(sign), x0, y); }
+    F('Unbounded', 'bold'); doc.text(sym, x0 + signW, y);
+    F(family, style); doc.text(body, x0 + signW + symW, y);
     return total;
   };
 
   // ---- data ----
   const userName = Object.fromEntries(users.map(u => [u.id, u.name]));
+  // SPLIT column: first names, unless two members share a first name (then the full name).
+  const firstOf = n => (n || '?').trim().split(/\s+/)[0];
+  const shortName = Object.fromEntries(users.map(u => [u.id, users.filter(o => firstOf(o.name) === firstOf(u.name)).length > 1 ? u.name : firstOf(u.name)]));
   const catName = Object.fromEntries((categories || []).map(c => [c.id, c.name]));
   const amt = e => parseFloat(e.amount) || 0;
   const inM = (e, m) => { const d = new Date(e.date); return d.getMonth() === m.month && d.getFullYear() === m.year; };
@@ -93,7 +98,9 @@ export async function generateExpenseReport({ expenses, users, roomName, categor
   const endDate = month ? new Date(month.year, month.month, 1) : (scoped[0] ? new Date(scoped[0].date) : new Date());
   const win = monthWindow(expenses, endDate).months; // up to 6 months ending at the scope month
   const lifetime = expenses.reduce((s, e) => s + amt(e), 0);
-  const firstMonth = win[0]?.short;
+  const firstExp = expenses.reduce((a, e) => (!a || new Date(e.date) < new Date(a.date) ? e : a), null);
+  const firstMonth = firstExp ? `${MONTHS[new Date(firstExp.date).getMonth()].slice(0, 3)} ${new Date(firstExp.date).getFullYear()}` : '';
+  const spanMonths = new Set(scoped.map(e => { const d = new Date(e.date); return `${d.getFullYear()}-${d.getMonth()}`; })).size;
   const scopeLabel = month ? `${MONTHS[month.month]} ${month.year}` : 'ALL TIME';
   const byCat = {};
   scoped.forEach(e => { const n = catName[e.categoryId] || 'Other'; byCat[n] = (byCat[n] || 0) + amt(e); });
@@ -132,7 +139,8 @@ export async function generateExpenseReport({ expenses, users, roomName, categor
     const pct = ((total - prev.total) / prev.total) * 100;
     sub = `— ${Math.abs(pct).toFixed(1)}% ${pct <= 0 ? 'less' : 'more'} than ${prev.full[0] + prev.full.slice(1).toLowerCase()}.`;
   } else if (!month) {
-    sub = `— across ${win.length} ${win.length === 1 ? 'month' : 'months'}, ${scoped.length} expenses.`;
+    const entries = new Set(scoped.map(e => (e.isItemised && e.groupId ? `g:${e.groupId}` : e.id))).size;
+    sub = `— across ${spanMonths} ${spanMonths === 1 ? 'month' : 'months'}, ${entries} expenses.`;
   }
   doc.setFontSize(15); F('Serif', 'italic'); doc.setTextColor(...MUTED);
   text(sub, 16, 64 + heroSize * PT + 20);
@@ -185,7 +193,7 @@ export async function generateExpenseReport({ expenses, users, roomName, categor
   }
   label('LIFETIME');
   money(lifetime, fx, fy, { size: 10.5, family: 'Sora', style: 'bold' });
-  if (firstMonth) { doc.setFontSize(7); F('Mono'); doc.setTextColor(...MUTED); text(`since ${firstMonth}`, fx + 44, fy); }
+  if (firstMonth) { doc.setFontSize(7); F('Mono'); doc.setTextColor(...MUTED); text(`since ${firstMonth.charAt(0) + firstMonth.slice(1).toLowerCase()}`, fx + 44, fy); }
   fy += 14;
   // bars
   const maxM = Math.max(1, ...win.map(m => m.total));
@@ -241,7 +249,7 @@ export async function generateExpenseReport({ expenses, users, roomName, categor
       const d = new Date(e.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
       const base = [d, clean(e.description || '-'), clean(catName[e.categoryId] || 'Other'), { content: '', money: a }];
       if (isPersonal) return base;
-      const splitTxt = split.length === users.length ? 'ALL' : split.map(id => (userName[id] || '?').charAt(0).toUpperCase()).join(' + ');
+      const splitTxt = split.length === users.length ? 'ALL' : split.map(id => shortName[id] || '?').join(' + ');
       return [...base, clean(userName[e.paidBy] || '-'), splitTxt,
         ...users.map(u => (split.includes(u.id) ? { content: '', money: per } : { content: '—', styles: { textColor: MUTED, halign: 'right' } }))];
     });
@@ -276,6 +284,9 @@ export async function generateExpenseReport({ expenses, users, roomName, categor
   const rowsM = Object.entries(grid).map(([n, v]) => [n, v, Object.values(v).reduce((s, x) => s + x, 0)]).sort((a, b) => b[2] - a[2]);
   doc.addPage();
   doc.setFontSize(17); F('Serif', 'italic'); doc.setTextColor(...INK); text('Where it went', 14, 28);
+  // The matrix shows at most 6 months; say so when the report covers more than that.
+  const windowed = !month && spanMonths > monthsUsed.length;
+  if (windowed) { doc.setFontSize(9); F('Serif', 'italic'); doc.setTextColor(...MUTED); text(`— the last ${monthsUsed.length} months`, 14 + doc.getTextWidth('Where it went') * 17 / 9 + 3, 28); }
   const delta = (cur, prevV) => (prevV > 0 ? Math.round(((cur - prevV) / prevV) * 100) : null);
   const mHead = ['CATEGORY', ...monthsUsed.map(m => `${m.short.toUpperCase()} ${String(m.year).slice(2)}`), 'TOTAL'];
   const mBody = rowsM.map(([n, v, t]) => [
@@ -284,7 +295,7 @@ export async function generateExpenseReport({ expenses, users, roomName, categor
     { content: '', money: t, bold: true },
   ]);
   const colTotals = monthsUsed.map(m => rowsM.reduce((s, [, v]) => s + (v[m.key] || 0), 0));
-  const mFoot = [[{ content: 'GRAND TOTAL', styles: { fontStyle: 'bold' } }, ...colTotals.map(t => ({ content: '', money: t, bold: true })), { content: '', money: colTotals.reduce((s, x) => s + x, 0), bold: true }]];
+  const mFoot = [[{ content: windowed ? `${monthsUsed.length}-MONTH TOTAL` : 'GRAND TOTAL', styles: { fontStyle: 'bold' } }, ...colTotals.map(t => ({ content: '', money: t, bold: true })), { content: '', money: colTotals.reduce((s, x) => s + x, 0), bold: true }]];
   autoTable(doc, {
     ...tableCommon, startY: 34, head: [mHead], body: mBody, foot: mFoot,
     styles: { ...tableCommon.styles, minCellHeight: 10, valign: 'middle' },
@@ -296,7 +307,7 @@ export async function generateExpenseReport({ expenses, users, roomName, categor
       const c = data.cell.raw?.cell; if (!c) return;
       const { x, y, width, height } = data.cell;
       if (c.sel) { doc.setGState(doc.GState({ opacity: 0.07 })); doc.setFillColor(...VIOLET); doc.rect(x, y, width, height, 'F'); doc.setGState(doc.GState({ opacity: 1 })); }
-      if (c.v > 0) money(c.v, x + width - 2, y + 4.6, { size: 8, family: 'Mono', style: c.sel ? 'bold' : 'normal' });
+      if (c.v > 0) money(c.v, x + width - 2, y + 4.6, { size: 8, family: 'Mono', style: c.sel ? 'bold' : 'normal', align: 'right' });
       const d = c.v > 0 ? delta(c.v, c.prev) : null;
       if (d !== null && d !== 0) {
         const up = d > 0; const col = up ? PINK : TEAL;
@@ -316,7 +327,8 @@ export async function generateExpenseReport({ expenses, users, roomName, categor
     text(`PAGE ${i} OF ${pages}`, W - 14, H - 8, { align: 'right', charSpace: 0.4 });
   }
 
-  const filename = `SplitEase_Report_${month ? `${MONTHS[month.month]}_${month.year}` : new Date().toISOString().split('T')[0]}.pdf`;
+  const safeRoom = String(roomName || 'SplitEase').replace(/[^\w-]+/g, '_').replace(/^_+|_+$/g, '') || 'SplitEase';
+  const filename = `${safeRoom}_Report_${month ? `${MONTHS[month.month]}_${month.year}` : new Date().toISOString().split('T')[0]}.pdf`;
   doc.save(filename);
   return { filename, pages };
 }

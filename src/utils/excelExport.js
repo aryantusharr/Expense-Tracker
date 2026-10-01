@@ -8,7 +8,13 @@ const RUPEE_FMT = '"₹"#,##,##0';
 const thin = { style: 'thin', color: { rgb: 'D9D9E3' } };
 const box = { top: thin, bottom: thin, left: thin, right: thin };
 
-const dateOf = value => new Date(value).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+// Real Excel dates (serial numbers) so the column sorts and filters by date; shown as "01 Oct 2026".
+const DATE_FMT = 'dd mmm yyyy';
+const serialOf = value => {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(value));
+  const d = m ? Date.UTC(+m[1], +m[2] - 1, +m[3]) : (() => { const x = new Date(value); return Date.UTC(x.getFullYear(), x.getMonth(), x.getDate()); })();
+  return Math.round((d - Date.UTC(1899, 11, 30)) / 86400000);
+};
 const safe = s => String(s).replace(/[^a-zA-Z0-9_-]/g, '_');
 
 function buildSheet(list, categories) {
@@ -23,7 +29,7 @@ function buildSheet(list, categories) {
   sorted.forEach((e, i) => {
     aoa.push([
       { v: i + 1, t: 'n', s: { border: box, alignment: { horizontal: 'center' }, font: { color: { rgb: '6F6E88' } } } },
-      { v: dateOf(e.date), t: 's', s: { border: box } },
+      { v: serialOf(e.date), t: 'n', z: DATE_FMT, s: { border: box, numFmt: DATE_FMT, alignment: { horizontal: 'left' } } },
       { v: e.description || '-', t: 's', s: { border: box } },
       { v: catMap[e.categoryId] || 'Other', t: 's', s: { border: box } },
       { v: parseFloat(e.amount) || 0, t: 'n', z: RUPEE_FMT, s: { border: box, numFmt: RUPEE_FMT, alignment: { horizontal: 'right' } } },

@@ -30,6 +30,9 @@ const ago = ts => {
 };
 
 /** Data section (board S6a): export report → scope chips → printing receipt → PDF / Excel; Import CSV. */
+// Itemised bills count once (same as History).
+const entryCount = list => new Set(list.map(e => (e.isItemised && e.groupId ? `g:${e.groupId}` : e.id))).size;
+
 export default function DataSection({ expenses, users, categories, room, roomCode }) {
   const toast = useToast();
   const [exportOpen, setExportOpen] = useState(false);
@@ -39,6 +42,7 @@ export default function DataSection({ expenses, users, categories, room, roomCod
   const [printKey, setPrintKey] = useState(0);
   const [tick, setTick] = useState(0);
   const [dismissed, setDismissed] = useState(false);
+  const [saving, setSaving] = useState(null);       // 'pdf' | 'xlsx' while a file is being built
 
   const banner = useMemo(() => readBanner(room, roomCode), [room, roomCode, tick]); // eslint-disable-line react-hooks/exhaustive-deps
   const lastImport = useMemo(() => {
@@ -69,7 +73,10 @@ export default function DataSection({ expenses, users, categories, room, roomCod
     if (!monthObj) {
       const by = {};
       for (const e of scoped) { const d = new Date(e.date); const k = d.getFullYear() * 12 + d.getMonth(); by[k] = (by[k] || 0) + amt(e); }
-      lines = Object.entries(by).sort((a, b) => b[0] - a[0]).slice(0, 5).map(([k, v]) => [`${MONTH_NAMES[k % 12].slice(0, 3).toUpperCase()} ${Math.floor(k / 12)}`, v]);
+      const all = Object.entries(by).sort((a, b) => b[0] - a[0]);
+      lines = all.slice(0, 5).map(([k, v]) => [`${MONTH_NAMES[k % 12].slice(0, 3).toUpperCase()} ${Math.floor(k / 12)}`, v]);
+      const older = all.slice(5);
+      if (older.length) lines.push([`+${older.length} EARLIER ${older.length === 1 ? 'MONTH' : 'MONTHS'}`, older.reduce((s, [, v]) => s + v, 0)]);
     } else {
       const names = Object.fromEntries(categories.map(c => [c.id, c.name]));
       const by = {};
@@ -79,7 +86,7 @@ export default function DataSection({ expenses, users, categories, room, roomCod
       const rest = sorted.slice(4).reduce((s, [, v]) => s + v, 0);
       if (rest > 0) lines.push(['Other', rest]);
     }
-    return { lines: lines.map(([m, v]) => [String(m).toUpperCase(), money(v)]), total: money(total), n: scoped.length };
+    return { lines: lines.map(([m, v]) => [String(m).toUpperCase(), money(v)]), total: money(total), n: entryCount(scoped) };
   }, [scoped, monthObj, categories]);
 
   const say = (message, kind, sub) => toast({ message, sub, kind, top: true, duration: 3000 });
@@ -93,7 +100,9 @@ export default function DataSection({ expenses, users, categories, room, roomCod
   };
 
   const save = async kind => {
+    if (saving) return;
     if (!scoped.length) { haptic('error'); say(monthObj ? `No expenses in ${monthObj.label}` : 'Nothing to export yet', 'warn', monthObj ? 'Pick another month' : 'Add an expense first — then export any time'); return; }
+    setSaving(kind);
     try {
       const name = room?.name || 'SplitEase';
       let file; let extra = `${scoped.length} rows`;
@@ -108,6 +117,7 @@ export default function DataSection({ expenses, users, categories, room, roomCod
       haptic('error');
       say('Couldn’t export the file', 'error', 'Try again · your data is safe');
     }
+    setSaving(null);
   };
 
   const lastTxt = lastImport ? `Last import ${ago(lastImport.timestamp)} · ${lastImport.count} expenses` : 'Bring in a CSV file';
@@ -169,8 +179,8 @@ export default function DataSection({ expenses, users, categories, room, roomCod
           </div>
         </div>
         <div className="st-btnrow">
-          <button type="button" className="se-btn se-btn--primary se-press" onClick={() => save('pdf')}>Save as PDF</button>
-          <button type="button" className="se-btn se-btn--secondary se-press" onClick={() => save('xlsx')}>Save as Excel</button>
+          <button type="button" className="se-btn se-btn--primary se-press" disabled={!!saving} onClick={() => save('pdf')}>{saving === 'pdf' ? 'Saving…' : 'Save as PDF'}</button>
+          <button type="button" className="se-btn se-btn--secondary se-press" disabled={!!saving} onClick={() => save('xlsx')}>{saving === 'xlsx' ? 'Saving…' : 'Save as Excel'}</button>
         </div>
       </Sheet>
 
