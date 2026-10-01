@@ -136,8 +136,10 @@ export default function QuickPane({ c }) {
               onToggle={c.toggleSplit}
             />
           )}
-          <Keypad onKey={onKey} />
-          <Button block size="lg" onClick={done}>Done</Button>
+          <div className="add-padzone">
+            <Keypad onKey={onKey} />
+            <Button block size="lg" onClick={done}>Done</Button>
+          </div>
         </div>
       ) : (
         <div className="add-form se-in">

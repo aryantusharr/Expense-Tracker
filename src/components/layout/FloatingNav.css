@@ -1,6 +1,6 @@
 .fnav {
   position: fixed; left: 16px; right: 16px; z-index: 100;
-  bottom: calc(24px + env(safe-area-inset-bottom) * .5);
+  bottom: var(--se-nav-bottom);
   max-width: 480px; margin: 0 auto;
   display: flex; align-items: center; gap: 12px;
   font-family: var(--se-font);

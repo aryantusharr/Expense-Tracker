@@ -21,7 +21,7 @@
 /* printer slot — sits where the nav will appear */
 .sm-slot {
   position: fixed; z-index: 3; left: 16px; right: 16px; max-width: 480px; margin: 0 auto; height: 60px;
-  bottom: calc(24px + env(safe-area-inset-bottom) * .5); border-radius: 999px;
+  bottom: var(--se-nav-bottom); border-radius: 999px;
   background: linear-gradient(180deg, #2A2945, #15142B); border: 1px solid rgba(255, 255, 255, 0.18);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center;
   animation: sm-buzz .12s linear infinite;
@@ -33,7 +33,7 @@
 /* window above the slot: clips the paper while it is still inside the printer */
 .sm-win {
   position: fixed; z-index: 2; left: 50%; width: 230px; margin-left: -115px; height: min(62vh, 520px);
-  bottom: calc(84px + env(safe-area-inset-bottom) * .5); overflow: visible;
+  bottom: calc(var(--se-nav-bottom) + 60px); overflow: visible;
 }
 .sm--print .sm-win { overflow: hidden; }
 .sm-paper {

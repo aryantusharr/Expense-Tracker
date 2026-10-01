@@ -35,8 +35,9 @@
 .add-main {
   position: relative; z-index: 1; box-sizing: border-box;
   max-width: 520px; margin: 0 auto;
-  padding: max(58px, calc(env(safe-area-inset-top) + 12px)) 0 calc(28px + env(safe-area-inset-bottom));
+  padding: max(58px, calc(env(safe-area-inset-top) + 12px)) 0 max(16px, calc(env(safe-area-inset-bottom) + 4px));
   display: flex; flex-direction: column; gap: 18px;
+  min-height: 100dvh;
 }
 .add-head { display: flex; align-items: center; justify-content: space-between; padding: 0 20px; }
 
@@ -266,3 +267,13 @@
 .add-payer--on { border-color: var(--c); box-shadow: 0 0 18px color-mix(in srgb, var(--c) 35%, transparent); }
 :root[data-theme='light'] .ib-paper { outline: 1px solid rgba(42, 35, 80, 0.1); }
 
+
+/* Amount page: keypad + Done sit at the bottom of the screen (thumb reach); spare height goes
+   between the split strip and the keypad, and keys grow a little on taller phones. */
+.add-viewport { flex: 1; display: flex; flex-direction: column; }
+.add-track { flex: 1; }
+.add-pane { display: flex; flex-direction: column; }
+.add-quick { flex: 1; }
+.add-amount-page { flex: 1; }
+.add-padzone { margin-top: auto; display: flex; flex-direction: column; gap: 14px; padding-top: 6px; }
+.add-padzone .add-key { height: clamp(50px, 6.6dvh, 60px); }

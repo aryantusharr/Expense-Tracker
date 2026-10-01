@@ -228,7 +228,7 @@
 .he0__copy h2 { margin: 0; font-size: 18px; font-weight: 600; }
 .he0__copy p { margin: 0; font-size: 13px; line-height: 1.5; color: var(--se-text-2); }
 .he0__copy .se-btn { margin-top: 10px; padding: 0 26px; gap: 8px; }
-.he0__lands { position: fixed; z-index: 3; left: calc(50% - 38px); bottom: calc(96px + env(safe-area-inset-bottom) * .5); transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 2px; color: var(--se-text-4); animation: hist-point 1.8s ease-in-out infinite; }
+.he0__lands { position: fixed; z-index: 3; left: calc(50% - 38px); bottom: calc(var(--se-nav-bottom) + 72px); transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 2px; color: var(--se-text-4); animation: hist-point 1.8s ease-in-out infinite; }
 .he0__lands .se-mono { font-size: 9px; letter-spacing: .12em; }
 @keyframes hist-sway { 0%, 100% { transform: rotate(-1.2deg); } 50% { transform: rotate(1.2deg); } }
 @keyframes hist-ghost { 0%, 100% { opacity: .35; } 50% { opacity: .7; } }

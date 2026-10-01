@@ -99,7 +99,7 @@
 /* ---- Toasts ---- */
 .se-toasts {
   position: fixed; left: 16px; right: 16px; z-index: 950;
-  bottom: calc(96px + env(safe-area-inset-bottom));
+  bottom: calc(var(--se-nav-bottom) + 76px);
   display: flex; flex-direction: column; gap: 8px; pointer-events: none;
 }
 .se-toasts--top { bottom: auto; top: calc(14px + env(safe-area-inset-top)); }
