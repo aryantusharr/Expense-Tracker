@@ -1,4 +1,4 @@
-// The 32 "A · line" category icons from the canvas (System · Category icons board).
+// The 36 "A · line" category icons from the canvas (System · Category icons board).
 // 24×24 viewBox, stroke 1.75, round caps/joins. Colours cycle through the 8 category hues.
 //
 // Firestore keeps each category's `icon` as an emoji (unchanged data model). The redesign
@@ -38,12 +38,20 @@ export const CATEGORY_ICONS = [
   ['insurance', 'Insurance', 'M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6zM9 12l2 2 4-4', '#A8E06B'],
   ['kids', 'Kids', 'M12 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM8 22v-6l-3-2 3-4h8l3 4-3 2v6', '#FF9A76'],
   ['other', 'Other', 'M5 12h.01M12 12h.01M19 12h.01', '#C9A7FF'],
+  ['smoking', 'Smoking', 'M2 14h15v4H2zM12 14v4M20 14v4M19 11c0-2 2-2 2-4s-2-2-2-4', '#8B7CFF'],
+  ['weed', 'Weed', 'M12 15C10 10 10.5 6 12 2c1.5 4 2 8 0 13zM12 15C8.5 13 6 10 5 6c3.5 1.5 6 4.5 7 9zM12 15c1-4.5 3.5-7.5 7-9-1 4-3.5 7-7 9zM12 15c-3 .5-6.5-.5-9-2 3-1.5 6.5-1.5 9 2zM12 15c2.5-3.5 6-3.5 9-2-2.5 1.5-6 2.5-9 2zM12 15v7', '#5FD4C4'],
+  ['saving', 'Saving', 'M19 5c-1.5 0-2.8 1.4-3 2-3.5-1.5-11-.3-11 5 0 1.8 0 3 2 4.5V20h4v-2h3v2h4v-4c1-.5 1.7-1 2-2h2v-4h-2c0-1-.5-1.5-1-2zM2 9v1a2 2 0 0 0 2 2h1M16 11h.01', '#FF8FB5'],
+  ['gadgets', 'Gadgets', 'M8 6h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2zM9 6l1-4h4l1 4M9 18l1 4h4l1-4M12 10v2l1.5 1.5M18 11h1v2h-1', '#F5C26B'],
 ].map(([key, label, path, color]) => ({ key, label, path, color }))
 
 const BY_KEY = Object.fromEntries(CATEGORY_ICONS.map(i => [i.key, i]))
 
 // Name keywords → icon (first match wins; checked against the lower-cased category name).
 const NAME_RULES = [
+  [/smok|cigar|cig\b|tobacco|vape|hookah/, 'smoking'],
+  [/weed|ganja|cannabis|\bmaal\b|joint/, 'weed'],
+  [/saving|invest|\bsip\b|deposit|piggy/, 'saving'],
+  [/gadget|watch|electronic|laptop|headphone|airpod|\bipad\b|\biphone\b|apple/, 'gadgets'],
   [/grocer|kirana|vegetable|fruit|supermarket/, 'groceries'],
   [/coffee|tea|chai|cafe/, 'coffee'],
   [/snack|chips|sweet/, 'snacks'],
@@ -83,6 +91,7 @@ const EMOJI_RULES = {
   '🛒': 'groceries', '🏡': 'rent', '🏠': 'rent', '⚡': 'electricity', '🍽️': 'food', '🍽': 'food',
   '🚕': 'transport', '🎭': 'movies', '🛍️': 'shopping', '🛍': 'shopping', '💊': 'health',
   '🍻': 'party', '☕': 'coffee', '🪩': 'party', '📦': 'other', '🧹': 'househelp', '🏋️': 'gym',
+  '🚬': 'smoking', '🌿': 'weed', '💰': 'saving', '⌚': 'gadgets', '💻': 'subscriptions',
 }
 
 export function resolveCategoryIcon(category) {

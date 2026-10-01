@@ -153,7 +153,7 @@ export default function FoundationsPage() {
           </div>
         </Section>
 
-        <Section title="CATEGORY ICONS · A LINE (32)">
+        <Section title={`CATEGORY ICONS · A LINE (${CATEGORY_ICONS.length})`}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '14px 6px' }}>
             {CATEGORY_ICONS.map(i => (
               <button
