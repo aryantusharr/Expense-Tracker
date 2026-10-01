@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import { haptic } from '../../utils/haptics';
-import Sheet from '../ui/Sheet';
 import Monogram from './Monogram';
 
 const nameOf = m => (m?.name || '').replace(/^test[\s_-]+/i, '') || m?.name || '';
@@ -13,7 +12,6 @@ const nameOf = m => (m?.name || '').replace(/^test[\s_-]+/i, '') || m?.name || '
 export default function SlipsStrip({ members, paidBy, splitAmong, amount, onPayer, onToggle }) {
   const payer = members.find(m => m.id === paidBy) || members[0];
   const [prev, setPrev] = useState(null);
-  const [picking, setPicking] = useState(false);
   const lastPayer = useRef(payer?.id);
   useEffect(() => {
     if (payer && lastPayer.current !== payer.id) {
@@ -35,7 +33,7 @@ export default function SlipsStrip({ members, paidBy, splitAmong, amount, onPaye
 
   return (
     <div className="add-slips se-glass" data-noswipe>
-      <button type="button" className="add-bill" style={{ '--c': payer.color }} onClick={() => { haptic('choose'); if (members.length > 4) setPicking(true); else nextPayer(); }} aria-label={`Paid by ${nameOf(payer)}. Tap to change`}>
+      <button type="button" className="add-bill" style={{ '--c': payer.color }} onClick={() => { haptic('choose'); nextPayer(); }} aria-label={`Paid by ${nameOf(payer)}. Tap to change`}>
         <span className="add-bill__label">PAID BY</span>
         <span className="add-bill__name">
           {prev && <span key={`o${prev.id}`} className="add-bill__out" style={{ color: prev.color }}>{nameOf(prev)}</span>}
@@ -69,17 +67,6 @@ export default function SlipsStrip({ members, paidBy, splitAmong, amount, onPaye
           })}
         </div>
       </div>
-      <Sheet open={picking} onClose={() => setPicking(false)} title="Who paid?">
-        <div className="add-payers">
-          {members.map(m => (
-            <button key={m.id} type="button" className={`add-payer ${m.id === payer.id ? 'add-payer--on' : ''}`} style={{ '--c': m.color }}
-              onClick={() => { haptic('choose'); onPayer(m.id); setPicking(false); }}>
-              <Monogram member={m} size={36} />
-              <span>{nameOf(m)}</span>
-            </button>
-          ))}
-        </div>
-      </Sheet>
     </div>
   );
 }

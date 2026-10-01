@@ -339,6 +339,10 @@
 .dsh-mx-cell.on { background: var(--dsh-heat); }
 .dsh-mx-cell b { font-size: 12px; font-weight: 600; }
 .dsh-mx-cell i { font-style: normal; font-family: var(--se-font-mono); font-size: 9px; font-weight: 700; color: var(--se-text-3); }
+.dsh-mx-cell i.pos-ink { color: var(--se-teal-2); }
+.dsh-mx-cell i.neg-ink { color: var(--se-pink-2); }
+:root[data-theme='light'] .dsh-mx-cell i.pos-ink { color: #0A8577; }
+:root[data-theme='light'] .dsh-mx-cell i.neg-ink { color: #D23B72; }
 .dsh-mx-num { text-align: right; padding-right: 12px; }
 .dsh-mx-total { display: flex; align-items: center; justify-content: flex-end; padding-right: 16px; font-size: 12px; font-weight: 700; }
 

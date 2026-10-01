@@ -183,11 +183,13 @@
 .ob-prow__radio { width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--se-line-2); }
 .ob-prow.is-on .ob-prow__radio { border-color: var(--se-teal); background: radial-gradient(var(--se-teal) 45%, transparent 50%); }
 .ob-receipt-scr { position: fixed !important; inset: 0; z-index: 960; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding: 50px 18px 30px; }
-.ob-receipt { position: relative; width: 260px; background: #FBFAFF; color: #15142B; padding: 16px; border-radius: 8px; font-family: var(--se-font-mono); font-size: 11px; display: flex; flex-direction: column; gap: 6px; }
+.ob-receipt.se-print { animation-name: ob-print; }
+@keyframes ob-print { from { clip-path: inset(0 -40px 100% -40px); transform: translateY(-12px); } to { clip-path: inset(-40px -40px -40px -40px); transform: none; } }
+.ob-receipt { position: relative; width: 280px; background: #FBFAFF; color: #15142B; padding: 16px; border-radius: 8px; font-family: var(--se-font-mono); font-size: 11px; display: flex; flex-direction: column; gap: 6px; }
 .ob-receipt b { letter-spacing: .1em; font-weight: 800; }
 .ob-receipt__rule { border-top: 1px dashed #B9B6DA; }
 .ob-receipt__dim { color: #6F6E88; }
-.ob-stamp--syncon { right: -14px; top: -14px; padding: 3px 12px; font-size: 13px; letter-spacing: .2em; animation-delay: .5s; }
+.ob-stamp--syncon { right: -12px; top: -14px; padding: 3px 12px; font-size: 13px; letter-spacing: .2em; animation-delay: .5s; }
 .ob-receipt-scr .se-btn { max-width: 360px; }
 
 /* Bigger invisible tap areas (~44pt) — no visual change. */
