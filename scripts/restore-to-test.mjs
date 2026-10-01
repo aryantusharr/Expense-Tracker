@@ -1,6 +1,7 @@
-// Copy rooms from a backup (scripts/backup-firestore.mjs output) into the TEST Firebase project.
-// Usage: node scripts/restore-to-test.mjs <backup firestore.json> [--skip "Room name" ...]
-// Target comes from .env.test.local. Refuses to run against the live project.
+// Copy rooms from an ANONYMISED backup (scripts/anonymise-backup.mjs output) into the TEST project.
+// Usage: node scripts/restore-to-test.mjs <firestore.anon.json> [--skip "Room name" ...]
+// Target comes from .env.test.local. Refuses to run against the live project, and refuses
+// raw (non-anonymised) backups so real people's details never leave live.
 // Values are written exactly as backed up (Firestore typed JSON), same document IDs.
 import fs from 'node:fs'
 
@@ -20,7 +21,10 @@ if (!projectId || projectId === LIVE_PROJECT_ID) {
 const key = env.VITE_FIREBASE_API_KEY
 const root = `projects/${projectId}/databases/(default)/documents`
 
-const { docs } = JSON.parse(fs.readFileSync(backupFile, 'utf8'))
+const { docs, anonymised } = JSON.parse(fs.readFileSync(backupFile, 'utf8'))
+if (!anonymised) {
+  throw new Error('Refusing to copy a raw backup — run scripts/anonymise-backup.mjs first')
+}
 const roomName = id => docs[`rooms/${id}`]?.fields?.name?.stringValue ?? ''
 const skipRooms = new Set(
   Object.keys(docs).filter(p => /^rooms\/[^/]+$/.test(p))
