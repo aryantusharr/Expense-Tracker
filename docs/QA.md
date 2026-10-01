@@ -2,6 +2,10 @@
 
 Walked: Landing → Create (taken name, roommates) → Share → sync sheet / Not now → Dashboard · Join (wrong code, personal code, D4NYY3, /join/CODE link) · Personal (typed budget, "I already have a code" with shared + personal code) · gear sheet → Delete for everyone · History (search, filter, edit, tear + Undo) · Add Quick + save · Settings (rename, add/edit/swap/delete category, theme, budget, sync off → set up, export PDF/Excel all time + month, import CSV shared + personal with bad rows).
 
+## Status (1 Oct): ALL items 1–27 fixed on `redesign` (commits e449000 → 683f188, local only)
+Extra found while fixing: turning sync on deleted copies from EVERY personal room on the phone (now only the member's old room). Also done on request: Add keypad anchored to the bottom; nav lowered to just above the home indicator (`--se-nav-bottom`).
+Left as-is by design: edit-sheet lines are 31px (44 would stretch the receipt look).
+
 ## Bugs (fix)
 | # | Sev | Where | What | Fix |
 |---|-----|-------|------|-----|

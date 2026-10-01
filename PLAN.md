@@ -47,7 +47,7 @@
 Her rules: Claude tests everything (no phone pass by her; iPhone web has no haptics anyway). Save credits: text checks (read_page / JS) first, screenshots only for visual bugs, small scale. Priority: UI, performance, animation. Viewport: iPhone 13 Pro 390×844 only (bigger phones are fine by layout). Local commits only — no push to GitHub.
 Decisions (her "do whatever is best" → Claude's picks): category delete keeps expenses (show under Other, reword sheet copy); "Start tracking" → Dashboard; bill line edit keeps receipt sheet; light orbs decided by side-by-side; PDF non-Latin names checked against backup first; "Delete for everyone" stays allowed in the go-live rules (single room).
 - [x] A1 Onboarding · A2 Dashboard/Add/History · A3 Settings/exports/import · A4 perf + animation audit → ranked list in `docs/QA.md` (waiting for her approval)
-- [ ] Fix pass (her approval of the list first)
+- [x] Fix pass — all 27 QA items + keypad/nav spacing, 7 local commits (not pushed)
 - [ ] Cleanup (chart.js, Expenses.css, index.css vars, emoji, a11y, lint)
 
 ## Phase 3 · iPhone testing
@@ -88,3 +88,4 @@ Decisions (her "do whatever is best" → Claude's picks): category delete keeps 
 - 2026-10-01 · Settings chunk 3b built (import wizard), untested by design.
 - 2026-10-01 · Exports built (styled Excel + magazine PDF with embedded fonts), untested by design. Settings is now feature-complete pending her test pass.
 - 2026-10-01 · QA pass 1 done in the browser (390×844, dark + light): 15 bugs + 12 polish items in docs/QA.md. Biggest: onboarding button styles lost, PDF matrix numbers in wrong column, PDF cover month span, leftover old animated background, slow profile-sync copy, History search only within one month.
+- 2026-10-01 · Fix pass done: onboarding button styles, duplicate names, name suggestions, sync dead-end; PDF matrix/cover/compression (4.3 MB → 0.4 MB), Excel real dates; animation perf (old bg layer removed, orbs masked not blurred, transform-only loops); sync batched (80s+ → ~14s) + only clears the member's own old room + categories mapped by name; History search across months; 44pt tap areas; import wizard hints/prefill; offline IndexedDB cache; Add keypad at bottom; nav lowered. Test data is messy now (Test C's MB739V copies were wiped by the old sync bug; Test B syncs to 9FQQ73) → re-run scripts/restore-to-test.mjs before Phase 4.
