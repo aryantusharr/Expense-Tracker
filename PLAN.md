@@ -25,7 +25,10 @@
 - [x] Dashboard (shared + personal) — `src/components/dashboard/DashboardScreen.jsx` + `parts/`, data in `dashboardData.js` (reuses splitCalculator / settlementEngine, read-only). New FloatingNav replaces BottomNav everywhere (old Add screen keeps the nav until Add is rebuilt — it has no back button). Checked dark + light, shared + personal on test data.
   - Her decisions (1 Oct): keep current (empty) month on the 1st; budget status ON TRACK / NEARLY THERE (≥85%, amber) / OVER BUDGET; nav should NOT be forced to the Dashboard version everywhere — follow each screen's own board (confirm when building Settings); light orbs keep the board's alpha (.34/.26/.2, spec says .22/.18/.14 — not decided). "NOT LOGGED" = no payment dated today
   - Cleanup later: chart.js + react-chartjs-2 now unused
-- [ ] Add Expense (Quick ⇄ Items, slips, receipt print save)
+- [~] Add Expense — built in 3 chunks (new code in `src/components/add/`; logic in `useAddController.js`, helpers moved unchanged to `addHelpers.js`; old `expenses/AddExpense.jsx` stays until Items is ported, then delete)
+  - [x] Chunk 1 · Quick mode: amount card with odometer, custom keypad (expressions), +₹ chips, recurring chips, slips strip (payer flip, seats, ₹ slips), description, categories (AUTO), date strip, slide-to-add with validation, Quick⇄Items pill + swipe, personal variant, dark + light. Nav hidden on /add (close button added). Items tab is a placeholder for now.
+  - [ ] Chunk 2 · Items mode: NEW BILL receipt paper, Bill name + Total, per-item panel, Print to receipt, Save bill. Open question: design sets payer per item; data model has one payer per group (service ignores item.paidBy) — either one payer per bill or a small service tweak (same fields, no schema change)
+  - [ ] Chunk 3 · Save moment: printer slot buzz → stutter print → receipt flies to History, nav bounce, "+1" (needs the nav on /add or a History target)
 - [ ] History (month stack, search/filters, printing bills, tear delete + undo, receipt edit)
 - [ ] Settings (room card, sync pill, join-code receipt, categories, pull-cord theme, export, import wizard, budget)
 - [ ] Exports: PDF magazine report (embed fonts for ₹), styled Excel (xlsx-js-style), toasts instead of alert()
@@ -52,3 +55,4 @@
 - 2026-10-01 · Phase 1 done. Backup taken; live rules found fully open; anonymised copy of real rooms in test project, verified in the app (Test Room 3 shows balances).
 - 2026-10-01 · Phase 2 foundations built and checked in the browser (dark + light, sheet, toast, icons); old screens untouched (new styles are --se-* / .se-* only).
 - 2026-10-01 · Dashboard rebuilt (shared + personal) + floating nav; 36 category icons.
+- 2026-10-01 · Add Expense chunk 1 (Quick mode) built + checked on test rooms D4NYY3 (shared) / MB739V (personal), dark + light. Saved a real test expense OK. Category starts unpicked (per spec); recent-description chips kept under the field.
