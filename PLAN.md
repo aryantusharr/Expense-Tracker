@@ -27,7 +27,7 @@
   - Cleanup later: chart.js + react-chartjs-2 now unused
 - [~] Add Expense — built in 3 chunks (new code in `src/components/add/`; logic in `useAddController.js`, helpers moved unchanged to `addHelpers.js`; old `expenses/AddExpense.jsx` stays until Items is ported, then delete)
   - [x] Chunk 1 · Quick mode: amount card with odometer, custom keypad (expressions), +₹ chips, recurring chips, slips strip (payer flip, seats, ₹ slips), description, categories (AUTO), date strip, slide-to-add with validation, Quick⇄Items pill + swipe, personal variant, dark + light. Nav hidden on /add (close button added). Items tab is a placeholder for now.
-  - [ ] Chunk 2 · Items mode: NEW BILL receipt paper, Bill name + Total, per-item panel, Print to receipt, Save bill. Open question: design sets payer per item; data model has one payer per group (service ignores item.paidBy) — either one payer per bill or a small service tweak (same fields, no schema change)
+  - [ ] Chunk 2 · Items mode: NEW BILL receipt paper, Bill name + Total, per-item panel, Print to receipt, Save bill. DECIDED (her, 1 Oct): one payer per bill (data model has one payer per group; no service change)
   - [ ] Chunk 3 · Save moment: printer slot buzz → stutter print → receipt flies to History, nav bounce, "+1" (needs the nav on /add or a History target)
 - [ ] History (month stack, search/filters, printing bills, tear delete + undo, receipt edit)
 - [ ] Settings (room card, sync pill, join-code receipt, categories, pull-cord theme, export, import wizard, budget)
