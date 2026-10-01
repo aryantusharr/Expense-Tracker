@@ -55,7 +55,16 @@
 .se-press:active { transform: scale(.93); }
 
 /* Ambient background orbs */
-.se-orb { position: absolute; border-radius: 50%; filter: blur(70px); pointer-events: none; }
+/* Soft edge from a radial mask on a box grown by 140px each side — looks like the old blur(70px)
+   but is rasterised once, so drifting/scaling stays on the GPU (blur filters re-render on iPhone). */
+.se-orb {
+  position: absolute; border-radius: 50%; pointer-events: none;
+  box-sizing: content-box; padding: 140px; margin: -140px;
+  /* falloff of a disc blurred by a 70px Gaussian, measured from the grown box's edge */
+  -webkit-mask-image: radial-gradient(closest-side, rgba(0,0,0,.92) 0%, rgba(0,0,0,.8) 30%, rgba(0,0,0,.5) 52%, rgba(0,0,0,.15) 76%, transparent 100%);
+  mask-image: radial-gradient(closest-side, rgba(0,0,0,.92) 0%, rgba(0,0,0,.8) 30%, rgba(0,0,0,.5) 52%, rgba(0,0,0,.15) 76%, transparent 100%);
+  will-change: transform;
+}
 .se-orb-1 { animation: se-drift-1 16s ease-in-out infinite alternate; }
 .se-orb-2 { animation: se-drift-2 19s ease-in-out infinite alternate; }
 .se-orb-3 { animation: se-drift-3 14s ease-in-out infinite alternate; }

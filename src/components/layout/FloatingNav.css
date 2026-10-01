@@ -34,16 +34,23 @@
   display: grid; place-items: center;
   background: var(--se-grad-primary); color: var(--se-on-accent);
   -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+  position: relative;
+  box-shadow: 0 12px 30px rgba(124, 108, 255, .35);
   transition: transform .45s var(--se-ease-strong);
+}
+/* Breathing ring: scale + fade only (composited), instead of animating box-shadow every frame. */
+.fnav__add::before {
+  content: ''; position: absolute; inset: 0; z-index: -1; border-radius: 50%; pointer-events: none;
+  background: rgba(124, 108, 255, .45);
   animation: fnav-breath 3.4s ease-in-out infinite;
 }
 .fnav__add:active { transform: rotate(90deg) scale(.9); }
 @keyframes fnav-breath {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(124, 108, 255, .45), 0 12px 30px rgba(124, 108, 255, .35); }
-  50% { box-shadow: 0 0 0 12px rgba(124, 108, 255, 0), 0 12px 38px rgba(95, 212, 196, .35); }
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.375); opacity: 0; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .fnav__add { animation: none; box-shadow: 0 12px 30px rgba(124, 108, 255, .35); }
+  .fnav__add::before { animation: none; opacity: 0; }
   .fnav__add:active { transform: none; }
   .fnav__ind { transition: none; }
 }

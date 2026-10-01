@@ -72,12 +72,12 @@
   background: var(--add-card); border: 1px solid var(--add-card-border); box-shadow: var(--add-glow);
 }
 .add-amt__sheen {
-  position: absolute; top: 0; bottom: 0; width: 38%; left: -50%; pointer-events: none;
+  position: absolute; top: 0; bottom: 0; width: 38%; left: 0; pointer-events: none;
   background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.14), transparent);
-  transform: skewX(-18deg); animation: add-sheen 6s ease-in-out 1.2s infinite;
+  transform: translateX(-132%) skewX(-18deg); animation: add-sheen 6s ease-in-out 1.2s infinite;
 }
 :root[data-theme='light'] .add-amt__sheen { background: linear-gradient(100deg, transparent, rgba(21, 20, 43, 0.11), transparent); }
-@keyframes add-sheen { 0%, 70% { left: -50%; } 100% { left: 130%; } }
+@keyframes add-sheen { 0%, 70% { transform: translateX(-132%) skewX(-18deg); } 100% { transform: translateX(342%) skewX(-18deg); } }
 .add-amt__top { display: flex; justify-content: space-between; align-items: center; min-height: 26px; }
 .add-amt__label { font: 600 10px var(--se-font-mono); letter-spacing: .14em; color: var(--se-text-3); }
 .add-amt__pill {
