@@ -31,13 +31,9 @@ export function ToastProvider({ children }) {
 
   const value = useMemo(() => ({ show, dismiss }), [show, dismiss]);
 
-  return (
-    <ToastContext.Provider value={value}>
-      {children}
-      {createPortal(
-        <div className="se-toasts" role="status" aria-live="polite">
-          {toasts.map(t => (
-            <div key={t.id} className={`se-toast ${t.kind ? `se-toast--${t.kind}` : ''} ${t.leaving ? 'se-toast-out' : 'se-toast-in'}`}>
+
+  const renderToast = t => (
+    <div key={t.id} className={`se-toast ${t.kind ? `se-toast--${t.kind}` : ''} ${t.leaving ? 'se-toast-out' : 'se-toast-in'}`}>
               <div className="se-toast__body">
                 <span className="se-toast__msg">{t.message}</span>
                 {t.sub && <span className="se-toast__sub">{t.sub}</span>}
@@ -52,13 +48,27 @@ export function ToastProvider({ children }) {
                 </button>
               )}
             </div>
-          ))}
+  );
+
+  return (
+    <ToastContext.Provider value={value}>
+      {children}
+      {createPortal(
+        <div className="se-toasts" role="status" aria-live="polite">
+          {toasts.filter(t => !t.top).map(renderToast)}
+        </div>,
+        document.body
+      )}
+      {createPortal(
+        <div className="se-toasts se-toasts--top" role="status" aria-live="polite">
+          {toasts.filter(t => t.top).map(renderToast)}
         </div>,
         document.body
       )}
     </ToastContext.Provider>
   );
 }
+
 
 // eslint-disable-next-line react-refresh/only-export-components
 export function useToast() {

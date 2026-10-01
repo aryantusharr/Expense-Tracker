@@ -102,6 +102,7 @@
   bottom: calc(96px + env(safe-area-inset-bottom));
   display: flex; flex-direction: column; gap: 8px; pointer-events: none;
 }
+.se-toasts--top { bottom: auto; top: calc(14px + env(safe-area-inset-top)); }
 .se-toast {
   pointer-events: auto;
   border-radius: var(--se-r-lg); background: var(--se-float); color: var(--se-text);

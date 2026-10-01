@@ -1,10 +1,10 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { useRoomContext } from './context/RoomContext';
 import FloatingNav from './components/layout/FloatingNav';
-import LandingPage from './components/setup/LandingPage';
+import LandingScreen from './components/onboarding/LandingScreen';
 import CreateRoom from './components/setup/CreateRoom';
-import JoinRoom from './components/setup/JoinRoom';
+import JoinScreen from './components/onboarding/JoinScreen';
 import ShareRoom from './components/setup/ShareRoom';
 import PersonalSetup from './components/setup/PersonalSetup';
 import DashboardScreen from './components/dashboard/DashboardScreen';
@@ -12,7 +12,7 @@ import AddScreen from './components/add/AddScreen';
 import HistoryScreen from './components/history/HistoryScreen';
 import SettingsPage from './components/settings/SettingsPage';
 
-import { lazy, Suspense, useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 
 // Redesign foundations preview — dev/test builds only (MODE is replaced at build time, so
 // the production bundle doesn't include it).
@@ -52,9 +52,9 @@ function AppRoutes() {
       <AnimatePresence mode="wait">
         <Routes>
           {/* Setup routes (no bottom nav) */}
-          <Route path="/" element={inRoom ? <Navigate to="/dashboard" replace /> : <LandingPage />} />
+          <Route path="/" element={inRoom ? <Navigate to="/dashboard" replace /> : <LandingScreen />} />
           <Route path="/create" element={<CreateRoom />} />
-          <Route path="/join" element={<JoinRoom />} />
+          <Route path="/join/:code?" element={<JoinScreen />} />
           <Route path="/personal" element={<PersonalSetup />} />
           <Route path="/share/:code" element={inRoom ? <ShareRoom /> : <Navigate to="/" replace />} />
 
