@@ -1,144 +1,80 @@
-import * as XLSX from 'xlsx';
+import * as XLSX from 'xlsx-js-style';
 
-/**
- * Export expenses to an Excel (.xlsx) file.
- *
- * Maps expense objects to clean, human-readable columns and triggers
- * a native browser download. Works entirely client-side via SheetJS.
- *
- * @param {Array}  expenses   - The active expenses array from context.
- * @param {Array}  categories - Category list for id → name lookup.
- * @param {string} [roomName] - Optional room name used in the filename.
- */
-export function exportToExcel(expenses, categories = [], roomName = 'SplitEase') {
-  try {
-    if (!expenses || expenses.length === 0) {
-      throw new Error('No expenses to export.');
-    }
+// Same columns and data as before; styled per the Report-Excel board (E2):
+// violet header (frozen, filter), ₹ number format with Indian grouping, bold Total row.
+const VIOLET = '6B5BFF';
+const INK = '15142B';
+const RUPEE_FMT = '"₹"#,##,##0';
+const thin = { style: 'thin', color: { rgb: 'D9D9E3' } };
+const box = { top: thin, bottom: thin, left: thin, right: thin };
 
-    // Build a category lookup map
-    const catMap = {};
-    categories.forEach(c => { catMap[c.id] = c.name; });
+const dateOf = value => new Date(value).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+const safe = s => String(s).replace(/[^a-zA-Z0-9_-]/g, '_');
 
-    // Sort by date descending (newest first)
-    const sorted = [...expenses].sort(
-      (a, b) => new Date(b.date) - new Date(a.date)
-    );
+function buildSheet(list, categories) {
+  const catMap = {};
+  categories.forEach(c => { catMap[c.id] = c.name; });
+  const sorted = [...list].sort((a, b) => new Date(b.date) - new Date(a.date));
 
-    // Map to clean rows
-    const rows = sorted.map((expense, index) => {
-      const d = new Date(expense.date);
-      return {
-        'S.No': index + 1,
-        'Date': d.toLocaleDateString('en-IN', {
-          day: '2-digit',
-          month: 'short',
-          year: 'numeric',
-        }),
-        'Description': expense.description || '-',
-        'Category': catMap[expense.categoryId] || 'Other',
-        'Amount': parseFloat(expense.amount) || 0,
-      };
-    });
+  const head = ['S.No', 'Date', 'Description', 'Category', 'Amount'];
+  const headStyle = { font: { bold: true, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: VIOLET } }, border: box, alignment: { vertical: 'center' } };
+  const aoa = [head.map((h, i) => ({ v: h, t: 's', s: { ...headStyle, alignment: { horizontal: i === 4 ? 'right' : i === 0 ? 'center' : 'left', vertical: 'center' } } }))];
 
-    // Create workbook & worksheet
-    const worksheet = XLSX.utils.json_to_sheet(rows);
+  sorted.forEach((e, i) => {
+    aoa.push([
+      { v: i + 1, t: 'n', s: { border: box, alignment: { horizontal: 'center' }, font: { color: { rgb: '6F6E88' } } } },
+      { v: dateOf(e.date), t: 's', s: { border: box } },
+      { v: e.description || '-', t: 's', s: { border: box } },
+      { v: catMap[e.categoryId] || 'Other', t: 's', s: { border: box } },
+      { v: parseFloat(e.amount) || 0, t: 'n', z: RUPEE_FMT, s: { border: box, numFmt: RUPEE_FMT, alignment: { horizontal: 'right' } } },
+    ]);
+  });
 
-    // Auto-size columns for better readability
-    const colWidths = [
-      { wch: 6 },   // S.No
-      { wch: 14 },  // Date
-      { wch: 30 },  // Description
-      { wch: 16 },  // Category
-      { wch: 14 },  // Amount
-    ];
-    worksheet['!cols'] = colWidths;
+  const last = aoa.length; // 1-based row number of the final expense row
+  const bold = { font: { bold: true } };
+  aoa.push([
+    { v: '', t: 's' }, { v: '', t: 's' },
+    { v: `Total · ${sorted.length} ${sorted.length === 1 ? 'expense' : 'expenses'}`, t: 's', s: bold },
+    { v: '', t: 's' },
+    { f: `SUM(E2:E${last})`, t: 'n', v: sorted.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0), z: RUPEE_FMT,
+      s: { font: { bold: true }, numFmt: RUPEE_FMT, alignment: { horizontal: 'right' }, border: { top: { style: 'medium', color: { rgb: INK } } } } },
+  ]);
 
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Expenses');
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols'] = [{ wch: 6 }, { wch: 14 }, { wch: 30 }, { wch: 16 }, { wch: 14 }];
+  ws['!autofilter'] = { ref: `A1:E${last}` };
+  ws['!freeze'] = { xSplit: 0, ySplit: 1 };
+  ws['!views'] = [{ state: 'frozen', ySplit: 1 }];
+  ws['!rows'] = [{ hpt: 22 }];
+  return ws;
+}
 
-    // Generate filename with date stamp
-    const dateStamp = new Date().toISOString().split('T')[0];
-    const safeName = roomName.replace(/[^a-zA-Z0-9_-]/g, '_');
-    const filename = `${safeName}_Expenses_${dateStamp}.xlsx`;
-
-    // Trigger browser download
-    XLSX.writeFile(workbook, filename);
-    return filename;
-  } finally {
-    // errors propagate to the caller, which shows a toast
-  }
+function save(ws, sheetName, filename) {
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, sheetName.slice(0, 31));
+  XLSX.writeFile(wb, filename);
+  return filename;
 }
 
 /**
- * Export expenses for a specific month to an Excel (.xlsx) file.
- *
- * @param {Array}  expenses   - The active expenses array from context.
- * @param {Array}  categories - Category list for id → name lookup.
- * @param {string} [roomName] - Optional room name used in the filename.
- * @param {Object} monthObj   - Object containing month and year properties.
+ * Export every expense to a styled .xlsx. Throws on failure (the caller shows a toast).
+ * @returns {string} the saved file name
+ */
+export function exportToExcel(expenses, categories = [], roomName = 'SplitEase') {
+  if (!expenses || expenses.length === 0) throw new Error('No expenses to export.');
+  const stamp = new Date().toISOString().split('T')[0];
+  return save(buildSheet(expenses, categories), 'Expenses', `${safe(roomName)}_Expenses_${stamp}.xlsx`);
+}
+
+/**
+ * Export one month ({ month, year, label }) to a styled .xlsx. Throws on failure.
+ * @returns {string} the saved file name
  */
 export function exportToExcelMonthly(expenses, categories = [], roomName = 'SplitEase', monthObj) {
-  try {
-    const filtered = expenses.filter(e => {
-      const d = new Date(e.date);
-      return d.getMonth() === monthObj.month && d.getFullYear() === monthObj.year;
-    });
-
-    if (!filtered || filtered.length === 0) {
-      throw new Error(`No expenses found for ${monthObj.label}.`);
-    }
-
-    // Build a category lookup map
-    const catMap = {};
-    categories.forEach(c => { catMap[c.id] = c.name; });
-
-    // Sort by date descending (newest first)
-    const sorted = [...filtered].sort(
-      (a, b) => new Date(b.date) - new Date(a.date)
-    );
-
-    // Map to clean rows
-    const rows = sorted.map((expense, index) => {
-      const d = new Date(expense.date);
-      return {
-        'S.No': index + 1,
-        'Date': d.toLocaleDateString('en-IN', {
-          day: '2-digit',
-          month: 'short',
-          year: 'numeric',
-        }),
-        'Description': expense.description || '-',
-        'Category': catMap[expense.categoryId] || 'Other',
-        'Amount': parseFloat(expense.amount) || 0,
-      };
-    });
-
-    // Create workbook & worksheet
-    const worksheet = XLSX.utils.json_to_sheet(rows);
-
-    // Auto-size columns for better readability
-    const colWidths = [
-      { wch: 6 },   // S.No
-      { wch: 14 },  // Date
-      { wch: 30 },  // Description
-      { wch: 16 },  // Category
-      { wch: 14 },  // Amount
-    ];
-    worksheet['!cols'] = colWidths;
-
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, monthObj.label);
-
-    // Generate filename
-    const safeName = roomName.replace(/[^a-zA-Z0-9_-]/g, '_');
-    const safeMonth = monthObj.label.replace(/\s+/g, '_');
-    const filename = `${safeName}_Expenses_${safeMonth}.xlsx`;
-
-    // Trigger browser download
-    XLSX.writeFile(workbook, filename);
-    return filename;
-  } finally {
-    // errors propagate to the caller, which shows a toast
-  }
+  const filtered = expenses.filter(e => {
+    const d = new Date(e.date);
+    return d.getMonth() === monthObj.month && d.getFullYear() === monthObj.year;
+  });
+  if (!filtered.length) throw new Error(`No expenses found for ${monthObj.label}.`);
+  return save(buildSheet(filtered, categories), monthObj.label, `${safe(roomName)}_Expenses_${monthObj.label.replace(/\s+/g, '_')}.xlsx`);
 }

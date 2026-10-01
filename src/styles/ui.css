@@ -115,6 +115,10 @@
 .se-toast__sub { font-size: 11px; color: var(--se-text-3); }
 .se-toast--error .se-toast__sub, .se-toast--error .se-toast__msg b { color: var(--se-pink-2); }
 .se-toast--success .se-toast__msg b { color: var(--se-teal-2); }
+/* colour rail (Report-Excel board): teal saved · amber nothing-to-do · pink failed */
+.se-toast--success { border-left: 3px solid var(--se-teal); }
+.se-toast--warn { border-left: 3px solid #F5C26B; }
+.se-toast--error { border-left: 3px solid var(--se-pink); }
 
 /* ---- Category icon tile (Icons · A line board: 52px tile, 17px radius, 1.75 stroke) ---- */
 .se-cat {

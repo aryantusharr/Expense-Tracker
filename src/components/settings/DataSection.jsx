@@ -94,7 +94,7 @@ export default function DataSection({ expenses, users, categories, room, roomCod
   };
 
   const save = async kind => {
-    if (!scoped.length) { haptic('error'); say(monthObj ? `No expenses in ${monthObj.label}` : 'Nothing to export yet', 'error'); return; }
+    if (!scoped.length) { haptic('error'); say(monthObj ? `No expenses in ${monthObj.label}` : 'Nothing to export yet', 'warn', monthObj ? 'Pick another month' : 'Add an expense first — then export any time'); return; }
     try {
       const name = room?.name || 'SplitEase';
       const file = kind === 'pdf'
@@ -102,10 +102,10 @@ export default function DataSection({ expenses, users, categories, room, roomCod
         : monthObj ? exportToExcelMonthly(expenses, categories, name, monthObj) : exportToExcel(expenses, categories, name);
       haptic('success');
       setExportOpen(false);
-      say(<>{kind === 'pdf' ? 'PDF' : 'Excel'} saved</>, 'success', file);
+      say(<>{kind === 'pdf' ? 'PDF' : 'Excel'} saved</>, 'success', `${file} · ${scoped.length} ${kind === 'pdf' ? 'expenses' : 'rows'}`);
     } catch (err) {
       haptic('error');
-      say('Couldn’t export', 'error', String(err?.message || err));
+      say('Couldn’t export the file', 'error', 'Try again · your data is safe');
     }
   };
 
