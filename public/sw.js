@@ -1,4 +1,4 @@
-const CACHE_NAME = 'splitease-v2';
+const CACHE_NAME = 'splitease-v3';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
