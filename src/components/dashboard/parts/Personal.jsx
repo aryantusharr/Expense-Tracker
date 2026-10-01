@@ -27,12 +27,13 @@ export function BudgetCard({ monthFull, spent, budget, daysLeft }) {
   const C = 402.1;
   const off = C * (1 - Math.min(1, ratio));
   const angle = Math.min(1, ratio) * 360;
-  const status = over ? 'OVER BUDGET' : 'ON TRACK';
+  const near = !over && ratio >= 0.85;
+  const status = over ? 'OVER BUDGET' : near ? 'NEARLY THERE' : 'ON TRACK';
   return (
     <section className="dsh-budget se-glass se-in" style={{ animationDelay: '120ms' }}>
       <div className="dsh-card__head">
         <span className="dsh-eyebrow">{monthFull} BUDGET</span>
-        <span className={`dsh-pill ${over ? 'dsh-pill--up' : 'dsh-pill--down'}`}>{status}</span>
+        <span className={`dsh-pill ${over ? 'dsh-pill--up' : near ? 'dsh-pill--warn' : 'dsh-pill--down'}`}>{status}</span>
       </div>
       <div className="dsh-budget__body">
         <div className="dsh-gauge">

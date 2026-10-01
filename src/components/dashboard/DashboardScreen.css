@@ -273,6 +273,8 @@
 .dsh-pill { font-family: var(--se-font-mono); font-size: 11px; font-weight: 700; padding: 6px 10px; border-radius: 999px; white-space: nowrap; }
 .dsh-pill--up { background: rgba(255,143,181,0.12); color: var(--se-pink-2); }
 .dsh-pill--down { background: rgba(95,212,196,0.12); color: var(--se-teal-2); }
+.dsh-pill--warn { background: rgba(255,176,32,0.14); color: #F2B45C; } /* spec §2 warning amber */
+:root[data-theme='light'] .dsh-pill--warn { background: #FFFAF2; color: #A65A00; }
 .dsh-pill--flat { background: var(--se-fill-2); color: var(--se-text-2); }
 :root[data-theme='light'] .dsh-pill--up { color: #D23B72; }
 :root[data-theme='light'] .dsh-pill--down { color: #0A8577; }
