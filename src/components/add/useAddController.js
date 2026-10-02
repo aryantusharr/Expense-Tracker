@@ -83,6 +83,24 @@ export function useAddController() {
   }, [expenses, isPersonal]);
   const filteredChips = descriptionChips;
 
+  // Items mode: recent item names (lines of itemised bills), most used first.
+  const itemChips = useMemo(() => {
+    // eslint-disable-next-line react-hooks/purity
+    const since = Date.now() - 60 * 24 * 60 * 60 * 1000;
+    const groups = {};
+    for (const e of expenses) {
+      if (!e.isItemised || (isPersonal && e.isSynced)) continue;
+      const desc = (e.description || '').trim();
+      if (!desc) continue;
+      const t = e.createdAt ? new Date(e.createdAt).getTime() : (e.date ? new Date(e.date).getTime() : 0);
+      if (t < since) continue;
+      const g = groups[desc.toLowerCase()] ||= { description: desc, n: 0, last: 0 };
+      g.n += 1;
+      g.last = Math.max(g.last, t);
+    }
+    return Object.values(groups).sort((a, b) => b.n - a.n || b.last - a.last).slice(0, 20).map(g => g.description);
+  }, [expenses, isPersonal]);
+
   // Recurring Expenses suggestions: filtered for recurring entries in last 45 days, sorted by 45-day usage count
   const recurringExpensesList = useMemo(() => {
     const roomExpenses = isPersonal ? expenses.filter(e => !e.isSynced) : expenses;
@@ -310,7 +328,7 @@ export function useAddController() {
     roomCode, room, isPersonal, members, userIdentity,
     mode, setMode,
     form, setField, toggleSplit, setDescription, pickCategory, autoCat, guessCat,
-    sortedCategories, filteredChips, recurringExpensesList, itemisedGroupNamesList,
+    sortedCategories, filteredChips, itemChips, recurringExpensesList, itemisedGroupNamesList,
     applyRecurring, problem, submitQuick, resetQuick, saving,
     billName, setBillName, billTotal, setBillTotal, rows, addRow, removeRow, remaining, billProblem, submitBill, resetBill,
   };

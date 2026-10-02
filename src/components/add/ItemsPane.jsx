@@ -8,8 +8,11 @@ import { initialOf, localDateStr, shortDay } from '../dashboard/dashboardData';
 import SlipsStrip from './SlipsStrip';
 import SlideToAdd from './SlideToAdd';
 import SaveMoment from './SaveMoment';
+import DateChips from './DateChips';
 import { evaluateMathExpression } from './addHelpers';
 
+// iOS drops the caret where you tap (often before a prefilled number) — move it to the end.
+const caretToEnd = e => { const el = e.target; setTimeout(() => { const n = el.value.length; try { el.setSelectionRange(n, n); } catch { /* not a text input */ } }, 0); };
 const fmtN = n => n.toLocaleString('en-IN', { maximumFractionDigits: 2 });
 
 /** Receipt paper (spec §6): mono type, dashed rules, dotted leaders, zigzag bottom, ink stamps before items. */
@@ -130,6 +133,10 @@ export default function ItemsPane({ c }) {
   };
   const finish = () => { setSaved(null); c.resetBill(); setStage('setup'); setDrafting(false); };
 
+  // Recent item names, narrowed by what's typed (hidden once it matches exactly).
+  const q = draft.description.trim().toLowerCase();
+  const itemChips = c.itemChips.filter(d => !q || (d.toLowerCase().includes(q) && d.toLowerCase() !== q)).slice(0, 8);
+
   const names = c.itemisedGroupNamesList.map(g => g.groupName);
 
   return (
@@ -154,11 +161,12 @@ export default function ItemsPane({ c }) {
           )}
           <label className="add-field">
             <span className="add-field__label">TOTAL</span>
-            <input className="add-input se-mono" value={c.billTotal} onChange={e => c.setBillTotal(e.target.value.replace(/[^0-9.+\-*/ ]/g, ''))} onBlur={evalTotal} placeholder="₹ 0" inputMode="decimal" autoComplete="off" />
+            <input className="add-input se-mono" value={c.billTotal} onChange={e => c.setBillTotal(e.target.value.replace(/[^0-9.+\-*/ ]/g, ''))} onBlur={evalTotal} onFocus={caretToEnd} placeholder="₹ 0" inputMode="decimal" autoComplete="off" />
           </label>
           {!isPersonal && (
-            <SlipsStrip members={members} paidBy={form.paidBy} splitAmong={form.splitAmong} amount={total} onPayer={id => setField.paidBy(id)} onToggle={c.toggleSplit} />
+            <SlipsStrip members={members} paidBy={form.paidBy} splitAmong={form.splitAmong} amount={total} onPayer={id => setField.paidBy(id)} onToggle={c.toggleSplit} payerOnly />
           )}
+          <DateChips value={form.date} onChange={setField.date} />
           <div key={shake} className={shake ? 'se-shake' : ''}>
             <Button block size="lg" className={ready ? '' : 'ib-btn--dim'} onClick={start}>Start adding items</Button>
           </div>
@@ -171,9 +179,14 @@ export default function ItemsPane({ c }) {
             <span className="add-field__label">ITEM</span>
             <input className="add-input" value={draft.description} onChange={e => setDesc(e.target.value)} placeholder="What was it for?" maxLength={80} autoComplete="off" />
           </label>
+          {itemChips.length > 0 && (
+            <div className="add-chips add-chips--scroll" data-noswipe aria-label="Recent items">
+              {itemChips.map(d => <button key={d} type="button" className="se-chip" onClick={() => { haptic('choose'); setDesc(d); }}>{d}</button>)}
+            </div>
+          )}
           <label className="add-field">
             <span className="add-field__label">AMOUNT</span>
-            <input className="add-input se-mono" value={draft.amount} onChange={e => setDraft(d => ({ ...d, amount: e.target.value.replace(/[^0-9.+\-*/ ]/g, '') }))} onBlur={evalDraft} inputMode="decimal" placeholder="₹ 0" autoComplete="off" />
+            <input className="add-input se-mono" value={draft.amount} onChange={e => setDraft(d => ({ ...d, amount: e.target.value.replace(/[^0-9.+\-*/ ]/g, '') }))} onBlur={evalDraft} onFocus={caretToEnd} inputMode="decimal" placeholder="₹ 0" autoComplete="off" />
           </label>
           <div className="add-field">
             <span className="add-field__label">CATEGORY</span>

@@ -1,14 +1,14 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { haptic } from '../../utils/haptics';
 import { useToast } from '../ui/Toast';
 import Button from '../ui/Button';
 import CategoryIcon from '../ui/CategoryIcon';
-import { localDateStr, shortDay } from '../dashboard/dashboardData';
 import AmountOdometer from './AmountOdometer';
 import Keypad from './Keypad';
 import SlipsStrip from './SlipsStrip';
 import SlideToAdd from './SlideToAdd';
 import SaveMoment from './SaveMoment';
+import DateChips from './DateChips';
 import { resolveCategoryIcon } from '../../design/categoryIcons';
 import { evalExpr, hasOperator, pressKey } from './amountExpr';
 
@@ -74,7 +74,16 @@ export default function QuickPane({ c }) {
     setView('form');
   };
 
-  const applyRecurring = chip => { haptic('choose'); c.applyRecurring(chip); setExpr(String(chip.lastAmount)); };
+  // Fill the amount, let the odometer roll, then move on to the description page.
+  const recTimer = useRef(null);
+  useEffect(() => () => clearTimeout(recTimer.current), []);
+  const applyRecurring = chip => {
+    haptic('choose');
+    c.applyRecurring(chip);
+    setExpr(String(chip.lastAmount));
+    clearTimeout(recTimer.current);
+    if (Number(chip.lastAmount) > 0) recTimer.current = setTimeout(() => setView('form'), 450);
+  };
 
   const blocked = () => {
     setShake(s => s + 1);
@@ -95,10 +104,6 @@ export default function QuickPane({ c }) {
     });
   };
   const finish = () => { setSaved(null); c.resetQuick(); setExpr(''); setView('amount'); };
-
-  // Date strip: today / yesterday / 2 days ago + a picker.
-  const dates = useMemo(() => [0, 1, 2].map(n => { const d = new Date(); d.setDate(d.getDate() - n); return localDateStr(d); }), []);
-  const customDate = !dates.includes(form.date);
 
   const count = isPersonal ? 1 : form.splitAmong.length;
 
@@ -179,21 +184,7 @@ export default function QuickPane({ c }) {
             </div>
           </div>
 
-          <div className="add-field">
-            <span className="add-field__label">DATE</span>
-            <div className="add-chips add-chips--scroll" data-noswipe>
-              {dates.map((d, i) => (
-                <button key={d} type="button" className="se-chip" aria-pressed={form.date === d} onClick={() => { haptic('choose'); setField.date(d); }}>
-                  {i === 0 ? 'Today' : i === 1 ? 'Yday' : shortDay(d, { upper: false })}
-                </button>
-              ))}
-              <label className="se-chip add-datepick" aria-pressed={customDate}>
-                <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16v13H4zM4 11h16M8 4v4M16 4v4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                {customDate ? shortDay(form.date, { upper: false }) : 'Pick date'}
-                <input type="date" value={form.date} max={localDateStr()} onChange={e => e.target.value && setField.date(e.target.value)} aria-label="Pick a date" />
-              </label>
-            </div>
-          </div>
+          <DateChips value={form.date} onChange={d => setField.date(d)} />
 
           <SlideToAdd problem={c.problem} busy={c.saving} shakeKey={shake} onBlocked={blocked} onConfirm={confirm} />
         </div>

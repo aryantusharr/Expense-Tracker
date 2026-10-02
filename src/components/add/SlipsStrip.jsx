@@ -9,7 +9,7 @@ const nameOf = m => (m?.name || '').replace(/^test[\s_-]+/i, '') || m?.name || '
  * (old name flips away, new one springs in); tap a seat to include / leave out — included seats get
  * a ₹ slip that slides out, left-out seats grey out and their slip tucks back.
  */
-export default function SlipsStrip({ members, paidBy, splitAmong, amount, onPayer, onToggle, hidePayer = false }) {
+export default function SlipsStrip({ members, paidBy, splitAmong, amount, onPayer, onToggle, hidePayer = false, payerOnly = false }) {
   const payer = members.find(m => m.id === paidBy) || members[0];
   const [prev, setPrev] = useState(null);
   const lastPayer = useRef(payer?.id);
@@ -43,12 +43,12 @@ export default function SlipsStrip({ members, paidBy, splitAmong, amount, onPaye
       </button>}
       <div className="add-slips__col">
         <div className="add-slips__head">
-          <span>{hidePayer ? 'SPLIT' : 'PAID BY · SPLIT'}</span>
-          <em>{count > 0 ? `₹${fmt(each)} EACH · ${count}` : 'PICK SOMEONE'}</em>
+          <span>{payerOnly ? 'WHO PAID?' : hidePayer ? 'SPLIT' : 'PAID BY · SPLIT'}</span>
+          {!payerOnly && <em>{count > 0 ? `₹${fmt(each)} EACH · ${count}` : 'PICK SOMEONE'}</em>}
         </div>
-        <div className="add-seats" role="group" aria-label="Split with">
+        <div className="add-seats" role="group" aria-label={payerOnly ? 'Who paid' : 'Split with'}>
           {members.map(m => {
-            const on = splitAmong.includes(m.id);
+            const on = payerOnly ? m.id === payer.id : splitAmong.includes(m.id);
             const isPayer = m.id === payer.id;
             return (
               <button
@@ -57,11 +57,11 @@ export default function SlipsStrip({ members, paidBy, splitAmong, amount, onPaye
                 className={`add-seat ${on ? 'add-seat--on' : ''}`}
                 style={{ '--c': m.color }}
                 aria-pressed={on}
-                aria-label={`${on ? 'Leave out' : 'Include'} ${nameOf(m)}${isPayer ? ' (paid)' : ''}`}
-                onClick={() => { haptic('choose'); onToggle(m.id); }}
+                aria-label={payerOnly ? `${nameOf(m)} paid` : `${on ? 'Leave out' : 'Include'} ${nameOf(m)}${isPayer ? ' (paid)' : ''}`}
+                onClick={() => { haptic('choose'); if (payerOnly) onPayer(m.id); else onToggle(m.id); }}
               >
                 <Monogram member={m} size={38} className={isPayer && !hidePayer ? 'add-mono--payer' : ''} />
-                <span className="add-slip" aria-hidden="true">₹{fmt(each)}</span>
+                {!payerOnly && <span className="add-slip" aria-hidden="true">₹{fmt(each)}</span>}
               </button>
             );
           })}
