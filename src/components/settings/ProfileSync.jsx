@@ -6,10 +6,11 @@ import { roomStatus } from '../../services/roomService';
 import { haptic } from '../../utils/haptics';
 import { memberStyle, initialOf, fmt } from '../dashboard/dashboardData';
 import Sheet from '../ui/Sheet';
+import { IdentitySheet } from '../dashboard/parts/Shared';
 import { useToast } from '../ui/Toast';
 
 const ECG = 'M0 7 H11 L13 7 L15 1 L19 13 L21 4 L23 7 H34';
-const LABEL = { on: 'SYNCING', ok: 'IN SYNC', off: 'SYNC OFF', wait: 'OFFLINE' };
+const LABEL = { on: 'SYNCING', ok: 'IN SYNC', off: 'SYNC OFF', wait: 'OFFLINE', who: 'WHO ARE YOU?' };
 
 /** Online / offline, live. */
 function useOnline() {
@@ -73,7 +74,7 @@ export default function ProfileSync({ room, roomCode, users, expenses, userIdent
   const linkedName = linked?.name || (linkCheck.code === me?.personalRoomCode && linkCheck.name) || 'your personal room';
 
   // Synced, but the personal room isn't in this phone's list (reinstall / new phone): offer to add it back.
-  const { rememberRoom } = useRoomContext();
+  const { rememberRoom, forgetRoom } = useRoomContext();
   const awayFromPhone = active && !linked && linkCheck.code === me?.personalRoomCode && linkCheck.status === 'exists';
   const addToPhone = () => {
     rememberRoom({ code: me.personalRoomCode, name: linkCheck.name || 'Personal room', isPersonal: true, memberCount: 1 });
@@ -96,7 +97,11 @@ export default function ProfileSync({ room, roomCode, users, expenses, userIdent
     const t = setTimeout(() => setBeating(false), 4100);
     return () => clearTimeout(t);
   }, [copies]);
-  const pill = !active ? 'off' : !online ? 'wait' : (beating || progress) ? 'on' : 'ok';
+  // Phone doesn't know which member it is (e.g. after a reinstall): sync may well be on — don't say
+  // "SYNC OFF" (tapping that led to setup, which could move sync and empty the old personal room).
+  const pill = !me ? 'who' : !active ? 'off' : !online ? 'wait' : (beating || progress) ? 'on' : 'ok';
+  const [picking, setPicking] = useState(false);
+  const pickMembers = users.map((u, i) => ({ id: u.id, name: u.name, color: memberStyle(i).color, initial: initialOf(u.name) }));
   const count = progress ? progress.done : copies;
 
   const whoUser = users.find(u => u.id === who);
@@ -109,7 +114,7 @@ export default function ProfileSync({ room, roomCode, users, expenses, userIdent
     return { n, share };
   }, [expenses, who]);
 
-  const openSheet = () => { haptic('tap'); setView(active ? 'on' : 'off'); };
+  const openSheet = () => { haptic('tap'); if (!me) { setPicking(true); return; } setView(active ? 'on' : 'off'); };
   const beginSetup = () => {
     haptic('tap');
     setWho(userIdentity || '');
@@ -134,6 +139,16 @@ export default function ProfileSync({ room, roomCode, users, expenses, userIdent
   const finish = async () => {
     if (!who || !target || busy) return;
     setBusy(true);
+    // The picked personal room may have been deleted on another phone: stop before changing anything.
+    if ((await roomStatus(target)).status === 'gone') {
+      haptic('error');
+      forgetRoom(target);
+      setTarget('');
+      setStep(1);
+      say(<><b>{targetName || 'That room'}</b> was deleted · pick or create another personal room</>, 'error');
+      setBusy(false);
+      return;
+    }
     try {
       // Only this member's old personal room (the target is updated in place) — never other members' rooms on this phone.
       const oldCode = users.find(u => u.id === who)?.personalRoomCode;
@@ -167,21 +182,23 @@ export default function ProfileSync({ room, roomCode, users, expenses, userIdent
   return (
     <>
       <button type="button" className={`ps-pill ps-pill--${pill} se-press`} onClick={openSheet}
-        aria-label={`Profile sync: ${LABEL[pill].toLowerCase()}${pill !== 'off' ? `, ${count} copies in ${linkedName}` : ', tap to set up'}`}>
+        aria-label={pill === 'who' ? 'Profile sync: pick which member you are first' : `Profile sync: ${LABEL[pill].toLowerCase()}${pill !== 'off' ? `, ${count} copies in ${linkedName}` : ', tap to set up'}`}>
         <span className="ps-l1">
           <span className={`ps-dot ${pill === 'on' ? 'ps-dot--blink' : ''}`} aria-hidden="true" />
           <span className="ps-txt">{LABEL[pill]}</span>
           <span className="ps-ecg ps-bump" key={`b${count}`} aria-hidden="true">
             <svg viewBox="0 0 34 14" preserveAspectRatio="none"><path d={ECG} /></svg>
           </span>
-          {pill !== 'off' && <span className="ps-cnt" key={`c${count}`} aria-hidden="true">{count}</span>}
+          {pill !== 'off' && pill !== 'who' && <span className="ps-cnt" key={`c${count}`} aria-hidden="true">{count}</span>}
         </span>
         <span className="ps-l2" aria-hidden="true">
-          {pill === 'off' ? (linkGone ? 'ROOM DELETED · TAP TO PICK ANOTHER' : 'TAP TO PICK A PERSONAL ROOM')
+          {pill === 'who' ? 'TAP TO PICK · THEN SEE YOUR SYNC' : pill === 'off' ? (linkGone ? 'ROOM DELETED · TAP TO PICK ANOTHER' : 'TAP TO PICK A PERSONAL ROOM')
             : `→ ${linkedName.toUpperCase()} · ${pill === 'on' ? 'COPYING' : pill === 'wait' ? 'WAITING' : 'UP TO DATE'}`}
         </span>
       </button>
 
+      <IdentitySheet open={picking} onClose={() => setPicking(false)} members={pickMembers} meId={userIdentity}
+        onPick={id => { setUserIdentity(id); setPicking(false); }} />
       <Sheet open={!!view} onClose={close} labelledBy="ps-title">
         {view === 'on' && (
           <>

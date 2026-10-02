@@ -1,6 +1,7 @@
 import process from 'node:process'
 import { execSync } from 'node:child_process'
-import { readFileSync } from 'node:fs'
+import { readFileSync, writeFileSync, existsSync } from 'node:fs'
+import { join } from 'node:path'
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 
@@ -11,10 +12,16 @@ const LIVE_PROJECT_ID = 'splitease-7bb6c'
 const VERSION = JSON.parse(readFileSync(new URL('./package.json', import.meta.url))).version
 const BUILD = (() => { try { return execSync('git rev-list --count HEAD').toString().trim() } catch { return '0' } })()
 const DATE = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()
+const BUILD_ID = `${VERSION}-${BUILD}-${Date.now().toString(36)}`
 const versionFile = () => ({
   name: 'splitease-version-json',
   generateBundle() {
-    this.emitFile({ type: 'asset', fileName: 'version.json', source: JSON.stringify({ version: VERSION, build: BUILD, date: DATE }) })
+    this.emitFile({ type: 'asset', fileName: 'version.json', source: JSON.stringify({ version: VERSION, build: BUILD, date: DATE, id: BUILD_ID }) })
+  },
+  // public/sw.js is copied as-is; stamp its cache name so every build ships a "new" service worker.
+  writeBundle(opts) {
+    const sw = join(opts.dir || 'dist', 'sw.js')
+    if (existsSync(sw)) writeFileSync(sw, readFileSync(sw, 'utf8').replace('__BUILD_ID__', BUILD_ID))
   },
 })
 
@@ -36,6 +43,7 @@ export default defineConfig(({ mode }) => {
       __APP_VERSION__: JSON.stringify(VERSION),
       __APP_BUILD__: JSON.stringify(BUILD),
       __APP_DATE__: JSON.stringify(DATE),
+      __APP_BUILD_ID__: JSON.stringify(BUILD_ID),
     },
     // launch tooling hands out a free port through PORT; plain `npm run dev` stays on 5173
     server: process.env.PORT ? { port: Number(process.env.PORT) } : {},

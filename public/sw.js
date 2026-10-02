@@ -1,4 +1,6 @@
-const CACHE_NAME = 'splitease-v6';
+// Stamped at build time (vite.config.js) with version + build + build time, so every deploy
+// changes this file → open apps get the new service worker → "Updating to vX" toast.
+const CACHE_NAME = 'splitease-__BUILD_ID__';
 const STATIC_ASSETS = [
   '/',
   '/index.html',

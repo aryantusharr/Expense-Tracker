@@ -2,6 +2,7 @@ import Papa from 'papaparse';
 import { db } from './firebase';
 import { collection, writeBatch, doc, getDoc } from 'firebase/firestore';
 import { getMemberShare } from './expenseService';
+import { roomStatus, unlinkPersonalRoom } from './roomService';
 
 // ── Date Parsing ───────────────────────────────────────────────
 const MONTH_ABBR = {
@@ -239,20 +240,20 @@ export async function importToFirestore(roomId, rows, onProgress) {
   }
 
   // 2. Pre-fetch the personal user ID for each linked personal room
+  //    A personal room that was deleted gets no copies (they'd be invisible ghost data) and its link is cleared.
   const personalUserIds = {};
+  const goneRooms = new Set();
   if (roomData && !isPersonal) {
     const users = roomData.users || [];
     for (const user of users) {
-      if (user.personalRoomCode && !personalUserIds[user.personalRoomCode]) {
-        try {
-          const pSnap = await getDoc(doc(db, 'rooms', user.personalRoomCode));
-          if (pSnap.exists()) {
-            personalUserIds[user.personalRoomCode] = pSnap.data().users[0]?.id || 'user-personal';
-          }
-// eslint-disable-next-line no-unused-vars
-        } catch (e) {
-          // Silent error
-        }
+      const code = user.personalRoomCode;
+      if (!code || personalUserIds[code] || goneRooms.has(code)) continue;
+      const st = await roomStatus(code);
+      if (st.status === 'gone') {
+        goneRooms.add(code);
+        await unlinkPersonalRoom(roomId, code).catch(() => {});
+      } else if (st.status === 'exists') {
+        personalUserIds[code] = st.data.users?.[0]?.id || 'user-personal';
       }
     }
   }
@@ -282,7 +283,7 @@ export async function importToFirestore(roomId, rows, onProgress) {
         const amount = parseFloat(expenseData.amount) || 0;
         const splitAmong = expenseData.splitAmong || [];
         users.forEach(user => {
-          if (user.personalRoomCode) {
+          if (user.personalRoomCode && !goneRooms.has(user.personalRoomCode)) {
             const share = getMemberShare(amount, splitAmong, user.id);
             if (share > 0) {
               const personalUserId = personalUserIds[user.personalRoomCode] || 'user-personal';

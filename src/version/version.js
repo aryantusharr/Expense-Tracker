@@ -5,6 +5,7 @@ export const VERSION = __APP_VERSION__;                  // e.g. 2.1.0
 export const SHORT = VERSION.replace(/\.0$/, '');        // 2.1 (2.1.1 stays 2.1.1)
 export const BUILD = __APP_BUILD__;
 export const DATE = __APP_DATE__;                        // build day, e.g. 02 OCT 2026
+export const BUILD_ID = __APP_BUILD_ID__;                // unique per build (also stamped into sw.js)
 
 /** This release's notes — the What's new sheet (layout A: NEW / IMPROVED / FIXED). */
 export const RELEASE = {
@@ -20,12 +21,15 @@ export const RELEASE = {
     'Switch room is the ⇄ at the top of Settings',
     'Items: date row, recent items and a Next key',
     'Categories fold into one row',
+    'Reinstalled the app? Add your personal room back from the sync pill',
   ],
   fixed: [
     'Names typed mid-sentence keep their capitals',
     'Recurring expenses jump straight to the description',
     'The room list shows the latest budget',
     'Printed bill items are easier to read',
+    'A deleted personal room no longer shows “In sync”',
+    'After a reinstall, the sync pill asks who you are instead of “Sync off”',
   ],
 };
 export const CHANGE_COUNT = RELEASE.new.length + RELEASE.improved.length + RELEASE.fixed.length;

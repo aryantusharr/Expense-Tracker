@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { haptic } from '../../utils/haptics';
-import { VERSION } from '../../version/version';
+import { BUILD_ID } from '../../version/version';
 import './UpdateToast.css';
 
 const COUNT = 5;
@@ -23,9 +23,11 @@ export default function UpdateToast() {
     if (!sw) return undefined;
     const onChange = async () => {
       if (!hadController.current) { hadController.current = true; return; }   // first install, not an update
-      let v = '';
-      try { v = (await (await fetch('/version.json', { cache: 'no-store' })).json()).version; } catch { /* offline */ }
-      if (!v || v === VERSION) return;
+      let info = null;
+      try { info = await (await fetch('/version.json', { cache: 'no-store' })).json(); } catch { /* offline */ }
+      // Any new build counts (a same-version fix too) — compare the unique build id.
+      if (!info?.version || (info.id || info.version) === BUILD_ID) return;
+      const v = info.version;
       setLeft(COUNT);
       setNext(v);
     };

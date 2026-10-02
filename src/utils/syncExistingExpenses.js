@@ -2,6 +2,9 @@ import { db } from '../services/firebase';
 import { collection, doc, getDoc, getDocs, writeBatch, updateDoc, arrayUnion } from 'firebase/firestore';
 import { getMemberShare } from '../services/expenseService';
 import { resolvePersonalCategory } from './syncExpenseToPersonal';
+import { roomStatus } from '../services/roomService';
+
+export const PERSONAL_ROOM_GONE = 'PERSONAL_ROOM_GONE';
 
 const BATCH = 400; // Firestore allows 500 writes per batch
 
@@ -12,6 +15,8 @@ const BATCH = 400; // Firestore allows 500 writes per batch
  * updated in place and stale ones deleted, so re-running it also repairs old copies. onProgress(done, total) is optional.
  */
 export async function syncExistingSharedExpenses(sharedRoomCode, sharedRoomName, personalRoomCode, userId, onProgress) {
+  // Never fill a personal room that was deleted (another phone may still list it).
+  if ((await roomStatus(personalRoomCode)).status === 'gone') throw new Error(PERSONAL_ROOM_GONE);
   const [sharedSnap, sharedRoomSnap, personalRoomSnap, personalSnap] = await Promise.all([
     getDocs(collection(db, 'rooms', sharedRoomCode, 'expenses')),
     getDoc(doc(db, 'rooms', sharedRoomCode)),
