@@ -16,8 +16,6 @@ const P = {
   tag: 'M3 12V4h8l10 10-8 8zM7.5 7.5h.01',
   sun: 'M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10zM12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4',
   data: 'M12 3v12M7 10l5 5 5-5M4 21h16',
-  room: 'M3 11l9-7 9 7v9H3z',
-  swap: 'M7 7h13l-3-3M17 17H4l3 3',
 };
 
 const Pill = ({ icon, children }) => (
@@ -86,7 +84,16 @@ export default function SettingsScreen() {
       </div>
 
       <main className="st-main">
-        <h1 className="st-title se-in">Settings</h1>
+        <div className="st-head se-in">
+          <h1 className="st-title">Settings</h1>
+          <button type="button" className="st-switch se-glass se-press" aria-label="Switch room" title="Switch room"
+            onClick={() => { haptic('tap'); switchRoom(); }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+              <path className="st-switch__a" d="M7 7h13l-3-3" />
+              <path className="st-switch__b" d="M17 17H4l3 3" />
+            </svg>
+          </button>
+        </div>
 
         {/* Room ID card */}
         <section className="st-room se-in" style={{ animationDelay: '.05s' }}>
@@ -120,13 +127,18 @@ export default function SettingsScreen() {
           )}
         </section>
 
-        {/* Join code receipt */}
-        <button type="button" className="st-code se-press se-in" style={{ animationDelay: '.1s' }} onClick={copy}>
-          <span className="st-code__l">{title} · {isPersonal ? 'CODE' : 'JOIN CODE'}</span>
-          <span className="st-code__c">{code}</span>
-          <span className="st-code__s">{isPersonal ? 'TAP TO COPY · OPEN ON ANOTHER DEVICE' : 'TAP TO COPY · SHARE WITH ROOMMATES'}</span>
-          {copied > 0 && <span key={copied} className="st-copied">COPIED</span>}
-        </button>
+        {/* Join code receipt — tap copies, ✎ renames the room */}
+        <div className="st-codewrap se-in" style={{ animationDelay: '.1s' }}>
+          <button type="button" className="st-code se-press" onClick={copy}>
+            <span className="st-code__l">{title} · {isPersonal ? 'CODE' : 'JOIN CODE'}</span>
+            <span className="st-code__c">{code}</span>
+            <span className="st-code__s">{isPersonal ? 'TAP TO COPY · OPEN ON ANOTHER DEVICE' : 'TAP TO COPY · SHARE WITH ROOMMATES'}</span>
+            {copied > 0 && <span key={copied} className="st-copied">COPIED</span>}
+          </button>
+          <button type="button" className="st-code__edit se-press" aria-label="Rename room" onClick={openName}>
+            <svg width="15" height="15" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4zM13.5 6.5l4 4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+          </button>
+        </div>
 
         <Pill icon={P.tag}>Categories</Pill>
         <CategoriesSection roomCode={roomCode} categories={categories} expenses={expenses} />
@@ -146,19 +158,6 @@ export default function SettingsScreen() {
         <Pill icon={P.data}>Data</Pill>
         <DataSection expenses={expenses} users={users} categories={categories} room={room} roomCode={roomCode} />
 
-        <Pill icon={P.room}>Room</Pill>
-        <div className="st-card se-glass st-rows">
-          <button type="button" className="st-r se-press" onClick={() => { haptic('tap'); switchRoom(); }}>
-            <span className="st-r__ic"><LineIcon path={P.swap} size={16} strokeWidth={1.9} /></span>
-            <span className="st-r__t"><span>Switch room</span><small>Back to your rooms</small></span>
-            <span className="st-r__chev">›</span>
-          </button>
-          <button type="button" className="st-r se-press" onClick={openName}>
-            <span className="st-r__ic"><LineIcon path={P.room} size={16} strokeWidth={1.9} /></span>
-            <span className="st-r__t"><span>Room name</span><small>{room?.name}</small></span>
-            <span className="st-r__chev">✎</span>
-          </button>
-        </div>
       </main>
 
       {wipe && <div className="st-wipe" style={{ background: wipe === 'light' ? '#F4F4F8' : '#07071A' }} aria-hidden="true" />}

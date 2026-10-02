@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { syncExistingSharedExpenses, removeSyncedExpensesFromPersonalRooms } from '../../services/expenseService';
 import { haptic } from '../../utils/haptics';
@@ -6,7 +6,19 @@ import { memberStyle, initialOf, fmt } from '../dashboard/dashboardData';
 import Sheet from '../ui/Sheet';
 import { useToast } from '../ui/Toast';
 
-const SLIPS = [['₹40', '0s'], ['₹120', '1s'], ['₹266', '2s']];
+const ECG = 'M0 20 H22 L26 20 L30 6 L36 34 L40 14 L44 20 H64';
+const LABEL = { on: 'SYNCING', ok: 'IN SYNC', off: 'SYNC OFF', wait: 'OFFLINE' };
+
+/** Online / offline, live. */
+function useOnline() {
+  const [on, setOn] = useState(() => (typeof navigator === 'undefined' ? true : navigator.onLine !== false));
+  useEffect(() => {
+    const up = () => setOn(true); const down = () => setOn(false);
+    window.addEventListener('online', up); window.addEventListener('offline', down);
+    return () => { window.removeEventListener('online', up); window.removeEventListener('offline', down); };
+  }, []);
+  return on;
+}
 const Arrow = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" className="ps-arrow">
     <path d="M4 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
@@ -38,6 +50,24 @@ export default function ProfileSync({ room, roomCode, users, expenses, userIdent
   const active = Boolean(me?.personalRoomCode);
   const roomName = room?.name || 'this room';
   const linkedName = linked?.name || 'your personal room';
+
+  // Sync pill (board Input-SyncPill-Final): one ECG spike per copy, count = copies of my share.
+  const online = useOnline();
+  const copies = useMemo(() => (active ? expenses.filter(e => (e.splitAmong || []).includes(userIdentity) && (parseFloat(e.amount) || 0) > 0).length : 0), [expenses, active, userIdentity]);
+  const lastCopies = useRef(copies);
+  const [beating, setBeating] = useState(false);
+  useEffect(() => {
+    if (copies === lastCopies.current) return undefined;
+    const grew = copies > lastCopies.current;
+    lastCopies.current = copies;
+    if (!grew) return undefined;
+    setBeating(true);
+    haptic('tap');
+    const t = setTimeout(() => setBeating(false), 4100);
+    return () => clearTimeout(t);
+  }, [copies]);
+  const pill = !active ? 'off' : !online ? 'wait' : (beating || progress) ? 'on' : 'ok';
+  const count = progress ? progress.done : copies;
 
   const whoUser = users.find(u => u.id === who);
   const preview = useMemo(() => {
@@ -106,15 +136,14 @@ export default function ProfileSync({ room, roomCode, users, expenses, userIdent
 
   return (
     <>
-      <button type="button" className={`ps-pill se-press ${active ? 'is-on' : ''}`} onClick={openSheet}>
-        {active && (
-          <span className="ps-pipe" aria-hidden="true">
-            {SLIPS.map(([t, d]) => <span key={t} className="ps-slip" style={{ animationDelay: d }}>{t}</span>)}
-          </span>
-        )}
-        <span className="ps-dot" />
-        <span className="ps-txt">{active ? `SYNCING TO ${linkedName.toUpperCase()}` : 'SYNC OFF · TAP TO SET UP'}</span>
-        <span>›</span>
+      <button type="button" className={`ps-pill ps-pill--${pill} se-press`} onClick={openSheet}
+        aria-label={`Profile sync: ${LABEL[pill].toLowerCase()}${pill !== 'off' ? `, ${count} copies in ${linkedName}` : ', tap to set up'}`}>
+        <span className={`ps-dot ${pill === 'on' ? 'ps-dot--blink' : ''}`} aria-hidden="true" />
+        <span className="ps-txt">{LABEL[pill]}</span>
+        <span className="ps-ecg ps-bump" key={`b${count}`} aria-hidden="true">
+          <svg viewBox="0 0 64 40" preserveAspectRatio="none"><path d={ECG} /></svg>
+        </span>
+        {pill !== 'off' && <span className="ps-cnt" key={`c${count}`} aria-hidden="true">{count}</span>}
       </button>
 
       <Sheet open={!!view} onClose={close} labelledBy="ps-title">

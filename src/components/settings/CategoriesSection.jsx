@@ -12,7 +12,7 @@ import { useToast } from '../ui/Toast';
 const BIN = 'M4 7h16M10 11v6M14 11v6M5 7l1 13h12l1-13M9 7V4h6v3';
 const TEAR_MS = 600;
 
-/** Categories card (boards S4a + S4c): icon rows with counts, bin + ⋮⋮ lift/swap, add/edit sheet. */
+/** Categories: folded into one row (her call, 2 Oct); tap unfolds the card (boards S4a + S4c): icon rows with counts, bin + ⋮⋮ lift/swap, add/edit sheet. */
 export default function CategoriesSection({ roomCode, categories, expenses }) {
   const toast = useToast();
   const { room } = useRoomContext();
@@ -22,6 +22,7 @@ export default function CategoriesSection({ roomCode, categories, expenses }) {
   const [fresh, setFresh] = useState(null);     // id of a just-added category (NEW tag)
   const [sheet, setSheet] = useState(null);     // null | { id|null, name, key }
   const [saving, setSaving] = useState(false);
+  const [open, setOpen] = useState(false);      // folded into one row until tapped
 
   const counts = useMemo(() => {
     const m = {};
@@ -102,6 +103,18 @@ export default function CategoriesSection({ roomCode, categories, expenses }) {
 
   return (
     <>
+      <button type="button" className={`st-card se-glass st-catrow se-press ${open ? 'is-open' : ''}`} aria-expanded={open}
+        onClick={() => { haptic('tap'); setOpen(o => !o); setLift(null); setAsking(null); }}>
+        <span className="st-catrow__stack" aria-hidden="true">
+          {categories.slice(0, 4).map(cat => <CategoryIcon key={cat.id} category={cat} size={28} />)}
+        </span>
+        <span className="st-catrow__t">
+          <span>{categories.length} {categories.length === 1 ? 'category' : 'categories'}</span>
+          <small>{open ? 'Tap to fold' : 'Tap to edit, add or reorder'}</small>
+        </span>
+        <span className="st-catrow__chev" aria-hidden="true">›</span>
+      </button>
+      {open && (<div className="st-catfold">
       <div className="st-card se-glass st-cats">
         {categories.map(cat => (
           <div key={cat.id} className={`st-cat ${lift === cat.id ? 'is-lifted' : ''} ${tearing === cat.id ? 'is-tearing' : ''}`}>
@@ -139,6 +152,7 @@ export default function CategoriesSection({ roomCode, categories, expenses }) {
         <button type="button" className="st-add se-press" onClick={openAdd}>+ Add category · {CATEGORY_ICONS.length} icons</button>
       </div>
       <span className="st-hint">{lift != null ? 'Now tap ⋮⋮ on another category to swap places' : 'Tap ⋮⋮ to lift a category · the bin removes it'}</span>
+      </div>)}
 
       <Sheet open={!!sheet} onClose={() => setSheet(null)} labelledBy="st-cat-title">
         {sheet && (
