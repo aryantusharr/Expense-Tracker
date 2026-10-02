@@ -109,7 +109,6 @@
 .add-chips--scroll { flex-wrap: nowrap; overflow-x: auto; margin: -10px -20px; padding: 12px 20px; scrollbar-width: none; }
 .add-chips--scroll::-webkit-scrollbar { display: none; }
 .add-chips .se-chip { flex-shrink: 0; }
-.add-rec { color: var(--se-teal-ink); }
 
 /* Keypad */
 .add-keys { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }

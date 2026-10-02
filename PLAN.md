@@ -82,6 +82,7 @@ Decisions (her "do whatever is best" → Claude's picks): category delete keeps 
 - [x] Settings: icon-only animated Switch room (top-right), ✎ rename on the code sticker (Room section removed), Categories folded into one row (unfolds in place), final Sync Pill (ECG + copy count; states SYNCING / IN SYNC / SYNC OFF / OFFLINE)
 - [x] History: printed item text 13px, 'Tap a line to change it' heading on the edit sheet
 - [x] In-app keyboard everywhere (src/components/ui/Keyboard.jsx + src/styles/keyboard.css): QWERTY 'Side rail' (ABC/123) for text, glass numpad for amounts (sums allowed), Quick keypad restyled to Numpad-Final. Native iPhone keyboard never opens (no autocorrect/dictation/emoji/paste — her call). Date pickers + CSV file picker stay native.
+- [x] Suggestion strip on top of the keyboard (iPhone-prediction style): recent descriptions / bill names / item names filter as you type; recurring chips sit above the Quick keypad; Paste chip first (navigator.clipboard.readText — iPhone shows its own Paste bubble). Page chips removed.
 - [ ] Her phone pass (test preview channel), then deploy to live with her yes (fresh backup first, bump sw.js cache to v4)
 
 ## Log

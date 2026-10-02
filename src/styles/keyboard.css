@@ -116,3 +116,19 @@
 /* Onboarding chat: the composer sits right above the tray. */
 .se-kb-open .ob-chat { padding-bottom: calc(var(--se-kb-h, 0px) + 12px); }
 .se-kb-open body:has(.ob-chat) { padding-bottom: 0; }
+
+/* Suggestion strip — like iPhone predictions, on top of the keyboard */
+.kb-slot:empty { display: none; }
+.kb-slot { margin: -4px -8px 10px; }
+.kb--pad .kb-slot { margin: -6px -16px 0; }
+.kb-sugg { display: flex; gap: 8px; overflow-x: auto; padding: 2px 12px 2px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.kb-sugg::-webkit-scrollbar { display: none; }
+.kb-chip {
+  flex: none; display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px; border-radius: 999px; cursor: pointer;
+  background: var(--kb-rail); border: 1px solid var(--kb-rail-line); color: var(--se-text); font: 600 13px var(--se-font);
+  white-space: nowrap; -webkit-tap-highlight-color: transparent; transition: transform .2s var(--se-ease-strong);
+}
+.kb-chip:active { transform: scale(.94); }
+.kb-chip--paste { color: var(--kb-sym); border-style: dashed; }
+.kb-chip--rec svg { color: #5FD4C4; }
+.kb-sugg--page { margin: 0 -20px; padding: 2px 20px; }

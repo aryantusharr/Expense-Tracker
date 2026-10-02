@@ -77,3 +77,9 @@ export const evaluateMathExpression = (str) => {
   }
   return null;
 };
+
+/** Suggestions narrowed by what's typed (an exact match drops out). */
+export const matchChips = (list, typed, n = 8) => {
+  const q = (typed || '').trim().toLowerCase();
+  return list.filter(d => !q || (d.toLowerCase().includes(q) && d.toLowerCase() !== q)).slice(0, n);
+};

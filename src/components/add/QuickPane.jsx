@@ -5,13 +5,14 @@ import Button from '../ui/Button';
 import CategoryIcon from '../ui/CategoryIcon';
 import AmountOdometer from './AmountOdometer';
 import Keypad from './Keypad';
-import { TextField } from '../ui/Keyboard';
+import { SuggestBar, TextField } from '../ui/Keyboard';
 import SlipsStrip from './SlipsStrip';
 import SlideToAdd from './SlideToAdd';
 import SaveMoment from './SaveMoment';
 import DateChips from './DateChips';
 import { resolveCategoryIcon } from '../../design/categoryIcons';
 import { evalExpr, hasOperator, pressKey } from './amountExpr';
+import { matchChips } from './addHelpers';
 
 const QUICK_ADDS = [50, 100, 200, 500];
 const nameOf = m => (m?.name || '').replace(/^test[\s_-]+/i, '') || m?.name || '';
@@ -122,16 +123,6 @@ export default function QuickPane({ c }) {
               <button key={n} type="button" className="se-chip" onClick={() => quickAdd(n)}>+₹{n}</button>
             ))}
           </div>
-          {c.recurringExpensesList.length > 0 && (
-            <div className="add-chips add-chips--scroll" data-noswipe aria-label="Repeat a recent expense">
-              {c.recurringExpensesList.slice(0, 6).map(r => (
-                <button key={r.description} type="button" className="se-chip add-rec" onClick={() => applyRecurring(r)}>
-                  <svg width="13" height="13" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.5-5.8M20 4v5h-5" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                  {r.description} · ₹{fmtN(Number(r.lastAmount) || 0)}
-                </button>
-              ))}
-            </div>
-          )}
           {!isPersonal && (
             <SlipsStrip
               members={members}
@@ -143,6 +134,9 @@ export default function QuickPane({ c }) {
             />
           )}
           <div className="add-padzone">
+            <SuggestBar className="kb-sugg--page" items={c.recurringExpensesList.slice(0, 8).map(r => ({
+              key: r.description, rec: true, label: `${r.description} · ₹${fmtN(Number(r.lastAmount) || 0)}`, onPick: () => applyRecurring(r),
+            }))} />
             <Keypad onKey={onKey} />
             <Button block size="lg" onClick={done}>Done</Button>
           </div>
@@ -151,15 +145,9 @@ export default function QuickPane({ c }) {
         <div className="add-form se-in">
           <div className="add-field">
             <span className="add-field__label">DESCRIPTION</span>
-            <TextField className="add-input" value={form.description} onChange={c.setDescription} placeholder="What was it for?" maxLength={80} aria-label="Description" />
+            <TextField className="add-input" value={form.description} onChange={c.setDescription} placeholder="What was it for?" maxLength={80} aria-label="Description"
+              suggestions={matchChips(c.filteredChips, form.description).map(d => ({ label: d, onPick: () => c.setDescription(d) }))} />
           </div>
-          {c.filteredChips.length > 0 && !form.description && (
-            <div className="add-chips add-chips--scroll" data-noswipe aria-label="Recent descriptions">
-              {c.filteredChips.slice(0, 8).map(d => (
-                <button key={d} type="button" className="se-chip" onClick={() => c.setDescription(d)}>{d}</button>
-              ))}
-            </div>
-          )}
 
           <div className="add-field">
             <span className="add-field__label">CATEGORY {!form.categoryId && <em>· auto-picks from your description</em>}</span>

@@ -10,7 +10,7 @@ import SlideToAdd from './SlideToAdd';
 import SaveMoment from './SaveMoment';
 import DateChips from './DateChips';
 import { TextField } from '../ui/Keyboard';
-import { evaluateMathExpression } from './addHelpers';
+import { evaluateMathExpression, matchChips } from './addHelpers';
 
 const fmtN = n => n.toLocaleString('en-IN', { maximumFractionDigits: 2 });
 
@@ -132,10 +132,6 @@ export default function ItemsPane({ c }) {
   };
   const finish = () => { setSaved(null); c.resetBill(); setStage('setup'); setDrafting(false); };
 
-  // Recent item names, narrowed by what's typed (hidden once it matches exactly).
-  const q = draft.description.trim().toLowerCase();
-  const itemChips = c.itemChips.filter(d => !q || (d.toLowerCase().includes(q) && d.toLowerCase() !== q)).slice(0, 8);
-
   const names = c.itemisedGroupNamesList.map(g => g.groupName);
 
   return (
@@ -151,13 +147,9 @@ export default function ItemsPane({ c }) {
         <div className="add-form se-in">
           <div className="add-field">
             <span className="add-field__label">BILL NAME</span>
-            <TextField className="add-input" value={c.billName} onChange={c.setBillName} placeholder="e.g. Dinner at Social" maxLength={60} caps="words" aria-label="Bill name" />
+            <TextField className="add-input" value={c.billName} onChange={c.setBillName} placeholder="e.g. Dinner at Social" maxLength={60} caps="words" aria-label="Bill name"
+              suggestions={matchChips(names, c.billName).map(n => ({ label: n, onPick: () => c.setBillName(n) }))} />
           </div>
-          {names.length > 0 && !c.billName && (
-            <div className="add-chips add-chips--scroll" data-noswipe aria-label="Recent bills">
-              {names.slice(0, 6).map(n => <button key={n} type="button" className="se-chip" onClick={() => c.setBillName(n)}>{n}</button>)}
-            </div>
-          )}
           <div className="add-field">
             <span className="add-field__label">TOTAL</span>
             <TextField className="add-input se-mono" kind="amount" value={c.billTotal} onChange={c.setBillTotal} onBlur={evalTotal} placeholder="₹ 0" maxLength={40} aria-label="Total" />
@@ -176,13 +168,9 @@ export default function ItemsPane({ c }) {
         <div className="add-form se-in ib-panel">
           <div className="add-field">
             <span className="add-field__label">ITEM</span>
-            <TextField className="add-input" value={draft.description} onChange={setDesc} placeholder="What was it for?" maxLength={80} aria-label="Item" />
+            <TextField className="add-input" value={draft.description} onChange={setDesc} placeholder="What was it for?" maxLength={80} aria-label="Item"
+              suggestions={matchChips(c.itemChips, draft.description).map(d => ({ label: d, onPick: () => setDesc(d) }))} />
           </div>
-          {itemChips.length > 0 && (
-            <div className="add-chips add-chips--scroll" data-noswipe aria-label="Recent items">
-              {itemChips.map(d => <button key={d} type="button" className="se-chip" onClick={() => { haptic('choose'); setDesc(d); }}>{d}</button>)}
-            </div>
-          )}
           <div className="add-field">
             <span className="add-field__label">AMOUNT</span>
             <TextField className="add-input se-mono" kind="amount" value={draft.amount} onChange={v => setDraft(d => ({ ...d, amount: v }))} onBlur={evalDraft} placeholder="₹ 0" maxLength={40} aria-label="Item amount" />

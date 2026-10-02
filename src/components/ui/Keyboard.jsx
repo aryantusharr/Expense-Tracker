@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { haptic } from '../../utils/haptics';
+import { useToast } from './Toast';
 
 /**
  * In-app keyboard (boards Input-Keypad-Final "Side rail" + Input-Numpad-Final "Glass grid").
@@ -54,13 +55,46 @@ function Key({ k, i, cls = '', style, onPress, children, label }) {
   );
 }
 
-function Tray({ kind, press, trayRef }) {
+const ClipIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M9 4h6v3H9zM9 5H6a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1h-3" />
+  </svg>
+);
+const RecIcon = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.5-5.8M20 4v5h-5" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+);
+
+/**
+ * Suggestion strip (iPhone-prediction style) — sits on top of the keyboard, or above the Quick keypad.
+ * items: [{ key, label, rec?: true, onPick }]. onPaste adds a Paste chip first.
+ */
+export function SuggestBar({ items = [], onPaste, className = '' }) {
+  if (!items.length && !onPaste) return null;
+  return (
+    <div className={`kb-sugg ${className}`} data-noswipe role="toolbar" aria-label="Suggestions">
+      {onPaste && (
+        <button type="button" className="kb-chip kb-chip--paste" onPointerDown={e => e.preventDefault()} onClick={onPaste}>
+          <ClipIcon />Paste
+        </button>
+      )}
+      {items.map(s => (
+        <button key={s.key ?? s.label} type="button" className={`kb-chip ${s.rec ? 'kb-chip--rec' : ''}`}
+          onPointerDown={e => e.preventDefault()} onClick={() => { haptic('choose'); s.onPick(); }}>
+          {s.rec && <RecIcon />}{s.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function Tray({ kind, press, trayRef, setSlot }) {
   const [layer, setLayer] = useState(0);
   const pick = n => { haptic('tap'); setLayer(n); };
 
   if (kind === 'amount' || kind === 'number') {
     return (
       <div className="kb kb--pad" ref={trayRef} data-kb>
+        <div className="kb-slot" ref={setSlot} />
         <div className="kb-pad" role="group" aria-label="Amount keypad">
           {PAD.map((k, i) => (
             <Key key={k} k={k} i={i} onPress={press}
@@ -75,6 +109,7 @@ function Tray({ kind, press, trayRef }) {
 
   return (
     <div className="kb" ref={trayRef} data-kb>
+      <div className="kb-slot" ref={setSlot} />
       <div className="kb-wrap">
         <div className="kb-rail" role="tablist" aria-label="Keyboard layer">
           {['ABC', '123'].map((n, i) => (
@@ -176,11 +211,12 @@ export function KeyboardProvider({ children }) {
     return () => { document.removeEventListener('pointerdown', down, true); document.removeEventListener('keydown', key); };
   }, [active, close, press]);
 
-  const value = useMemo(() => ({ active, focus, close, isActive }), [active, focus, close, isActive]);
+  const [slot, setSlot] = useState(null);   // where the focused field puts its suggestion strip
+  const value = useMemo(() => ({ active, focus, close, isActive, slot }), [active, focus, close, isActive, slot]);
   return (
     <KbCtx.Provider value={value}>
       {children}
-      {active && createPortal(<Tray key={active.kind} kind={active.kind} press={press} trayRef={trayRef} />, document.body)}
+      {active && createPortal(<Tray key={active.kind} kind={active.kind} press={press} trayRef={trayRef} setSlot={setSlot} />, document.body)}
     </KbCtx.Provider>
   );
 }
@@ -212,9 +248,10 @@ function nextAmount(v, k) {
  */
 export function TextField({
   value = '', onChange, placeholder, maxLength = 80, kind = 'text', caps = 'sentences',
-  className = '', autoFocus = false, onDone, onBlur, disabled = false, prefix, ...rest
+  className = '', autoFocus = false, onDone, onBlur, disabled = false, prefix, suggestions = [], ...rest
 }) {
   const kb = useKeyboard();
+  const toast = useToast();
   const id = useId();
   const ref = useRef(null);
   const props = useRef(null);
@@ -226,6 +263,19 @@ export function TextField({
       el: () => ref.current,
       blur: () => { ref.current?.blur(); props.current.onBlur?.(); },
       done: () => props.current.onDone?.(),
+      paste: raw => {
+        const p = props.current;
+        let t = String(raw || '').replace(/\s+/g, ' ');
+        if (p.kind === 'amount') t = t.replace(/[×x]/g, '*').replace(/÷/g, '/').replace(/[−–]/g, '-').replace(/[^0-9.+\-*/]/g, '');
+        else if (p.kind === 'number') t = t.replace(/[^0-9.]/g, '');
+        else if (p.kind === 'code') t = t.toUpperCase().replace(/[^A-Z0-9]/g, '');
+        const next = (p.value + t).slice(0, p.maxLength);
+        if (!t || next === p.value) return false;
+        p.value = next;
+        setFx(f => ({ type: 'add', n: (f?.n || 0) + 1, c: ACCENTS[1], ch: '' }));
+        p.onChange?.(next);
+        return true;
+      },
       press: (k, c) => {
         const p = props.current;
         const v = p.value;
@@ -252,6 +302,14 @@ export function TextField({
   }));
 
   const pad = kind === 'amount' || kind === 'number' ? kind : 'text';
+  // Paste: iPhone shows its own small 'Paste' bubble first (Apple's privacy rule) — tap it to drop the text in.
+  const paste = async () => {
+    haptic('tap');
+    try {
+      const txt = await navigator.clipboard.readText();
+      if (!fieldApi.paste(txt)) { haptic('error'); toast({ message: 'Nothing to paste here', top: true, duration: 1800 }); }
+    } catch { haptic('error'); toast({ message: 'Couldn’t read the clipboard', top: true, duration: 1800 }); }
+  };
   const open = () => { if (!disabled && kb) { haptic('tap'); kb.focus(id, pad, fieldApi); } };
 
   useEffect(() => {
@@ -288,6 +346,7 @@ export function TextField({
       {...rest}
     >
       {prefix}
+      {on && kb.slot && createPortal(<SuggestBar items={suggestions} onPaste={paste} />, kb.slot)}
       <span className="se-field__in" ref={inner}>
         {v === '' && !on && <span className="se-field__ph">{placeholder}</span>}
         <span className="se-field__txt">
