@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useRoomContext } from '../../context/RoomContext';
 import { syncExistingSharedExpenses, removeSyncedExpensesFromPersonalRooms } from '../../services/expenseService';
 import { roomStatus } from '../../services/roomService';
 import { haptic } from '../../utils/haptics';
@@ -70,6 +71,15 @@ export default function ProfileSync({ room, roomCode, users, expenses, userIdent
   const active = Boolean(me?.personalRoomCode) && !linkGone;
   const roomName = room?.name || 'this room';
   const linkedName = linked?.name || (linkCheck.code === me?.personalRoomCode && linkCheck.name) || 'your personal room';
+
+  // Synced, but the personal room isn't in this phone's list (reinstall / new phone): offer to add it back.
+  const { rememberRoom } = useRoomContext();
+  const awayFromPhone = active && !linked && linkCheck.code === me?.personalRoomCode && linkCheck.status === 'exists';
+  const addToPhone = () => {
+    rememberRoom({ code: me.personalRoomCode, name: linkCheck.name || 'Personal room', isPersonal: true, memberCount: 1 });
+    haptic('success');
+    say(<>Added <b>{linkCheck.name || 'your personal room'}</b> · open it from ⇄ Switch room</>, 'success');
+  };
 
   // Sync pill (board Input-SyncPill-Final): one ECG spike per copy, count = copies of my share.
   const online = useOnline();
@@ -181,6 +191,18 @@ export default function ProfileSync({ room, roomCode, users, expenses, userIdent
               <Arrow />
               <div className="ps-link__t"><b>{linkedName}</b><span className="st-mono">YOUR SHARE OF EVERY EXPENSE</span></div>
             </div>
+            {awayFromPhone && (
+              <div className="ps-away se-pop">
+                <span className="ps-away__k">NOT ON THIS PHONE YET</span>
+                <b>Your copies are safe — sync never stopped.</b>
+                <p>
+                  {linkedName} is still being filled with your share of every expense here. It just isn’t in this phone’s
+                  room list, which happens after reinstalling the app or switching phones.
+                </p>
+                <p>Add it back to see your own spending and budget on this phone. Nothing is copied twice and nothing changes for your roommates.</p>
+                <button type="button" className="se-btn se-btn--primary se-press ps-away__btn" onClick={addToPhone}>Add {linkedName} to this phone</button>
+              </div>
+            )}
             <div className="ps-rules">• Copies are read-only and carry the COPY stamp<br />• Edits and deletes here update the copy<br />• If your share drops to ₹0, the copy is removed</div>
             <div className="st-btnrow">
               <button type="button" className="se-btn se-btn--secondary se-press" onClick={beginSetup}>Change</button>
