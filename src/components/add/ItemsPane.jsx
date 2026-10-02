@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { haptic } from '../../utils/haptics';
 import { useToast } from '../ui/Toast';
 import Button from '../ui/Button';
@@ -120,9 +120,11 @@ export default function ItemsPane({ c }) {
     setDrafting(false);
   };
 
+  const nudge = useRef(null);   // budget nudge, shown once the save moment is over
   const confirm = async () => {
+    nudge.current = c.budgetNudge(total, form.date);
     const res = await c.submitBill();
-    if (!res.ok) { toast({ kind: 'error', message: <b>{res.message}</b> }); setSlideShake(s => s + 1); return; }
+    if (!res.ok) { nudge.current = null; toast({ kind: 'error', message: <b>{res.message}</b> }); setSlideShake(s => s + 1); return; }
     const payer = members.find(m => m.id === form.paidBy);
     setSaved({
       title: res.name, date: form.date, total: res.total, room: c.room?.name || c.roomCode,
@@ -130,7 +132,10 @@ export default function ItemsPane({ c }) {
       lines: c.rows.map(r => ({ name: r.description, amount: parseFloat(r.amount), iconPath: resolveCategoryIcon(cats.find(x => x.id === r.categoryId)).path })),
     });
   };
-  const finish = () => { setSaved(null); c.resetBill(); setStage('setup'); setDrafting(false); };
+  const finish = () => {
+    setSaved(null); c.resetBill(); setStage('setup'); setDrafting(false);
+    if (nudge.current) { if (nudge.current.kind === 'warn') haptic('error'); toast({ ...nudge.current, duration: 5000 }); nudge.current = null; }
+  };
 
   const names = c.itemisedGroupNamesList.map(g => g.groupName);
 

@@ -92,9 +92,11 @@ export default function QuickPane({ c }) {
     toast({ kind: 'error', message: <b>{c.problem}</b> });
   };
 
+  const nudge = useRef(null);   // budget nudge, shown once the save moment is over
   const confirm = async () => {
+    nudge.current = c.budgetNudge(amount, form.date);
     const res = await c.submitQuick();
-    if (!res.ok) { toast({ kind: 'error', message: <b>{res.message}</b> }); setShake(s => s + 1); return; }
+    if (!res.ok) { nudge.current = null; toast({ kind: 'error', message: <b>{res.message}</b> }); setShake(s => s + 1); return; }
     const cat = c.sortedCategories.find(x => x.id === form.categoryId);
     const payer = members.find(m => m.id === form.paidBy);
     const n = form.splitAmong.length;
@@ -105,7 +107,10 @@ export default function QuickPane({ c }) {
       rows: isPersonal || n < 1 ? [] : [{ a: `SPLIT ${n} WAYS`, b: `${n} × ${fmtN(Math.round(res.amount / n * 100) / 100)}` }],
     });
   };
-  const finish = () => { setSaved(null); c.resetQuick(); setExpr(''); setView('amount'); };
+  const finish = () => {
+    setSaved(null); c.resetQuick(); setExpr(''); setView('amount');
+    if (nudge.current) { if (nudge.current.kind === 'warn') haptic('error'); toast({ ...nudge.current, duration: 5000 }); nudge.current = null; }
+  };
 
   const count = isPersonal ? 1 : form.splitAmong.length;
 

@@ -14,8 +14,11 @@ import { useToast } from './Toast';
 const ACCENTS = ['#8B7CFF', '#5FD4C4', '#FF8FB5', '#F5C26B', '#6EC1FF', '#A8E06B', '#FF9A76', '#C9A7FF'];
 const ROWS = ['QWERTYUIOP', 'ASDFGHJKL', 'ZXCVBNM'];
 // 123 layer: 6 columns; ⌫ and Done span 2.
-const NUM = ['₹', '1', '2', '3', '-', '/', '@', '4', '5', '6', '(', ')', '&', '7', '8', '9', '⌫', '#', '.', '0', ',', 'Done'];
-const SYM = new Set(['₹', '-', '/', '@', '(', ')', '&', '#']);
+const NUM = ["'", '1', '2', '3', '-', '/', '@', '4', '5', '6', '(', ')', '&', '7', '8', '9', '⌫', '?', '.', '0', ',', 'Done'];
+const SYM = new Set(["'", '-', '/', '@', '(', ')', '&', '?']);
+const REPEAT_AFTER = 450;   // ⌫ held: start repeating after this…
+const REPEAT_EVERY = 80;    // …one letter per tick…
+const WORDS_AFTER = 12;     // …then whole words after this many ticks
 const PAD = ['÷', '7', '8', '9', '×', '4', '5', '6', '−', '1', '2', '3', '+', '.', '0', '⌫'];
 const OPS = { '÷': '/', '×': '*', '−': '-', '+': '+' };
 
@@ -23,6 +26,11 @@ const KbCtx = createContext(null);
 // eslint-disable-next-line react-refresh/only-export-components
 export const useKeyboard = () => useContext(KbCtx);
 
+const ShiftIcon = ({ lock }) => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M12 4l8 8h-4.5v7h-7v-7H4z" />{lock && <path d="M8 22h8" />}
+  </svg>
+);
 const BackIcon = () => (
   <svg width="22" height="16" viewBox="0 0 26 18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <path d="M8 1h15a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H8L1 9z" /><path d="M12 6l6 6M18 6l-6 6" />
@@ -30,10 +38,12 @@ const BackIcon = () => (
 );
 
 /** A key that pops up + glows in its accent when pressed (fires on pointer up, like the board). */
-function Key({ k, i, cls = '', style, onPress, children, label }) {
+function Key({ k, i, cls = '', style, onPress, children, label, repeat = false }) {
   const [on, setOn] = useState(0);
   const t = useRef(null);
-  useEffect(() => () => clearTimeout(t.current), []);
+  const hold = useRef({ timer: null, ticks: 0, held: false });
+  const stop = () => { clearTimeout(hold.current.timer); clearInterval(hold.current.timer); hold.current.timer = null; };
+  useEffect(() => () => { clearTimeout(t.current); stop(); }, []);
   const c = ACCENTS[i % ACCENTS.length];
   const r = `${((i * 37) % 11) - 5}deg`;
   return (
@@ -42,8 +52,25 @@ function Key({ k, i, cls = '', style, onPress, children, label }) {
       className={`kb-k ${cls} ${on ? 'is-on' : ''}`}
       style={{ '--c': c, '--r': r, ...style }}
       aria-label={label || k}
-      onPointerDown={e => e.preventDefault()}
+      onPointerDown={e => {
+        e.preventDefault();
+        if (!repeat) return;
+        stop();
+        hold.current = { timer: null, ticks: 0, held: false };
+        hold.current.timer = setTimeout(() => {
+          hold.current.held = true;
+          setOn(1);
+          hold.current.timer = setInterval(() => {
+            hold.current.ticks += 1;
+            onPress(hold.current.ticks > WORDS_AFTER ? '⌫w' : k, c);
+          }, REPEAT_EVERY);
+        }, REPEAT_AFTER);
+      }}
+      onPointerUp={repeat ? () => { stop(); if (hold.current.held) setOn(0); } : undefined}
+      onPointerLeave={repeat ? () => { stop(); if (hold.current.held) setOn(0); } : undefined}
+      onPointerCancel={repeat ? () => { stop(); setOn(0); } : undefined}
       onClick={() => {
+        if (hold.current.held) { hold.current.held = false; return; }   // a hold already deleted
         setOn(n => n + 1);
         clearTimeout(t.current);
         t.current = setTimeout(() => setOn(0), 220);
@@ -87,7 +114,7 @@ export function SuggestBar({ items = [], onPaste, className = '' }) {
   );
 }
 
-function Tray({ kind, press, trayRef, setSlot }) {
+function Tray({ kind, press, trayRef, setSlot, shift, capsOn }) {
   const [layer, setLayer] = useState(0);
   const pick = n => { haptic('tap'); setLayer(n); };
 
@@ -97,7 +124,7 @@ function Tray({ kind, press, trayRef, setSlot }) {
         <div className="kb-slot" ref={setSlot} />
         <div className="kb-pad" role="group" aria-label="Amount keypad">
           {PAD.map((k, i) => (
-            <Key key={k} k={k} i={i} onPress={press}
+            <Key key={k} k={k} i={i} onPress={press} repeat={k === '⌫'}
               cls={`kb-n ${OPS[k] ? 'kb-n--op' : ''} ${OPS[k] && kind === 'number' ? 'kb-n--off' : ''} ${k === '⌫' ? 'kb-n--del' : ''}`}
               label={k === '⌫' ? 'Delete' : k === '.' ? 'Decimal point' : undefined} />
           ))}
@@ -122,19 +149,23 @@ function Tray({ kind, press, trayRef, setSlot }) {
             <div className="kb-rows">
               {ROWS.map((row, ri) => (
                 <div className="kb-row" key={row}>
-                  {[...row].map((k, ki) => <Key key={k} k={k} i={ri * 10 + ki} onPress={press} cls="kb-l" />)}
-                  {ri === 2 && <Key k="⌫" i={27} onPress={press} cls="kb-del" label="Delete" style={{ flex: 1 }} />}
+                  {[...row].map((k, ki) => <Key key={k} k={k} i={ri * 10 + ki} onPress={press} cls="kb-l">{capsOn ? k : k.toLowerCase()}</Key>)}
+                  {ri === 2 && <Key k="⌫" i={27} onPress={press} cls="kb-del" label="Delete" style={{ flex: 1 }} repeat />}
                 </div>
               ))}
               <div className="kb-row">
+                <Key k="⇧" i={26} onPress={press} cls={`kb-sp kb-shk ${shift === 1 ? 'is-shon' : shift === 2 ? 'is-shlock' : ''}`}
+                  label={shift === 2 ? 'Caps lock on' : shift === 1 ? 'Shift on' : 'Shift'} style={{ width: 72, flex: 'none' }}>
+                  <ShiftIcon lock={shift === 2} />
+                </Key>
                 <Key k="space" i={28} onPress={press} cls="kb-sp" style={{ flex: 1 }} />
-                <Key k="Done" i={29} onPress={press} cls="kb-sp kb-go" style={{ width: 'calc((100% - 45px) / 10 * 3 + 10px)' }} />
+                <Key k="Done" i={29} onPress={press} cls="kb-sp kb-go" style={{ width: 96, flex: 'none' }} />
               </div>
             </div>
           ) : (
             <div className="kb-grid">
               {NUM.map((k, i) => (
-                <Key key={k} k={k} i={i} onPress={press}
+                <Key key={k} k={k} i={i} onPress={press} repeat={k === '⌫'}
                   cls={k === '⌫' ? 'kb-del' : k === 'Done' ? 'kb-sp kb-go' : SYM.has(k) ? 'kb-sym' : ''}
                   label={k === '⌫' ? 'Delete' : undefined}
                   style={k === '⌫' || k === 'Done' ? { gridColumn: 'span 2' } : undefined} />
@@ -152,6 +183,11 @@ export function KeyboardProvider({ children }) {
   const api = useRef(null);                      // the focused field's { press, blur, el }
   const activeId = useRef(null);
   const trayRef = useRef(null);
+  const [shift, setShift] = useState(0);         // 0 off · 1 next letter · 2 caps lock (double-tap)
+  const shiftRef = useRef(0);
+  useEffect(() => { shiftRef.current = shift; }, [shift]);
+  const lastShift = useRef(0);
+  const [autoCap, setAutoCap] = useState(false); // field says the next letter starts a sentence / word
 
   const close = useCallback(() => {
     const a = api.current;
@@ -165,14 +201,24 @@ export function KeyboardProvider({ children }) {
     if (api.current && api.current !== fieldApi) api.current.blur?.();
     api.current = fieldApi;
     activeId.current = id;
+    setShift(0);
     setActive({ id, kind });
   }, []);
   const isActive = useCallback(id => activeId.current === id, []);
 
   const press = useCallback((k, c) => {
     if (k === 'Done') { haptic('choose'); const a = api.current; close(); a?.done?.(); return; }
+    if (k === '⇧') {
+      const now = Date.now();
+      const dbl = now - lastShift.current < 320;
+      lastShift.current = now;
+      haptic(dbl ? 'choose' : 'tap');
+      setShift(s => (dbl ? 2 : s ? 0 : 1));
+      return;
+    }
     haptic('tap');
-    api.current?.press(k, c);
+    api.current?.press(k, c, shiftRef.current);
+    if (/^[A-Z]$/.test(k) && shiftRef.current === 1) setShift(0);
   }, [close]);
 
   // Page/sheet make room for the tray; keep the field in view.
@@ -212,14 +258,17 @@ export function KeyboardProvider({ children }) {
   }, [active, close, press]);
 
   const [slot, setSlot] = useState(null);   // where the focused field puts its suggestion strip
-  const value = useMemo(() => ({ active, focus, close, isActive, slot }), [active, focus, close, isActive, slot]);
+  const value = useMemo(() => ({ active, focus, close, isActive, slot, setAutoCap }), [active, focus, close, isActive, slot]);
   return (
     <KbCtx.Provider value={value}>
       {children}
-      {active && createPortal(<Tray key={active.kind} kind={active.kind} press={press} trayRef={trayRef} setSlot={setSlot} />, document.body)}
+      {active && createPortal(<Tray key={active.kind} kind={active.kind} press={press} trayRef={trayRef} setSlot={setSlot} shift={shift} capsOn={shift > 0 || autoCap} />, document.body)}
     </KbCtx.Provider>
   );
 }
+
+/** Does the next letter start a word / sentence (auto-capital)? */
+const autoStart = (v, caps) => (caps === 'words' ? (v === '' || / $/.test(v)) : caps === 'sentences' && (v === '' || /[.!?] $/.test(v)));
 
 const PAD_OPS = '+-*/';
 /** Next amount expression after a numpad key (same characters the old inputs allowed: 0-9 . + - * /). */
@@ -258,6 +307,8 @@ export function TextField({
   useLayoutEffect(() => { props.current = { value: String(value ?? ''), onChange, maxLength, kind, caps, onDone, onBlur }; });
   const [fx, setFx] = useState(null);       // { type: 'add' | 'del', n, c, ch }
   const on = kb?.active?.id === id;
+  const willCap = kind === 'code' || autoStart(String(value ?? ''), caps);
+  useEffect(() => { if (on) kb.setAutoCap(willCap); }, [on, willCap, kb]);
 
   const [fieldApi] = useState(() => ({
       el: () => ref.current,
@@ -276,18 +327,20 @@ export function TextField({
         p.onChange?.(next);
         return true;
       },
-      press: (k, c) => {
+      press: (k, c, shift = 0) => {
         const p = props.current;
         const v = p.value;
         let next;
-        if (p.kind === 'amount') next = nextAmount(v, k);
-        else if (p.kind === 'number') next = OPS[k] ? v : nextAmount(v, k);
-        else if (k === '⌫') next = v.slice(0, -1);
+        const key = k === '⌫w' && (p.kind === 'amount' || p.kind === 'number') ? '⌫' : k;
+        if (p.kind === 'amount') next = nextAmount(v, key);
+        else if (p.kind === 'number') next = OPS[key] ? v : nextAmount(v, key);
+        else if (key === '⌫w') next = v.replace(/\S+\s*$|\s+$/, '');
+        else if (key === '⌫') next = v.slice(0, -1);
         else if (k === 'space') next = v + ' ';
         else {
           let ch = typeof k === 'object' ? k.raw : k;
           if (typeof k !== 'object' && /^[A-Z]$/.test(ch)) {
-            const start = p.kind === 'code' || (p.caps === 'words' ? (v === '' || / $/.test(v)) : p.caps === 'sentences' && (v === '' || /[.!?] $/.test(v)));
+            const start = p.kind === 'code' || shift > 0 || autoStart(v, p.caps);
             ch = start ? ch : ch.toLowerCase();
           }
           if (p.kind === 'code') ch = ch.toUpperCase();
@@ -295,7 +348,7 @@ export function TextField({
         }
         if (next.length > p.maxLength) return;
         if (next === v) return;
-        setFx(f => ({ type: next.length < v.length ? 'del' : 'add', n: (f?.n || 0) + 1, c: c || ACCENTS[1], ch: next.length < v.length ? v.slice(-1) : '' }));
+        setFx(f => ({ type: next.length < v.length ? 'del' : 'add', n: (f?.n || 0) + 1, c: c || ACCENTS[1], ch: next.length < v.length ? v.slice(next.length) : '' }));
         p.value = next;   // fast presses build on this one before the next render
         p.onChange?.(next);
       },

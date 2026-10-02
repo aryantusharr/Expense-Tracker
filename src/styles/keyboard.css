@@ -132,3 +132,11 @@
 .kb-chip--paste { color: var(--kb-sym); border-style: dashed; }
 .kb-chip--rec svg { color: #5FD4C4; }
 .kb-sugg--page { margin: 0 -20px; padding: 2px 20px; }
+
+/* Shift (board: Input-Keypad-Final, bottom-left): off · on for one letter · caps lock (double-tap) */
+.kb-shk { color: #D9D6F5; }
+.kb-shk.is-shon { background: rgba(95, 212, 196, .18); border: 1px solid rgba(95, 212, 196, .55); color: #B5F2E9; }
+.kb-shk.is-shlock { background: #5FD4C4; border: 0; color: #07071A; box-shadow: 0 0 16px rgba(95, 212, 196, .5); }
+:root[data-theme='light'] .kb-shk { color: #4A4390; }
+:root[data-theme='light'] .kb-shk.is-shon { color: #0A7A6D; }
+:root[data-theme='light'] .kb-shk.is-shlock { background: #0A8577; color: #FFFFFF; }

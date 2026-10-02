@@ -129,3 +129,6 @@
   border: 1px solid color-mix(in srgb, var(--c) 45%, transparent);
 }
 .se-cat svg { width: 46%; height: 46%; }
+.se-toast--warn { border-left: 3px solid #F2B45C; }
+.se-toast--warn .se-toast__sub { color: #F2B45C; }
+:root[data-theme='light'] .se-toast--warn .se-toast__sub { color: #A65A00; }

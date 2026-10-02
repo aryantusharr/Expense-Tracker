@@ -6,7 +6,7 @@ import { validateExpense } from '../../utils/expenseFormHelpers';
 import { getLastUsedMode, setLastUsedMode, getLastUsedDefaults, setLastUsedDefaults } from '../../utils/lastUsedDefaults';
 import { addRecentDescription } from '../../utils/recentDescriptions';
 import { detectRecurringExpenses } from '../../utils/recurringExpenses';
-import { memberStyle } from '../dashboard/dashboardData';
+import { memberStyle, monthWindow, localDateStr } from '../dashboard/dashboardData';
 import { getSortedCategories } from './addHelpers';
 import { guessCategory, learnPatterns } from '../../utils/categoryGuess';
 
@@ -324,7 +324,26 @@ export function useAddController() {
 
   const resetBill = () => { setBillName(''); setBillTotal(''); setRows([]); };
 
+  /**
+   * Budget nudge (personal rooms): a message when this expense pushes this month's spend
+   * past 80% or 100% of the monthly budget — only on the crossing, so it never nags.
+   */
+  const budgetNudge = (amount, date) => {
+    const budget = Number(room?.budget) || 0;
+    if (!isPersonal || !(budget > 0) || !(amount > 0)) return null;
+    const cur = monthWindow(expenses).months.slice(-1)[0];
+    if (!cur || !date || date.slice(0, 7) !== localDateStr().slice(0, 7)) return null;
+    const before = cur.total;
+    const after = before + amount;
+    const pct = Math.round((after / budget) * 100);
+    const fmtR = n => `₹${Math.round(n).toLocaleString('en-IN')}`;
+    if (before <= budget && after > budget) return { kind: 'error', message: `Over budget · ${fmtR(after - budget)} past ${fmtR(budget)}`, sub: 'This month’s spend went over your monthly budget' };
+    if (before < budget * 0.8 && after >= budget * 0.8) return { kind: 'warn', message: `${pct}% of budget used · ${fmtR(budget - after)} left`, sub: 'Heads up — you’re close to this month’s limit' };
+    return null;
+  };
+
   return {
+    budgetNudge,
     roomCode, room, isPersonal, members, userIdentity,
     mode, setMode,
     form, setField, toggleSplit, setDescription, pickCategory, autoCat, guessCat,
