@@ -1,6 +1,7 @@
 // Landing room rows: balance / budget line read from the offline caches the app already
 // keeps (RoomContext writes them), so the list costs no Firestore reads.
 import { sharedModel, monthWindow, fmt } from '../dashboard/dashboardData';
+import { joinRoom } from '../../services/roomService';
 
 const readJson = key => {
   try { return JSON.parse(localStorage.getItem(key) || 'null'); } catch { return null; }
@@ -30,6 +31,20 @@ export function summariseRoom(saved) {
     }
   }
   return { value, tone, count };
+}
+
+/**
+ * The room cache only refreshes for the room that's open, so a budget / name changed on another
+ * phone stayed stale here. One get per saved room (read-only, same shape RoomContext caches).
+ * Offline or missing rooms are skipped quietly.
+ */
+export async function refreshRoomCaches(saved) {
+  await Promise.all(saved.map(async r => {
+    try {
+      const { roomCode, roomData } = await joinRoom(r.code);
+      localStorage.setItem(`splitease_room_cache_${roomCode}`, JSON.stringify({ roomCode, ...roomData }));
+    } catch { /* offline / gone — keep the old copy */ }
+  }));
 }
 
 // Line-icon paths used across onboarding screens (24px grid, 1.9 stroke).

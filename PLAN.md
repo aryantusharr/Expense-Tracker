@@ -85,6 +85,9 @@ Decisions (her "do whatever is best" → Claude's picks): category delete keeps 
 - [x] Suggestion strip on top of the keyboard (iPhone-prediction style): recent descriptions / bill names / item names filter as you type; recurring chips sit above the Quick keypad; Paste chip first (navigator.clipboard.readText — iPhone shows its own Paste bubble). Page chips removed.
 - [x] Keyboard v2 (board Input-Keypad-Final, updated): Shift key bottom-left (tap = next letter, double-tap = caps lock), letters show lowercase when off; ⌫ hold-to-repeat (letters, then whole words after ~1s; also on the numpads); 123 layer ' and ? replace ₹ and #
 - [x] Budget nudge (personal rooms): toast after the save moment when this month crosses 80% (amber) or 100% (pink) of the budget — only on the crossing. Tested on MB739V with a 'Test budget nudge' expense, then deleted.
+- [x] Sync pill v2 (board updated): slim two-line pill — state + small ECG + count on top, '→ <ROOM> · COPYING / UP TO DATE / WAITING' (or 'TAP TO PICK A PERSONAL ROOM') underneath
+- [x] Bug: room list showed stale budgets (cache only refreshed for the open room) — landing now re-reads each saved room (one get per room, read-only) and redraws
+- [x] Items: 'Next' key (bill name → total, item → amount); one-time 'What's new' sheet on Dashboard for existing users (localStorage splitease_whatsnew_keyboard; new users skip it)
 - [ ] Her phone pass (test preview channel), then deploy to live with her yes (fresh backup first, bump sw.js cache to v4)
 
 ## Log

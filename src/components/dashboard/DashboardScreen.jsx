@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRoomContext } from '../../context/RoomContext';
 import { useTheme } from '../../context/ThemeContext';
 import { haptic } from '../../utils/haptics';
+import WhatsNew from '../layout/WhatsNew';
 import {
   sharedModel, monthWindow, lifetime, spendingMatrix, lastTransaction, skyFor, memberStyle, initialOf,
 } from './dashboardData';
@@ -115,6 +116,7 @@ export default function DashboardScreen() {
           </>
         )}
       </main>
+      <WhatsNew />
 
       {isPersonal && <UnmappedCategories roomCode={roomCode} expenses={expenses} categories={categories} />}
       {!isPersonal && (

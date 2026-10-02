@@ -120,6 +120,8 @@ export default function ItemsPane({ c }) {
     setDrafting(false);
   };
 
+  const totalField = useRef(null);   // Next: bill name → total, item → amount
+  const amountField = useRef(null);
   const nudge = useRef(null);   // budget nudge, shown once the save moment is over
   const confirm = async () => {
     nudge.current = c.budgetNudge(total, form.date);
@@ -152,12 +154,12 @@ export default function ItemsPane({ c }) {
         <div className="add-form se-in">
           <div className="add-field">
             <span className="add-field__label">BILL NAME</span>
-            <TextField className="add-input" value={c.billName} onChange={c.setBillName} placeholder="e.g. Dinner at Social" maxLength={60} caps="words" aria-label="Bill name"
+            <TextField className="add-input" value={c.billName} onChange={c.setBillName} placeholder="e.g. Dinner at Social" maxLength={60} caps="words" aria-label="Bill name" next={totalField}
               suggestions={matchChips(names, c.billName).map(n => ({ label: n, onPick: () => c.setBillName(n) }))} />
           </div>
           <div className="add-field">
             <span className="add-field__label">TOTAL</span>
-            <TextField className="add-input se-mono" kind="amount" value={c.billTotal} onChange={c.setBillTotal} onBlur={evalTotal} placeholder="₹ 0" maxLength={40} aria-label="Total" />
+            <TextField className="add-input se-mono" kind="amount" fieldRef={totalField} value={c.billTotal} onChange={c.setBillTotal} onBlur={evalTotal} placeholder="₹ 0" maxLength={40} aria-label="Total" />
           </div>
           {!isPersonal && (
             <SlipsStrip members={members} paidBy={form.paidBy} splitAmong={form.splitAmong} amount={total} onPayer={id => setField.paidBy(id)} onToggle={c.toggleSplit} payerOnly />
@@ -173,12 +175,12 @@ export default function ItemsPane({ c }) {
         <div className="add-form se-in ib-panel">
           <div className="add-field">
             <span className="add-field__label">ITEM</span>
-            <TextField className="add-input" value={draft.description} onChange={setDesc} placeholder="What was it for?" maxLength={80} aria-label="Item"
+            <TextField className="add-input" value={draft.description} onChange={setDesc} placeholder="What was it for?" maxLength={80} aria-label="Item" next={amountField}
               suggestions={matchChips(c.itemChips, draft.description).map(d => ({ label: d, onPick: () => setDesc(d) }))} />
           </div>
           <div className="add-field">
             <span className="add-field__label">AMOUNT</span>
-            <TextField className="add-input se-mono" kind="amount" value={draft.amount} onChange={v => setDraft(d => ({ ...d, amount: v }))} onBlur={evalDraft} placeholder="₹ 0" maxLength={40} aria-label="Item amount" />
+            <TextField className="add-input se-mono" kind="amount" fieldRef={amountField} value={draft.amount} onChange={v => setDraft(d => ({ ...d, amount: v }))} onBlur={evalDraft} placeholder="₹ 0" maxLength={40} aria-label="Item amount" />
           </div>
           <div className="add-field">
             <span className="add-field__label">CATEGORY</span>

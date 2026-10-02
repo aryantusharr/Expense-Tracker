@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRoomContext } from '../../context/RoomContext';
 import { deleteRoom } from '../../services/roomService';
@@ -6,7 +6,7 @@ import { copyToClipboard } from '../../utils/helpers';
 import { haptic } from '../../utils/haptics';
 import Sheet from '../ui/Sheet';
 import { useToast } from '../ui/Toast';
-import { summariseRoom, ROOM_DOTS, ICONS } from './onboardingData';
+import { summariseRoom, refreshRoomCaches, ROOM_DOTS, ICONS } from './onboardingData';
 import { ObPage, Icon } from './OnboardingBits';
 
 const SLIPS = [
@@ -29,9 +29,20 @@ export default function LandingScreen() {
   const [target, setTarget] = useState(null);   // room whose gear sheet is open
   const [confirming, setConfirming] = useState(false);
 
+  // Fresh room details (budget, name) for every saved room, then redraw the rows.
+  const [fresh, setFresh] = useState(0);
+  const codes = savedRooms.map(r => r.code).join(',');
+  useEffect(() => {
+    let live = true;
+    if (codes) refreshRoomCaches(savedRooms).then(() => { if (live) setFresh(n => n + 1); });
+    return () => { live = false; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [codes]);
+
   const rows = useMemo(
     () => savedRooms.map((r, i) => ({ ...r, dot: ROOM_DOTS[i % ROOM_DOTS.length], ...summariseRoom(r) })),
-    [savedRooms]
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+    [savedRooms, fresh]
   );
   const current = rows.find(r => r.code === target) || null;
 

@@ -114,7 +114,7 @@ export function SuggestBar({ items = [], onPaste, className = '' }) {
   );
 }
 
-function Tray({ kind, press, trayRef, setSlot, shift, capsOn }) {
+function Tray({ kind, press, trayRef, setSlot, shift, capsOn, doneLabel = 'Done' }) {
   const [layer, setLayer] = useState(0);
   const pick = n => { haptic('tap'); setLayer(n); };
 
@@ -129,7 +129,7 @@ function Tray({ kind, press, trayRef, setSlot, shift, capsOn }) {
               label={k === '⌫' ? 'Delete' : k === '.' ? 'Decimal point' : undefined} />
           ))}
         </div>
-        <button type="button" className="kb-done se-press" onPointerDown={e => e.preventDefault()} onClick={() => press('Done')}>Done</button>
+        <button type="button" className="kb-done se-press" onPointerDown={e => e.preventDefault()} onClick={() => press('Done')}>{doneLabel}</button>
       </div>
     );
   }
@@ -159,7 +159,7 @@ function Tray({ kind, press, trayRef, setSlot, shift, capsOn }) {
                   <ShiftIcon lock={shift === 2} />
                 </Key>
                 <Key k="space" i={28} onPress={press} cls="kb-sp" style={{ flex: 1 }} />
-                <Key k="Done" i={29} onPress={press} cls="kb-sp kb-go" style={{ width: 96, flex: 'none' }} />
+                <Key k="Done" i={29} onPress={press} cls="kb-sp kb-go" style={{ width: 96, flex: 'none' }} label={doneLabel}>{doneLabel}</Key>
               </div>
             </div>
           ) : (
@@ -167,8 +167,8 @@ function Tray({ kind, press, trayRef, setSlot, shift, capsOn }) {
               {NUM.map((k, i) => (
                 <Key key={k} k={k} i={i} onPress={press} repeat={k === '⌫'}
                   cls={k === '⌫' ? 'kb-del' : k === 'Done' ? 'kb-sp kb-go' : SYM.has(k) ? 'kb-sym' : ''}
-                  label={k === '⌫' ? 'Delete' : undefined}
-                  style={k === '⌫' || k === 'Done' ? { gridColumn: 'span 2' } : undefined} />
+                  label={k === '⌫' ? 'Delete' : k === 'Done' ? doneLabel : undefined}
+                  style={k === '⌫' || k === 'Done' ? { gridColumn: 'span 2' } : undefined}>{k === 'Done' ? doneLabel : undefined}</Key>
               ))}
             </div>
           )}
@@ -197,12 +197,12 @@ export function KeyboardProvider({ children }) {
     a?.blur?.();
   }, []);
 
-  const focus = useCallback((id, kind, fieldApi) => {
+  const focus = useCallback((id, kind, fieldApi, doneLabel) => {
     if (api.current && api.current !== fieldApi) api.current.blur?.();
     api.current = fieldApi;
     activeId.current = id;
     setShift(0);
-    setActive({ id, kind });
+    setActive({ id, kind, doneLabel });
   }, []);
   const isActive = useCallback(id => activeId.current === id, []);
 
@@ -262,7 +262,7 @@ export function KeyboardProvider({ children }) {
   return (
     <KbCtx.Provider value={value}>
       {children}
-      {active && createPortal(<Tray key={active.kind} kind={active.kind} press={press} trayRef={trayRef} setSlot={setSlot} shift={shift} capsOn={shift > 0 || autoCap} />, document.body)}
+      {active && createPortal(<Tray key={active.kind} kind={active.kind} press={press} trayRef={trayRef} setSlot={setSlot} shift={shift} capsOn={shift > 0 || autoCap} doneLabel={active.doneLabel} />, document.body)}
     </KbCtx.Provider>
   );
 }
@@ -297,7 +297,8 @@ function nextAmount(v, k) {
  */
 export function TextField({
   value = '', onChange, placeholder, maxLength = 80, kind = 'text', caps = 'sentences',
-  className = '', autoFocus = false, onDone, onBlur, disabled = false, prefix, suggestions = [], ...rest
+  className = '', autoFocus = false, onDone, onBlur, disabled = false, prefix, suggestions = [],
+  next, fieldRef, ...rest
 }) {
   const kb = useKeyboard();
   const toast = useToast();
@@ -310,10 +311,11 @@ export function TextField({
   const willCap = kind === 'code' || autoStart(String(value ?? ''), caps);
   useEffect(() => { if (on) kb.setAutoCap(willCap); }, [on, willCap, kb]);
 
+  const nextField = useRef(null);   // the `next` field's ref (Done → Next)
   const [fieldApi] = useState(() => ({
       el: () => ref.current,
       blur: () => { ref.current?.blur(); props.current.onBlur?.(); },
-      done: () => props.current.onDone?.(),
+      done: () => { props.current.onDone?.(); nextField.current?.current?.focus(); },
       paste: raw => {
         const p = props.current;
         let t = String(raw || '').replace(/\s+/g, ' ');
@@ -363,10 +365,16 @@ export function TextField({
       if (!fieldApi.paste(txt)) { haptic('error'); toast({ message: 'Nothing to paste here', top: true, duration: 1800 }); }
     } catch { haptic('error'); toast({ message: 'Couldn’t read the clipboard', top: true, duration: 1800 }); }
   };
-  const open = () => { if (!disabled && kb) { haptic('tap'); kb.focus(id, pad, fieldApi); } };
+  // next: another field's fieldRef — the Done key becomes "Next" and jumps there.
+  const doneLabel = next ? 'Next' : 'Done';
+  useEffect(() => {
+    nextField.current = next || null;
+    if (fieldRef) fieldRef.current = { focus: () => kb?.focus(id, pad, fieldApi, doneLabel) };
+  });
+  const open = () => { if (!disabled && kb) { haptic('tap'); kb.focus(id, pad, fieldApi, doneLabel); } };
 
   useEffect(() => {
-    if (autoFocus && !disabled && kb) kb.focus(id, pad, fieldApi);
+    if (autoFocus && !disabled && kb) kb.focus(id, pad, fieldApi, next ? 'Next' : 'Done');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoFocus]);
   // Unmounting while focused closes the tray.

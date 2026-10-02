@@ -1,0 +1,7 @@
+.wn-kicker { display: block; font: 700 10px var(--se-font-mono); letter-spacing: .14em; color: var(--se-teal); margin-bottom: 4px; }
+.wn-list { list-style: none; margin: 16px 0 20px; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+.wn-row { display: flex; gap: 12px; align-items: flex-start; }
+.wn-ic { flex: none; width: 36px; height: 36px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--c); background: color-mix(in srgb, var(--c) 16%, transparent); }
+.wn-txt { display: flex; flex-direction: column; gap: 2px; font-size: 13px; line-height: 1.4; color: var(--se-text-2); }
+.wn-txt b { font-size: 14px; color: var(--se-text); font-weight: 600; }
+.wn-ok { width: 100%; height: 52px; }

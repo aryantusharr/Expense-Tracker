@@ -6,7 +6,7 @@ import { memberStyle, initialOf, fmt } from '../dashboard/dashboardData';
 import Sheet from '../ui/Sheet';
 import { useToast } from '../ui/Toast';
 
-const ECG = 'M0 20 H22 L26 20 L30 6 L36 34 L40 14 L44 20 H64';
+const ECG = 'M0 7 H11 L13 7 L15 1 L19 13 L21 4 L23 7 H34';
 const LABEL = { on: 'SYNCING', ok: 'IN SYNC', off: 'SYNC OFF', wait: 'OFFLINE' };
 
 /** Online / offline, live. */
@@ -138,12 +138,18 @@ export default function ProfileSync({ room, roomCode, users, expenses, userIdent
     <>
       <button type="button" className={`ps-pill ps-pill--${pill} se-press`} onClick={openSheet}
         aria-label={`Profile sync: ${LABEL[pill].toLowerCase()}${pill !== 'off' ? `, ${count} copies in ${linkedName}` : ', tap to set up'}`}>
-        <span className={`ps-dot ${pill === 'on' ? 'ps-dot--blink' : ''}`} aria-hidden="true" />
-        <span className="ps-txt">{LABEL[pill]}</span>
-        <span className="ps-ecg ps-bump" key={`b${count}`} aria-hidden="true">
-          <svg viewBox="0 0 64 40" preserveAspectRatio="none"><path d={ECG} /></svg>
+        <span className="ps-l1">
+          <span className={`ps-dot ${pill === 'on' ? 'ps-dot--blink' : ''}`} aria-hidden="true" />
+          <span className="ps-txt">{LABEL[pill]}</span>
+          <span className="ps-ecg ps-bump" key={`b${count}`} aria-hidden="true">
+            <svg viewBox="0 0 34 14" preserveAspectRatio="none"><path d={ECG} /></svg>
+          </span>
+          {pill !== 'off' && <span className="ps-cnt" key={`c${count}`} aria-hidden="true">{count}</span>}
         </span>
-        {pill !== 'off' && <span className="ps-cnt" key={`c${count}`} aria-hidden="true">{count}</span>}
+        <span className="ps-l2" aria-hidden="true">
+          {pill === 'off' ? 'TAP TO PICK A PERSONAL ROOM'
+            : `→ ${linkedName.toUpperCase()} · ${pill === 'on' ? 'COPYING' : pill === 'wait' ? 'WAITING' : 'UP TO DATE'}`}
+        </span>
       </button>
 
       <Sheet open={!!view} onClose={close} labelledBy="ps-title">
