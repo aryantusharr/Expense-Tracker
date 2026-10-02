@@ -1,4 +1,4 @@
-const CACHE_NAME = 'splitease-v5';
+const CACHE_NAME = 'splitease-v6';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -35,8 +35,15 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
   if (url.hostname.includes('firestore') || url.hostname.includes('googleapis')) return;
 
+  // Pages and version.json always come from the server, never the phone's HTTP cache —
+  // otherwise an installed app can keep running an old index.html after a release.
+  const fresh = event.request.mode === 'navigate' || url.pathname === '/version.json';
+  const go = fresh
+    ? fetch(event.request.url, { cache: 'no-store', credentials: 'same-origin' })
+    : fetch(event.request);
+
   event.respondWith(
-    fetch(event.request)
+    go
       .then((response) => {
         // Cache successful responses
         if (response.status === 200) {
