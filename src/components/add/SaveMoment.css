@@ -94,3 +94,9 @@
   .sm-paper--print { animation: se-fade .2s ease both; transform: none; }
   .sm-paper--fly { animation: se-fade .2s ease reverse forwards; }
 }
+
+/* Board Version-Final 3C: round double-ring version stamp on the receipt */
+.sm-ver { position: absolute; right: 12px; bottom: 16px; width: 54px; height: 54px; border-radius: 50%; border: 2.5px double #3B2F6B; color: #3B2F6B;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; transform: rotate(-7deg); opacity: .85;
+  font: 800 12px var(--se-font-display); line-height: 1.1; }
+.sm-ver small { font: 700 5.5px var(--se-font-mono); letter-spacing: .14em; }

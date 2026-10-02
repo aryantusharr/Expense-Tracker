@@ -4,6 +4,7 @@ import { haptic } from '../../utils/haptics';
 import { LineIcon } from '../ui/CategoryIcon';
 import FloatingNav from '../layout/FloatingNav';
 import './SaveMoment.css';
+import { SHORT } from '../../version/version';
 
 const fmtN = n => n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const prettyDate = d => new Date(`${d}T00:00`).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }).toUpperCase();
@@ -75,6 +76,7 @@ export default function SaveMoment({ title, lines, rows = [], total, date, paid,
           <span className="sm-paper__total"><span>TOTAL</span><span>₹{fmtN(total)}</span></span>
           <span className="sm-paper__added">✓ ADDED TO {room}</span>
           <span className="sm-paper__bars" aria-hidden="true">|||| ||| || |||| |</span>
+          <span className="sm-ver" aria-hidden="true">v{SHORT}<small>SPLITEASE</small></span>
         </div>
       </div>
 

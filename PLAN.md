@@ -88,6 +88,8 @@ Decisions (her "do whatever is best" → Claude's picks): category delete keeps 
 - [x] Sync pill v2 (board updated): slim two-line pill — state + small ECG + count on top, '→ <ROOM> · COPYING / UP TO DATE / WAITING' (or 'TAP TO PICK A PERSONAL ROOM') underneath
 - [x] Bug: room list showed stale budgets (cache only refreshed for the open room) — landing now re-reads each saved room (one get per room, read-only) and redraws
 - [x] Items: 'Next' key (bill name → total, item → amount); one-time 'What's new' sheet on Dashboard for existing users (localStorage splitease_whatsnew_keyboard; new users skip it)
+- [x] Version system (boards Version-Final + Version-WhatsNew-Final): v2.1.0 in package.json; build number = commit count, baked in by vite.config.js (+ dist/version.json). Settings footer (types in after an update), rooms-sheet footer, round v-stamp on the save receipt, PDF footer 'ROOM · PERIOD | SPLITEASE vX | n / N', 'UPDATED vX' stamp drops on the Settings room card once per update, What's new row (badge = number of changes) → sheet layout A (src/version/version.js RELEASE notes), auto-update toast 'Updating to vX in 5s' + Later (waits while on Add or typing). The earlier auto-popup What's new card was replaced by this.
+- RELEASE CHECKLIST (every release): bump package.json "version", write RELEASE notes in src/version/version.js, bump CACHE_NAME in public/sw.js (that's what makes open apps see the update toast).
 - [ ] Her phone pass (test preview channel), then deploy to live with her yes (fresh backup first, bump sw.js cache to v4)
 
 ## Log

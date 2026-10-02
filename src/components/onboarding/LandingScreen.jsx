@@ -8,6 +8,7 @@ import Sheet from '../ui/Sheet';
 import { useToast } from '../ui/Toast';
 import { summariseRoom, refreshRoomCaches, ROOM_DOTS, ICONS } from './onboardingData';
 import { ObPage, Icon } from './OnboardingBits';
+import { VERSION } from '../../version/version';
 
 const SLIPS = [
   { t: '₹40', left: '18%', x: '-24px', r: '-30deg', d: '0s' },
@@ -128,6 +129,7 @@ export default function LandingScreen() {
               </button>
             ))}
           </div>
+          <span className="ob-ver">SPLITEASE v{VERSION}</span>
         </div>
       </div>
 

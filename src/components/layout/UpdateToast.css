@@ -1,0 +1,12 @@
+/* Board Version-Final 7A2 */
+.upd { position: fixed; left: 16px; right: 16px; top: calc(12px + env(safe-area-inset-top, 0px)); z-index: 960; max-width: 480px; margin: 0 auto;
+  height: 44px; box-sizing: border-box; border-radius: 14px; display: flex; align-items: center; gap: 10px; padding: 0 6px 0 14px;
+  font-family: var(--se-font); background: #12112E; border: 1px solid rgba(95, 212, 196, .45); color: var(--se-text); animation: upd-in .5s var(--se-ease-strong) both; }
+:root[data-theme='light'] .upd { background: #FFFFFF; }
+.upd__dot { width: 8px; height: 8px; border-radius: 50%; background: #5FD4C4; flex: none; animation: upd-pulse 1.4s ease-in-out infinite; }
+@keyframes upd-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(95, 212, 196, .6); } 50% { box-shadow: 0 0 0 6px rgba(95, 212, 196, 0); } }
+.upd__txt { flex: 1; font-size: 12px; font-weight: 600; }
+.upd__later { height: 36px; padding: 0 10px; border: 0; background: none; cursor: pointer; font: 600 11px var(--se-font); color: #9E9BC0; }
+:root[data-theme='light'] .upd__later { color: #5E55A8; }
+@keyframes upd-in { from { transform: translateY(-30px); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .upd, .upd__dot { animation: none; } }

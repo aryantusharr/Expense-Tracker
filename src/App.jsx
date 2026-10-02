@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import { AnimatePresence } from 'framer-motion';
 import { useRoomContext } from './context/RoomContext';
 import FloatingNav from './components/layout/FloatingNav';
+import UpdateToast from './components/layout/UpdateToast';
 import LandingScreen from './components/onboarding/LandingScreen';
 import CreateScreen from './components/onboarding/CreateScreen';
 import JoinScreen from './components/onboarding/JoinScreen';
@@ -48,6 +49,7 @@ function AppRoutes() {
   return (
     <div className="app-container">
       <ScrollToTop />
+      <UpdateToast />
       <AnimatePresence mode="wait">
         <Routes>
           {/* Setup routes (no bottom nav) */}

@@ -11,6 +11,8 @@ import { useToast } from '../ui/Toast';
 import CategoriesSection from './CategoriesSection';
 import ProfileSync from './ProfileSync';
 import DataSection from './DataSection';
+import { WhatsNewRow } from '../layout/WhatsNew';
+import { VERSION, SHORT, BUILD, DATE, takeUpdateMoment } from '../../version/version';
 import './SettingsScreen.css';
 
 const P = {
@@ -72,6 +74,10 @@ export default function SettingsScreen() {
     catch (err) { toast({ message: 'Couldn’t save the budget', sub: String(err?.message || err), kind: 'error', top: true }); }
   };
 
+  // First open after an update: stamp drops on the room card, footer version types in (once).
+  const [stamp] = useState(() => takeUpdateMoment('stamp'));
+  const [typeIn] = useState(() => takeUpdateMoment('footer'));
+
   const a = theme === 'light' ? [0.2, 0.16, 0.1] : [0.5, 0.32, 0.22];
   const code = roomCode || '';
   const title = (room?.name || '').toUpperCase();
@@ -98,6 +104,11 @@ export default function SettingsScreen() {
 
         {/* Room ID card */}
         <section className="st-room se-in" style={{ animationDelay: '.05s' }}>
+          {stamp && (
+            <span className="st-upd" aria-label={`Updated to version ${SHORT}`}>
+              <span>UPDATED</span><b>v{SHORT}</b><span>{DATE}</span>
+            </span>
+          )}
           <div className="st-room__top">
             <div className="st-room__txt">
               <span className="st-mono st-mono--wide">
@@ -158,6 +169,11 @@ export default function SettingsScreen() {
 
         <Pill icon={P.data}>Data</Pill>
         <DataSection expenses={expenses} users={users} categories={categories} room={room} roomCode={roomCode} />
+
+        <WhatsNewRow />
+        <p className="st-ver">
+          SPLITEASE · <span className={typeIn ? 'st-ver__type' : ''} style={{ '--n': VERSION.length + 1 }}>v{VERSION}</span> · BUILD {BUILD}
+        </p>
 
       </main>
 

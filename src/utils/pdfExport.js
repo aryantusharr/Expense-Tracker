@@ -3,6 +3,7 @@ import autoTable from 'jspdf-autotable';
 import { calculateBalances } from './splitCalculator';
 import { calculateSettlements } from './settlementEngine';
 import { memberStyle, monthWindow } from '../components/dashboard/dashboardData';
+import { VERSION } from '../version/version';
 
 // "Magazine" report (board E1e): A4 landscape on white paper — a cover with one huge number,
 // then expenses per month, then a category × month matrix. Sora / JetBrains Mono / Unbounded /
@@ -323,8 +324,10 @@ export async function generateExpenseReport({ expenses, users, roomName, categor
   for (let i = 1; i <= pages; i++) {
     doc.setPage(i);
     doc.setFontSize(6); F('Mono'); doc.setTextColor(...MUTED);
-    text(`Generated ${new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} · ${clean(roomName)}`, 14, H - 8);
-    text(`PAGE ${i} OF ${pages}`, W - 14, H - 8, { align: 'right', charSpace: 0.4 });
+    // Board Version-Final 4A: room · period | SPLITEASE vX | page / pages
+    text(`${clean(roomName).toUpperCase()} · ${scopeLabel.toUpperCase()}`, 14, H - 8, { charSpace: 0.3 });
+    text(`SPLITEASE v${VERSION}`, W / 2, H - 8, { align: 'center', charSpace: 0.3 });
+    text(`${i} / ${pages}`, W - 14, H - 8, { align: 'right', charSpace: 0.3 });
   }
 
   const safeRoom = String(roomName || 'SplitEase').replace(/[^\w-]+/g, '_').replace(/^_+|_+$/g, '') || 'SplitEase';

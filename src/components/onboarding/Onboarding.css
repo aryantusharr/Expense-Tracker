@@ -197,3 +197,6 @@
 .ob-gear, .ob-back { position: relative; }
 .ob-gear::after { content: ''; position: absolute; inset: -5px; }
 .ob-back::after { content: ''; position: absolute; inset: -4px; }
+/* Board Version-Final 2C: version at the foot of the rooms sheet */
+.ob-ver { display: block; margin-top: 14px; text-align: center; font: 500 9.5px var(--se-font-mono); letter-spacing: .14em; color: #5C5B75; }
+:root[data-theme='light'] .ob-ver { color: #4A4390; }
