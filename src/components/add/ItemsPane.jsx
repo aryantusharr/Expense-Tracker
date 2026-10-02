@@ -9,10 +9,9 @@ import SlipsStrip from './SlipsStrip';
 import SlideToAdd from './SlideToAdd';
 import SaveMoment from './SaveMoment';
 import DateChips from './DateChips';
+import { TextField } from '../ui/Keyboard';
 import { evaluateMathExpression } from './addHelpers';
 
-// iOS drops the caret where you tap (often before a prefilled number) — move it to the end.
-const caretToEnd = e => { const el = e.target; setTimeout(() => { const n = el.value.length; try { el.setSelectionRange(n, n); } catch { /* not a text input */ } }, 0); };
 const fmtN = n => n.toLocaleString('en-IN', { maximumFractionDigits: 2 });
 
 /** Receipt paper (spec §6): mono type, dashed rules, dotted leaders, zigzag bottom, ink stamps before items. */
@@ -150,19 +149,19 @@ export default function ItemsPane({ c }) {
 
       {stage === 'setup' && (
         <div className="add-form se-in">
-          <label className="add-field">
+          <div className="add-field">
             <span className="add-field__label">BILL NAME</span>
-            <input className="add-input" value={c.billName} onChange={e => c.setBillName(e.target.value)} placeholder="e.g. Dinner at Social" maxLength={60} autoComplete="off" enterKeyHint="next" />
-          </label>
+            <TextField className="add-input" value={c.billName} onChange={c.setBillName} placeholder="e.g. Dinner at Social" maxLength={60} caps="words" aria-label="Bill name" />
+          </div>
           {names.length > 0 && !c.billName && (
             <div className="add-chips add-chips--scroll" data-noswipe aria-label="Recent bills">
               {names.slice(0, 6).map(n => <button key={n} type="button" className="se-chip" onClick={() => c.setBillName(n)}>{n}</button>)}
             </div>
           )}
-          <label className="add-field">
+          <div className="add-field">
             <span className="add-field__label">TOTAL</span>
-            <input className="add-input se-mono" value={c.billTotal} onChange={e => c.setBillTotal(e.target.value.replace(/[^0-9.+\-*/ ]/g, ''))} onBlur={evalTotal} onFocus={caretToEnd} placeholder="₹ 0" inputMode="decimal" autoComplete="off" />
-          </label>
+            <TextField className="add-input se-mono" kind="amount" value={c.billTotal} onChange={c.setBillTotal} onBlur={evalTotal} placeholder="₹ 0" maxLength={40} aria-label="Total" />
+          </div>
           {!isPersonal && (
             <SlipsStrip members={members} paidBy={form.paidBy} splitAmong={form.splitAmong} amount={total} onPayer={id => setField.paidBy(id)} onToggle={c.toggleSplit} payerOnly />
           )}
@@ -175,19 +174,19 @@ export default function ItemsPane({ c }) {
 
       {stage === 'bill' && drafting && (
         <div className="add-form se-in ib-panel">
-          <label className="add-field">
+          <div className="add-field">
             <span className="add-field__label">ITEM</span>
-            <input className="add-input" value={draft.description} onChange={e => setDesc(e.target.value)} placeholder="What was it for?" maxLength={80} autoComplete="off" />
-          </label>
+            <TextField className="add-input" value={draft.description} onChange={setDesc} placeholder="What was it for?" maxLength={80} aria-label="Item" />
+          </div>
           {itemChips.length > 0 && (
             <div className="add-chips add-chips--scroll" data-noswipe aria-label="Recent items">
               {itemChips.map(d => <button key={d} type="button" className="se-chip" onClick={() => { haptic('choose'); setDesc(d); }}>{d}</button>)}
             </div>
           )}
-          <label className="add-field">
+          <div className="add-field">
             <span className="add-field__label">AMOUNT</span>
-            <input className="add-input se-mono" value={draft.amount} onChange={e => setDraft(d => ({ ...d, amount: e.target.value.replace(/[^0-9.+\-*/ ]/g, '') }))} onBlur={evalDraft} onFocus={caretToEnd} inputMode="decimal" placeholder="₹ 0" autoComplete="off" />
-          </label>
+            <TextField className="add-input se-mono" kind="amount" value={draft.amount} onChange={v => setDraft(d => ({ ...d, amount: v }))} onBlur={evalDraft} placeholder="₹ 0" maxLength={40} aria-label="Item amount" />
+          </div>
           <div className="add-field">
             <span className="add-field__label">CATEGORY</span>
             <div className="add-cats" data-noswipe role="group" aria-label="Category">

@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react';
 import { haptic } from '../../utils/haptics';
 
 // Operators sit in the LEFT column, ⌫ bottom-right (spec §9).
@@ -9,6 +10,10 @@ const KEYS = [
 ];
 
 export default function Keypad({ onKey }) {
+  const [hit, setHit] = useState(null);   // board Numpad-Final: pressed key flashes the brand gradient
+  const t = useRef(null);
+  useEffect(() => () => clearTimeout(t.current), []);
+  const flash = k => { setHit(k); clearTimeout(t.current); t.current = setTimeout(() => setHit(null), 150); };
   return (
     <div className="add-keys" role="group" aria-label="Amount keypad">
       {KEYS.map(k => {
@@ -17,9 +22,9 @@ export default function Keypad({ onKey }) {
           <button
             key={k}
             type="button"
-            className={`add-key ${op ? 'add-key--op' : ''} ${k === '⌫' ? 'add-key--back' : ''}`}
+            className={`add-key ${op ? 'add-key--op' : ''} ${k === '⌫' ? 'add-key--back' : ''} ${hit === k ? 'is-hit' : ''}`}
             aria-label={k === '⌫' ? 'Delete' : k === '.' ? 'Decimal point' : k}
-            onClick={() => { haptic('tap'); onKey(k); }}
+            onClick={() => { haptic('tap'); flash(k); onKey(k); }}
           >
             {k === '⌫' ? (
               <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">

@@ -77,6 +77,13 @@ Decisions (her "do whatever is best" → Claude's picks): category delete keeps 
 - [ ] Rollback ready: hosting → Firebase console › Hosting › Release history › Rollback (24 Jun release), or build b33421b + deploy; rules → console › Firestore › Rules history, or deploy `allow read, write: if true`
 - [ ] Ask her, then delete the test Firebase project
 
+## Phase 6 · Post-launch fixes (her list, 2 Oct) — on `redesign`, NOT deployed yet
+- [x] Add: recurring chip → fills amount then jumps to description; Items: date row (shared DateChips), recent item chips, payer-only strip on bill page
+- [x] Settings: icon-only animated Switch room (top-right), ✎ rename on the code sticker (Room section removed), Categories folded into one row (unfolds in place), final Sync Pill (ECG + copy count; states SYNCING / IN SYNC / SYNC OFF / OFFLINE)
+- [x] History: printed item text 13px, 'Tap a line to change it' heading on the edit sheet
+- [x] In-app keyboard everywhere (src/components/ui/Keyboard.jsx + src/styles/keyboard.css): QWERTY 'Side rail' (ABC/123) for text, glass numpad for amounts (sums allowed), Quick keypad restyled to Numpad-Final. Native iPhone keyboard never opens (no autocorrect/dictation/emoji/paste — her call). Date pickers + CSV file picker stay native.
+- [ ] Her phone pass (test preview channel), then deploy to live with her yes (fresh backup first, bump sw.js cache to v4)
+
 ## Log
 - 2026-10-01 · Design finalised on the canvas (all screens + motion system). Plan written.
 - 2026-10-01 · Phase 0 done. Test project splitease-test-2026; env split + live guard; dev server runs against test. Test preview builds: `npm run build:test` then `firebase deploy --config firebase.test.json --only hosting:… --project test` (preview channel: `firebase hosting:channel:deploy <name> --config firebase.test.json --project test`).
@@ -112,3 +119,4 @@ Decisions (her "do whatever is best" → Claude's picks): category delete keeps 
 - 2026-10-02 · Phase 5 prep done in this chat (rules tested on test, build checked, SW v3). Actual go-live (backup, roomNames backfill, rules, merge, deploy) moves to a fresh chat — needs her explicit yes per live step.
 - 2026-10-01 · Go-live started: backup, 7 test rooms deleted on live, roomNames backfilled (4). Next: merge + hosting deploy, then rules (proposed order: hosting before rules — the old app's name check queries rooms, which the strict rules deny).
 - 2026-10-01 · LIVE: new app published + strict rules deployed (app first, then rules). Next: her phone check, tell the other 2 users to close + reopen, then ask before deleting the test project.
+- 2026-10-02 · Phase 6 built + checked in the browser (dark + light, 390×844): Settings, Add Items (numpad sums, item chips), History print + edit sheet, onboarding composer. Next: phone pass on a test preview, then live deploy (needs her yes).

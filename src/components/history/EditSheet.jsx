@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import Sheet from '../ui/Sheet';
+import { TextField } from '../ui/Keyboard';
+import { evaluateMathExpression } from '../add/addHelpers';
 import CategoryIcon from '../ui/CategoryIcon';
 import { haptic } from '../../utils/haptics';
 import { localDateStr, MONTHS_SHORT } from '../dashboard/dashboardData';
@@ -23,6 +25,7 @@ export default function EditSheet({ expense, users, categories, isPersonal, meId
     groupName: expense.groupName || '',
   }));
   const [field, setField] = useState('amt');
+  const [amtTxt, setAmtTxt] = useState(null);   // what's typed on the numpad (null = show the number)
     const [err, setErr] = useState('');
   const set = (k, v) => setD(p => ({ ...p, [k]: v }));
   const name = id => (id === meId ? 'You' : users.find(u => u.id === id)?.name || '—');
@@ -76,15 +79,16 @@ export default function EditSheet({ expense, users, categories, isPersonal, meId
           <div className="he__ctl se-pop">
             <div className="he__chips">
               {[-10, 10, 50, 100].map(n => (
-                <button key={n} type="button" className="he__chip se-press" onClick={() => { haptic('tap'); set('amount', Math.max(0, d.amount + n)); }}>{n < 0 ? '−' : '+'}₹{Math.abs(n)}</button>
+                <button key={n} type="button" className="he__chip se-press" onClick={() => { haptic('tap'); setAmtTxt(null); set('amount', Math.max(0, d.amount + n)); }}>{n < 0 ? '−' : '+'}₹{Math.abs(n)}</button>
               ))}
             </div>
-            <input className="he__input" inputMode="decimal" aria-label="Amount" value={d.amount || ''} placeholder="0"
-              onChange={e => set('amount', parseFloat(e.target.value.replace(/[^\d.]/g, '')) || 0)} />
+            <TextField className="he__input" kind="amount" aria-label="Amount" placeholder="0" maxLength={30}
+              value={amtTxt ?? (d.amount ? String(d.amount) : '')}
+              onChange={v => { setAmtTxt(v); set('amount', Math.max(0, evaluateMathExpression(v) ?? parseFloat(v) ?? 0) || 0); }} />
           </div>
         )}
-        {field === 'desc' && <input className="he__input he__input--wide se-pop" aria-label="Description" autoFocus value={d.description} onChange={e => set('description', e.target.value)} />}
-        {field === 'bill' && <input className="he__input he__input--wide se-pop" aria-label="Bill name" autoFocus value={d.groupName} onChange={e => set('groupName', e.target.value)} />}
+        {field === 'desc' && <TextField className="he__input he__input--wide se-pop" aria-label="Description" autoFocus maxLength={80} value={d.description} onChange={v => set('description', v)} />}
+        {field === 'bill' && <TextField className="he__input he__input--wide se-pop" aria-label="Bill name" autoFocus maxLength={60} caps="words" value={d.groupName} onChange={v => set('groupName', v)} />}
         {field === 'cat' && (
           <div className="he__strip se-pop">
             {categories.map(c => (

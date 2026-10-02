@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { ObPage, ObHeader } from './OnboardingBits';
+import { TextField } from '../ui/Keyboard';
 
 /**
  * Chat layout shared by Create and Personal: header, progress bar, bubbles, answer chips,
@@ -50,16 +51,16 @@ export default function ChatScreen({ title, sub, progress, msgs, typing, options
 
         {input && (
           <form className="ob-input se-glass" onSubmit={submit}>
-            <input
+            <TextField
               value={text}
-              onChange={e => setText(e.target.value)}
+              onChange={setText}
               placeholder={input.placeholder}
-              inputMode={input.inputMode}
+              kind={input.inputMode === 'numeric' ? 'number' : 'text'}
               maxLength={input.maxLength || 40}
-              autoComplete="off"
-              autoCapitalize={input.inputMode === 'numeric' ? 'off' : 'words'}
+              caps="words"
               aria-label={input.placeholder}
               disabled={input.disabled}
+              onDone={() => { const v = text.trim(); if (v) { setText(''); input.onSubmit(v); } }}
             />
             <button type="submit" className="ob-send se-press" aria-label="Send" disabled={!text.trim() || input.disabled}>↑</button>
           </form>

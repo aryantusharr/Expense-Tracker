@@ -5,6 +5,7 @@ import Button from '../ui/Button';
 import CategoryIcon from '../ui/CategoryIcon';
 import AmountOdometer from './AmountOdometer';
 import Keypad from './Keypad';
+import { TextField } from '../ui/Keyboard';
 import SlipsStrip from './SlipsStrip';
 import SlideToAdd from './SlideToAdd';
 import SaveMoment from './SaveMoment';
@@ -148,18 +149,10 @@ export default function QuickPane({ c }) {
         </div>
       ) : (
         <div className="add-form se-in">
-          <label className="add-field">
+          <div className="add-field">
             <span className="add-field__label">DESCRIPTION</span>
-            <input
-              className="add-input"
-              value={form.description}
-              onChange={e => c.setDescription(e.target.value)}
-              placeholder="What was it for?"
-              enterKeyHint="done"
-              autoComplete="off"
-              maxLength={80}
-            />
-          </label>
+            <TextField className="add-input" value={form.description} onChange={c.setDescription} placeholder="What was it for?" maxLength={80} aria-label="Description" />
+          </div>
           {c.filteredChips.length > 0 && !form.description && (
             <div className="add-chips add-chips--scroll" data-noswipe aria-label="Recent descriptions">
               {c.filteredChips.slice(0, 8).map(d => (

@@ -7,6 +7,7 @@ import { haptic } from '../../utils/haptics';
 import { CATEGORY_ICONS, resolveCategoryIcon } from '../../design/categoryIcons';
 import CategoryIcon, { LineIcon } from '../ui/CategoryIcon';
 import Sheet from '../ui/Sheet';
+import { TextField } from '../ui/Keyboard';
 import { useToast } from '../ui/Toast';
 
 const BIN = 'M4 7h16M10 11v6M14 11v6M5 7l1 13h12l1-13M9 7V4h6v3';
@@ -162,7 +163,7 @@ export default function CategoriesSection({ roomCode, categories, expenses }) {
               <span className="se-cat st-namefield__ic" style={{ '--c': picked?.color, '--size': '44px' }}><LineIcon path={picked?.path} size={22} /></span>
               <span className="st-namefield__col">
                 <span className="st-mono">NAME</span>
-                <input value={sheet.name} onChange={e => setSheet(s => ({ ...s, name: e.target.value }))} placeholder="Category name" maxLength={24} autoFocus={!sheet.id} />
+                <TextField value={sheet.name} onChange={v => setSheet(s => ({ ...s, name: v }))} placeholder="Category name" maxLength={24} autoFocus={!sheet.id} caps="words" aria-label="Category name" />
               </span>
             </label>
             <span className="st-mono">PICK AN ICON · {CATEGORY_ICONS.length}</span>

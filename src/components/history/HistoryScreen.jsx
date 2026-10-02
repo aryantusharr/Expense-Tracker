@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRoomContext } from '../../context/RoomContext';
 import { useToast, useToastDismiss } from '../ui/Toast';
 import { haptic } from '../../utils/haptics';
+import { TextField } from '../ui/Keyboard';
 import { resolveCategoryIcon } from '../../design/categoryIcons';
 import { memberStyle, fmt } from '../dashboard/dashboardData';
 import { updateExpense, updateGroupName, deleteExpense } from '../../services/expenseService';
@@ -47,7 +48,6 @@ export default function HistoryScreen() {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState('');
   const [filter, setFilter] = useState(null);
-  const inputRef = useRef(null);
   const ql = q.trim().toLowerCase();
   const suggestions = useMemo(() => {
     if (ql.length < 2) return [];
@@ -58,7 +58,7 @@ export default function HistoryScreen() {
   }, [ql, users, categories, isPersonal, meId]);
 
   // focus() must happen inside the tap itself or iOS won't raise the keyboard, so the input is always mounted.
-  const openSearch = () => { if (open) return; haptic('tap'); inputRef.current?.focus(); setOpen(true); };
+  const openSearch = () => { if (open) return; haptic('tap'); setOpen(true); };
   const closeSearch = e => { e?.stopPropagation(); setOpen(false); setQ(''); };
   const applyFilter = f => { haptic('tap'); setFilter(f); setOpen(false); setQ(''); };
 
@@ -176,7 +176,9 @@ export default function HistoryScreen() {
           </div>
           <div className={`hist__search se-glass ${open ? 'is-open' : ''}`} onClick={openSearch} role="search">
             <svg width="17" height="17" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16zM21 21l-4.3-4.3" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" /></svg>
-            <input ref={inputRef} value={q} onChange={e => setQ(e.target.value)} placeholder="Search “chai”, “Ravi”, “₹500”" aria-label="Search expenses" enterKeyHint="search" tabIndex={open ? 0 : -1} />
+            {open
+              ? <TextField value={q} onChange={setQ} placeholder="Search “chai”, “Ravi”, “₹500”" aria-label="Search expenses" caps="none" maxLength={40} autoFocus />
+              : <span className="hist__ph">Search “chai”, “Ravi”, “₹500”</span>}
             {open && <button type="button" className="hist__x" onClick={closeSearch} aria-label="Close search">×</button>}
           </div>
         </div>

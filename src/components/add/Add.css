@@ -277,3 +277,10 @@
 .add-amount-page { flex: 1; }
 .add-padzone { margin-top: auto; display: flex; flex-direction: column; gap: 14px; padding-top: 6px; }
 .add-padzone .add-key { height: clamp(50px, 6.6dvh, 60px); }
+
+/* Numpad final (glass grid): teal operator column, pink ⌫, gradient flash on press */
+.add-key { transition: transform .25s cubic-bezier(.34, 1.56, .64, 1), background .15s, box-shadow .2s, color .15s; }
+.add-key--op { color: #5FD4C4; background: rgba(95, 212, 196, .1); border-color: rgba(95, 212, 196, .25); }
+.add-key--back { background: rgba(255, 143, 181, .16); border-color: rgba(255, 143, 181, .5); color: var(--kb-del); }
+.add-key.is-hit { transform: scale(.9); background: linear-gradient(135deg, #8B7CFF, #5FD4C4); color: var(--kb-on-ink); box-shadow: 0 0 24px rgba(139, 124, 255, .55); border-color: transparent; }
+.add-key--back.is-hit { background: #FF8FB5; box-shadow: 0 0 22px rgba(255, 143, 181, .55); }

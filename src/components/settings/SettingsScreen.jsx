@@ -6,6 +6,7 @@ import { haptic } from '../../utils/haptics';
 import { memberStyle, initialOf, monthWindow, fmt } from '../dashboard/dashboardData';
 import { LineIcon } from '../ui/CategoryIcon';
 import Sheet from '../ui/Sheet';
+import { TextField } from '../ui/Keyboard';
 import { useToast } from '../ui/Toast';
 import CategoriesSection from './CategoriesSection';
 import ProfileSync from './ProfileSync';
@@ -166,8 +167,7 @@ export default function SettingsScreen() {
         <h2 className="se-sheet__title" id="st-name-t">Room name</h2>
         <label className="st-field">
           <span className="st-mono st-mono--wide">NAME</span>
-          <input value={nameDraft} onChange={e => setNameDraft(e.target.value)} maxLength={40} autoFocus
-            onKeyDown={e => { if (e.key === 'Enter') saveName(); }} />
+          <TextField value={nameDraft} onChange={setNameDraft} maxLength={40} autoFocus caps="words" aria-label="Room name" />
         </label>
         <span className="st-note">Everyone in the room sees the new name.</span>
         <div className="st-btnrow">
