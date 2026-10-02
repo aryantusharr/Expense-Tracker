@@ -137,3 +137,4 @@ Decisions (her "do whatever is best" → Claude's picks): category delete keeps 
 - 2026-10-02 · Test link updated: v2.1.0 build 97 (all fixes incl. sync safety), expires 2026-10-09. Next: her one phone pass → go live (backup, app, then rules 'room must exist' — each with her yes).
 
 - 2026-10-02 — Phone-pass polish (builds 99–100 on test link): bottom space above nav trimmed (Dashboard/History/Settings), no gap between sheet and keyboard, even keyboard margins + bigger letter keys, What's new Got it full height/pinned, build number coloured, sync setup sheet closes once copying starts (pill counts, toast at end).
+- 2026-10-02 — Slide to add prints immediately (no "Adding…" wait); save runs during the print, failure cancels the print with an error. Build 102 on test link.
