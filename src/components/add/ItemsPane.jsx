@@ -122,19 +122,27 @@ export default function ItemsPane({ c }) {
 
   const totalField = useRef(null);   // Next: bill name → total, item → amount
   const amountField = useRef(null);
-  const nudge = useRef(null);   // budget nudge, shown once the save moment is over
+  const nudge = useRef(null);     // budget nudge, shown once the save moment is over
+  const pending = useRef(null);   // the save, running while the receipt prints
+  const fail = message => { nudge.current = null; setSaved(null); toast({ kind: 'error', message: <b>{message}</b> }); setSlideShake(s => s + 1); };
   const confirm = async () => {
+    if (c.billProblem) { fail(c.billProblem); return; }
     nudge.current = c.budgetNudge(total, form.date);
-    const res = await c.submitBill();
-    if (!res.ok) { nudge.current = null; toast({ kind: 'error', message: <b>{res.message}</b> }); setSlideShake(s => s + 1); return; }
+    // Print straight away; the save runs underneath. A failed save stops the print and keeps the bill.
     const payer = members.find(m => m.id === form.paidBy);
     setSaved({
-      title: res.name, date: form.date, total: res.total, room: c.room?.name || c.roomCode,
+      title: c.billName.trim(), date: form.date, total, room: c.room?.name || c.roomCode,
       paid: isPersonal ? '' : `${(payer?.name || '').replace(/^test[\s_-]+/i, '').toUpperCase()} PAID`,
       lines: c.rows.map(r => ({ name: r.description, amount: parseFloat(r.amount), iconPath: resolveCategoryIcon(cats.find(x => x.id === r.categoryId)).path })),
     });
+    pending.current = c.submitBill();
+    const res = await pending.current;
+    if (!res.ok) fail(res.message);
   };
-  const finish = () => {
+  const finish = async () => {
+    const res = await pending.current;
+    pending.current = null;
+    if (!res?.ok) return;   // already shown as an error
     setSaved(null); c.resetBill(); setStage('setup'); setDrafting(false);
     if (nudge.current) { if (nudge.current.kind === 'warn') haptic('error'); toast({ ...nudge.current, duration: 5000 }); nudge.current = null; }
   };

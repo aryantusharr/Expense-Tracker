@@ -349,6 +349,7 @@ export function useAddController() {
     form, setField, toggleSplit, setDescription, pickCategory, autoCat, guessCat,
     sortedCategories, filteredChips, itemChips, recurringExpensesList, itemisedGroupNamesList,
     applyRecurring, problem, submitQuick, resetQuick, saving,
+    quickCheck: () => problem || validateExpense(form, isPersonal) || '',
     billName, setBillName, billTotal, setBillTotal, rows, addRow, removeRow, remaining, billProblem, submitBill, resetBill,
   };
 }

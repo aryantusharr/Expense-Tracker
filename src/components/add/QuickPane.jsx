@@ -92,22 +92,32 @@ export default function QuickPane({ c }) {
     toast({ kind: 'error', message: <b>{c.problem}</b> });
   };
 
-  const nudge = useRef(null);   // budget nudge, shown once the save moment is over
+  const nudge = useRef(null);     // budget nudge, shown once the save moment is over
+  const pending = useRef(null);   // the save, running while the receipt prints
+  const fail = message => { nudge.current = null; setSaved(null); toast({ kind: 'error', message: <b>{message}</b> }); setShake(s => s + 1); };
   const confirm = async () => {
+    const err = c.quickCheck();
+    if (err) { fail(err); return; }
     nudge.current = c.budgetNudge(amount, form.date);
-    const res = await c.submitQuick();
-    if (!res.ok) { nudge.current = null; toast({ kind: 'error', message: <b>{res.message}</b> }); setShake(s => s + 1); return; }
+    // Print straight away; the save runs underneath. A failed save stops the print and keeps the form.
     const cat = c.sortedCategories.find(x => x.id === form.categoryId);
     const payer = members.find(m => m.id === form.paidBy);
     const n = form.splitAmong.length;
+    const title = form.description.trim();
     setSaved({
-      title: res.description, date: form.date, total: res.amount, room: c.room?.name || c.roomCode,
+      title, date: form.date, total: amount, room: c.room?.name || c.roomCode,
       paid: isPersonal ? '' : `${nameOf(payer)} PAID`,
-      lines: [{ name: res.description, amount: res.amount, iconPath: cat ? resolveCategoryIcon(cat).path : undefined }],
-      rows: isPersonal || n < 1 ? [] : [{ a: `SPLIT ${n} WAYS`, b: `${n} × ${fmtN(Math.round(res.amount / n * 100) / 100)}` }],
+      lines: [{ name: title, amount, iconPath: cat ? resolveCategoryIcon(cat).path : undefined }],
+      rows: isPersonal || n < 1 ? [] : [{ a: `SPLIT ${n} WAYS`, b: `${n} × ${fmtN(Math.round(amount / n * 100) / 100)}` }],
     });
+    pending.current = c.submitQuick();
+    const res = await pending.current;
+    if (!res.ok) fail(res.message);
   };
-  const finish = () => {
+  const finish = async () => {
+    const res = await pending.current;
+    pending.current = null;
+    if (!res?.ok) return;   // already shown as an error
     setSaved(null); c.resetQuick(); setExpr(''); setView('amount');
     if (nudge.current) { if (nudge.current.kind === 'warn') haptic('error'); toast({ ...nudge.current, duration: 5000 }); nudge.current = null; }
   };
