@@ -17,13 +17,13 @@
 /* Room for the tray: pages scroll above it, sheets sit on top of it. */
 .se-kb-open body { padding-bottom: var(--se-kb-h, 0px); }
 .se-kb-open .se-sheet-wrap { bottom: var(--se-kb-h, 0px); }
-.se-kb-open .se-sheet { max-height: calc(92dvh - var(--se-kb-h, 0px)); }
+.se-kb-open .se-sheet { max-height: calc(92dvh - var(--se-kb-h, 0px)); padding-bottom: 14px; }
 .se-kb-open .se-floatnav, .se-kb-open .fnav { visibility: hidden; }
 
 /* ---------- Tray ---------- */
 .kb {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 940; box-sizing: border-box;
-  padding: 12px 8px calc(16px + env(safe-area-inset-bottom, 0px));
+  padding: 12px 14px calc(16px + env(safe-area-inset-bottom, 0px)) 10px;
   background: var(--kb-bg); background-image: radial-gradient(var(--kb-dots) 1px, transparent 1.2px); background-size: 12px 12px;
   user-select: none; -webkit-user-select: none; touch-action: manipulation;
   animation: kb-in .45s cubic-bezier(.34, 1.15, .64, 1) both;

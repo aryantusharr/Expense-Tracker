@@ -1,7 +1,7 @@
 /* Settings — boards App-Settings / -Personal / -Light (chunk 1: card, code, categories, appearance, room). */
 .st { min-height: 100dvh; }
 .st-sky { position: fixed; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
-.st-main { position: relative; z-index: 1; padding: calc(44px + env(safe-area-inset-top)) 20px 150px; display: flex; flex-direction: column; gap: 12px; }
+.st-main { position: relative; z-index: 1; padding: calc(44px + env(safe-area-inset-top)) 20px calc(var(--se-nav-bottom) + 92px); display: flex; flex-direction: column; gap: 12px; }
 .st-main :where(button) { font-family: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
 .st-title { margin: 0; font-size: 26px; font-weight: 600; letter-spacing: -.02em; }
 .st-mono { font-family: var(--se-font-mono); font-size: 9px; letter-spacing: .08em; color: var(--se-text-3); }

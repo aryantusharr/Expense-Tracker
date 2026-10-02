@@ -20,7 +20,7 @@
   --dsh-hairline: rgba(255, 255, 255, 0.06);
   --dsh-heat: rgba(139, 124, 255, 0.10);
   min-height: 100dvh;
-  padding: max(58px, calc(env(safe-area-inset-top) + 12px)) 20px calc(150px + env(safe-area-inset-bottom)); /* spec §5 */
+  padding: max(58px, calc(env(safe-area-inset-top) + 12px)) 20px calc(var(--se-nav-bottom) + 92px); /* spec §5 */
   max-width: 520px; margin: 0 auto;
   display: flex; flex-direction: column; gap: 22px;
   position: relative; box-sizing: border-box;

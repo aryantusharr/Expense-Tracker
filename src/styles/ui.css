@@ -93,6 +93,7 @@
   padding: 10px 18px calc(24px + env(safe-area-inset-bottom));
   display: flex; flex-direction: column; gap: 12px;
 }
+:where(.se-sheet > *) { flex-shrink: 0; }   /* tall sheets scroll instead of squashing buttons */
 .se-sheet__handle { align-self: center; width: 40px; height: 5px; border-radius: 3px; background: var(--se-handle); flex-shrink: 0; }
 .se-sheet__title { font-size: 17px; font-weight: 700; margin: 0; }
 

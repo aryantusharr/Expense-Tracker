@@ -161,11 +161,11 @@ export default function ProfileSync({ room, roomCode, users, expenses, userIdent
       });
       await updateRoom(roomCode, { users: next });
       setUserIdentity(who);
+      close();   // the sheet steps aside; the pill counts the copies up
       const n = await syncExistingSharedExpenses(roomCode, roomName, target, who, (done, total) => setProgress({ done, total }));
       haptic('success');
       setCopied(n);
-      setView('done');
-      setTimeout(() => setView(v => (v === 'done' ? null : v)), 2600);
+      say(<><b>Sync is on</b> · {n} past expense{n === 1 ? '' : 's'} copied</>);
     } catch { haptic('error'); say('Couldn’t set up sync — try again', 'error'); }
     setProgress(null);
     setBusy(false);

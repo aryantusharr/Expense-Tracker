@@ -172,7 +172,7 @@ export default function SettingsScreen() {
 
         <WhatsNewRow />
         <p className="st-ver">
-          SPLITEASE · <span className={typeIn ? 'st-ver__type' : ''} style={{ '--n': VERSION.length + 1 }}>v{VERSION}</span> · BUILD {BUILD}
+          SPLITEASE · <span className={typeIn ? 'st-ver__type' : ''} style={{ '--n': VERSION.length + 1 }}>v{VERSION}</span> · BUILD <span>{BUILD}</span>
         </p>
 
       </main>

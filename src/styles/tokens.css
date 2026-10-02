@@ -19,7 +19,7 @@
 :root {
   /* Floating nav's distance from the bottom: just above the home indicator on Face ID iPhones,
      12px on phones/browsers without one. Everything that lines up with the nav uses this. */
-  --se-nav-bottom: max(12px, calc(env(safe-area-inset-bottom) - 6px));
+  --se-nav-bottom: max(12px, calc(env(safe-area-inset-bottom) - 14px));
   /* ---- Type ---- */
   --se-font: 'Sora', system-ui, -apple-system, sans-serif;            /* body + UI */
   --se-font-display: 'Unbounded', 'Sora', system-ui, sans-serif;      /* big numbers, titles */

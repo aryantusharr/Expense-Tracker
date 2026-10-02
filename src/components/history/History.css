@@ -51,7 +51,7 @@
 .hist__stick-r .se-display { font-size: 16px; font-weight: 800; }
 .hist__list {
   position: fixed; left: 0; right: 0; top: var(--lt); bottom: 0; z-index: 2; max-width: 520px; margin: 0 auto; box-sizing: border-box;
-  overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; padding: 0 20px calc(130px + env(safe-area-inset-bottom));
+  overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; padding: 0 20px calc(var(--se-nav-bottom) + 92px);
   transition: top .35s; display: flex; flex-direction: column;
 }
 .hist__list::-webkit-scrollbar { display: none; }
