@@ -56,6 +56,10 @@ export default function EditSheet({ expense, users, categories, isPersonal, meId
   return (
     <Sheet open onClose={onClose} title={undefined} labelledBy="he-title">
       <div className="he">
+        <p className="he__cue">
+          <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4zM13.5 6.5l4 4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+          Tap a line to change it
+        </p>
         <div className="he__paper se-mono">
           <span id="he-title" className="he__title">{(bill ? d.groupName || expense.description : d.description || 'EXPENSE').toUpperCase()}</span>
           <span className="he__rule" />
