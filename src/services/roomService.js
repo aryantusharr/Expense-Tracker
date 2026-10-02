@@ -1,9 +1,37 @@
 
 import { db } from './firebase';
 import {
-  doc, setDoc, getDoc, updateDoc, deleteDoc, arrayUnion, onSnapshot,
+  doc, setDoc, getDoc, getDocFromServer, updateDoc, deleteDoc, arrayUnion, onSnapshot,
   collection, getDocs
 } from 'firebase/firestore';
+
+/**
+ * Does this room still exist? Asks the server (never the offline cache), so "gone" is only
+ * returned when the server says so. Returns 'exists' | 'gone' | 'unknown' (offline / error) + data.
+ */
+export async function roomStatus(roomCode) {
+  try {
+    const snap = await getDocFromServer(doc(db, 'rooms', roomCode));
+    return snap.exists() ? { status: 'exists', data: snap.data() } : { status: 'gone', data: null };
+  } catch {
+    return { status: 'unknown', data: null };
+  }
+}
+
+/**
+ * A personal room was deleted: clear every link to it in this shared room, so nothing keeps
+ * copying expenses into a room that no longer exists (that's how ghost data appeared).
+ */
+export async function unlinkPersonalRoom(sharedRoomCode, personalRoomCode) {
+  const snap = await getDoc(doc(db, 'rooms', sharedRoomCode));
+  if (!snap.exists()) return false;
+  const users = snap.data().users || [];
+  if (!users.some(u => u.personalRoomCode === personalRoomCode)) return false;
+  await updateDoc(doc(db, 'rooms', sharedRoomCode), {
+    users: users.map(u => (u.personalRoomCode === personalRoomCode ? { ...u, personalRoomCode: null } : u)),
+  });
+  return true;
+}
 
 // Generate a 6-character room code
 export function generateRoomCode() {

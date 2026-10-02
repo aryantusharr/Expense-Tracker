@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRoomContext } from '../../context/RoomContext';
-import { deleteRoom } from '../../services/roomService';
+import { deleteRoom, unlinkPersonalRoom } from '../../services/roomService';
 import { copyToClipboard } from '../../utils/helpers';
 import { haptic } from '../../utils/haptics';
 import Sheet from '../ui/Sheet';
@@ -66,9 +66,14 @@ export default function LandingScreen() {
     say(<>Removed <b>{name}</b> from this device · rejoin with {code}</>);
   };
   const deleteForEveryone = () => {
-    const { code, name } = current;
+    const { code, name, isPersonal } = current;
     closeSheet();
     deleteRoom(code).catch(() => { /* room doc deletion failed — it is removed locally either way */ });
+    // A deleted personal room: stop the shared rooms on this phone copying into it.
+    if (isPersonal) {
+      savedRooms.filter(r => !r.isPersonal && r.code !== code)
+        .forEach(r => unlinkPersonalRoom(r.code, code).catch(() => {}));
+    }
     forgetRoom(code);
     haptic('error');
     say(<><b>{name}</b> deleted for everyone</>);

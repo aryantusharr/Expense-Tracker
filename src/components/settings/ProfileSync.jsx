@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { syncExistingSharedExpenses, removeSyncedExpensesFromPersonalRooms } from '../../services/expenseService';
+import { roomStatus } from '../../services/roomService';
 import { haptic } from '../../utils/haptics';
 import { memberStyle, initialOf, fmt } from '../dashboard/dashboardData';
 import Sheet from '../ui/Sheet';
@@ -47,9 +48,28 @@ export default function ProfileSync({ room, roomCode, users, expenses, userIdent
   const personal = useMemo(() => savedRooms.filter(r => r.isPersonal), [savedRooms]);
   const me = users.find(u => u.id === userIdentity);
   const linked = me?.personalRoomCode ? savedRooms.find(r => r.code === me.personalRoomCode) : null;
-  const active = Boolean(me?.personalRoomCode);
+
+  // Is the linked personal room still there? (server-confirmed; offline keeps the last state)
+  const [linkCheck, setLinkCheck] = useState({ code: null, status: 'unknown', name: '' });
+  useEffect(() => {
+    const code = me?.personalRoomCode;
+    if (!code) return undefined;
+    let live = true;
+    roomStatus(code).then(r => { if (live) setLinkCheck({ code, status: r.status, name: r.data?.name || '' }); });
+    return () => { live = false; };
+  }, [me?.personalRoomCode]);
+  const linkGone = linkCheck.code === me?.personalRoomCode && linkCheck.status === 'gone';
+  // Deleted elsewhere → clear my dead link once (same write as "Turn off").
+  const unlinked = useRef(null);
+  useEffect(() => {
+    if (!linkGone || unlinked.current === me?.personalRoomCode) return;
+    unlinked.current = me?.personalRoomCode;
+    updateRoom(roomCode, { users: users.map(u => (u.id === userIdentity ? { ...u, personalRoomCode: null } : u)) }).catch(() => {});
+  }, [linkGone, me?.personalRoomCode, roomCode, updateRoom, users, userIdentity]);
+
+  const active = Boolean(me?.personalRoomCode) && !linkGone;
   const roomName = room?.name || 'this room';
-  const linkedName = linked?.name || 'your personal room';
+  const linkedName = linked?.name || (linkCheck.code === me?.personalRoomCode && linkCheck.name) || 'your personal room';
 
   // Sync pill (board Input-SyncPill-Final): one ECG spike per copy, count = copies of my share.
   const online = useOnline();
@@ -147,7 +167,7 @@ export default function ProfileSync({ room, roomCode, users, expenses, userIdent
           {pill !== 'off' && <span className="ps-cnt" key={`c${count}`} aria-hidden="true">{count}</span>}
         </span>
         <span className="ps-l2" aria-hidden="true">
-          {pill === 'off' ? 'TAP TO PICK A PERSONAL ROOM'
+          {pill === 'off' ? (linkGone ? 'ROOM DELETED · TAP TO PICK ANOTHER' : 'TAP TO PICK A PERSONAL ROOM')
             : `→ ${linkedName.toUpperCase()} · ${pill === 'on' ? 'COPYING' : pill === 'wait' ? 'WAITING' : 'UP TO DATE'}`}
         </span>
       </button>

@@ -4,6 +4,7 @@ import {
   query, getDoc, getDocs, where, arrayUnion
 } from 'firebase/firestore';
 import { getMemberShare } from '../services/expenseService';
+import { roomStatus, unlinkPersonalRoom } from '../services/roomService';
 
 /**
  * Resolves the first user ID in a personal room.
@@ -73,6 +74,12 @@ export async function syncExpenseToPersonalRooms(roomCode, roomData, expenseId, 
   const syncPromises = users
     .filter(user => user.personalRoomCode)
     .map(async (user) => {
+      // The personal room may have been deleted: never write copies into a room that's gone.
+      const pRoom = await roomStatus(user.personalRoomCode);
+      if (pRoom.status === 'gone') {
+        await unlinkPersonalRoom(roomCode, user.personalRoomCode).catch(() => {});
+        return;
+      }
       const share = getMemberShare(amount, splitAmong, user.id);
       const personalExpensesRef = collection(db, 'rooms', user.personalRoomCode, 'expenses');
       const q = query(personalExpensesRef, where('parentExpenseId', '==', expenseId));
@@ -93,7 +100,7 @@ export async function syncExpenseToPersonalRooms(roomCode, roomData, expenseId, 
         roomData.categories,
       );
 
-      const personalUserId = await getPersonalUserId(user.personalRoomCode);
+      const personalUserId = pRoom.data?.users?.[0]?.id || await getPersonalUserId(user.personalRoomCode);
       const syncedData = {
         description: expense.description,
         amount: share,
