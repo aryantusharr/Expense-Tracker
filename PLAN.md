@@ -129,3 +129,4 @@ Decisions (her "do whatever is best" → Claude's picks): category delete keeps 
 - 2026-10-01 · LIVE: new app published + strict rules deployed (app first, then rules). Next: her phone check, tell the other 2 users to close + reopen, then ask before deleting the test project.
 - 2026-10-02 · Phase 6 built + checked in the browser (dark + light, 390×844): Settings, Add Items (numpad sums, item chips), History print + edit sheet, onboarding composer. Next: phone pass on a test preview, then live deploy (needs her yes).
 - 2026-10-02 · Phase 6 on the test preview: https://splitease-test-2026--phone-test-1jiy4laa.web.app (expires 2026-10-09), SW cache v4. Next: her phone pass, then live deploy with her yes (fresh backup first).
+- 2026-10-02 · v2.1.0 build 88 on the test preview (SW cache v5), expires 2026-10-09. Next: her phone pass, then live with her yes (fresh backup first).
