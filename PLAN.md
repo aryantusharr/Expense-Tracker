@@ -96,7 +96,7 @@ Decisions (her "do whatever is best" → Claude's picks): category delete keeps 
 - Spec: `docs/AAI-Handoff.md` · Tech plan + steps (one chat each, Sonnet/Opus marked): `docs/AAI-Plan.md`
 - [ ] Her samples: payment texts (before Chat B), bill screenshots in test-data/bills/ (before Chat C)
 - [x] Her decisions + defaults (3 Oct): Remind only (no Mark settled), free Gemini tier, pay-back note, equal splits only (names win), digit row, Android Share later
-- [x] Chat A Brain ✅ (4 Oct… see Log) · [ ] Chat B Text AAI (Opus·high → Sonnet) · [ ] Chat C Bill reading (Sonnet → Opus·high → Sonnet) · [ ] Chat D iPhone + release v2.2.0 (Sonnet·med) · [ ] E Android Share (optional)
+- [x] Chat A Brain ✅ (see Log) · [ ] Chat B Text AAI (Opus·high → Sonnet) · [ ] Chat C Bill reading (Sonnet → Opus·high → Sonnet) · [ ] Chat D iPhone + release v2.2.0 (Sonnet·med) · [ ] E Android Share (optional)
 
 ## Log
 - 2026-10-01 · Design finalised on the canvas (all screens + motion system). Plan written.
