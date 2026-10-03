@@ -94,16 +94,6 @@ export function spendAnswer({ expenses, categories, categoryId, period, now, meI
 }
 
 /**
- * Personal room card: "₹X LEFT AFTER". The app has no budget field yet, so this returns null
- * unless a budget is passed in — Chat B decides where the budget comes from.
- */
-export function leftAfter({ budget, expenses, now, amount }) {
-  if (!(budget > 0)) return null;
-  const spent = monthSpend(expenses, now.getFullYear(), now.getMonth(), null, null).total;
-  return Math.round(budget - spent - amount);
-}
-
-/**
  * Same amount + same description within 24h of an existing expense → possible duplicate.
  * @returns the older matching expense, or null
  */

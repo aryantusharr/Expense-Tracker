@@ -148,7 +148,6 @@ export function buildChips(state) {
   q('q-month', 'This month', 'this month');
   if (now.getDate() > 10) q('q-biggest', 'Biggest spend', 'biggest spend');
   q('q-vs', 'vs last month', 'vs last month');
-  if (isPersonal) add('q-budget', 'questions', 'Budget left', '', { kind: 'budget' });
 
   return chips.filter(c => !hidden.includes(c.id)).slice(0, MAX_CHIPS);
 }

@@ -22,9 +22,9 @@ test('"Biggest spend" only after the 10th', () => {
   assert.ok(ids(buildChips(base({ now: at(2026, 10, 5) }))).every(i => i !== 'q-biggest'));
   assert.ok(ids(buildChips(base({ now: at(2026, 10, 11) }))).includes('q-biggest'));
 });
-test('personal room: Budget left, no Kitna dena hai', () => {
+test('personal room: no Kitna dena hai, no budget chip', () => {
   const c = ids(buildChips(base({ isPersonal: true })));
-  assert.ok(c.includes('q-budget')); assert.ok(!c.includes('q-owe'));
+  assert.ok(!c.includes('q-budget')); assert.ok(!c.includes('q-owe'));
 });
 test('Bill waiting when the queue has bills', () => {
   const c = buildChips(base({ queueCount: 2 }));

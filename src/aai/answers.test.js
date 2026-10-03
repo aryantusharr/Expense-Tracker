@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { balanceAnswer, settleAnswer, spendAnswer, findDuplicate, duplicatePairs, leftAfter } from './answers.js';
+import { balanceAnswer, settleAnswer, spendAnswer, findDuplicate, duplicatePairs } from './answers.js';
 import { exp, USERS, CATEGORIES, NOW } from './fixtures.js';
 
 const ME = 'u-me', RAVI = 'u-ravi', MEERA = 'u-meera';
@@ -65,11 +65,6 @@ test('spend: January looks back to December', () => {
   const jan = new Date(2027, 0, 15);
   const r = spendAnswer({ expenses: [exp({ date: '2026-12-20', amount: 200 }), exp({ date: '2027-01-02', amount: 300 })], categories: CATEGORIES, period: 'this', now: jan });
   assert.equal(r.prevTotal, 200); assert.equal(r.prevMonth, 'Dec'); assert.equal(r.pctVsPrev, 50);
-});
-
-test('leftAfter: needs a budget', () => {
-  assert.equal(leftAfter({ budget: 0, expenses: [], now: NOW, amount: 100 }), null);
-  assert.equal(leftAfter({ budget: 10000, expenses: [OCT({ amount: 1000 })], now: NOW, amount: 450 }), 8550);
 });
 
 test('duplicate: same amount + description within 24h', () => {
