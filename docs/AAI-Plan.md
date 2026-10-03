@@ -165,25 +165,19 @@ The text parser never shows these screens.
 
 ---
 
-## 3. Phases — one chat per step, with the model to use
+## 3. Phases — 5 chats (+1 optional), combined to save credits
 
-Each step is meant to fit in one fresh chat. **Sonnet** works for logic and wiring. **Opus** is worth it where the work is about matching the canvas exactly or tricky Safari animation. At the end of each step I update PLAN.md and give you a ready-to-paste first message for the next chat.
+Why 5: every new chat spends credits re-reading CLAUDE.md, PLAN.md and this plan. But one very long chat also gets expensive, because each reply carries the whole history. So steps that share the same files and the same kind of work go together, and there's a `/compact` at the natural break inside the big chats. At the end of each chat I update PLAN.md and give you the ready-to-paste first message for the next one.
 
-| # | Step (one chat) | Model | Size | Done when |
-|---|---|---|---|---|
-| 1a | Parser + answers + upi + chips logic, Node tests, no UI | Sonnet | M | `npm run test:aai` green |
-| 1b | Pill + buddy + sheet + bubble + AAI field (Ask) + tiles (bill tile shows "soon") | **Opus** | M | matches the canvas in dark + light at 390×844 |
-| 1c | Answer cards + in-card edit + Confirm → save moment → toast/Share; commands (undo/change/remove), remind, who-owes-whom (Remind only) | Sonnet | L | text-only AAI fully works on the test room |
-| 1d | Chips on screen + Paste payment (+ Android copied-payment chip, one-tap Install) | Sonnet | S | chips order checked against the table |
-| 2a | **You + me:** AI Logic + App Check on the TEST project (console, ~15 min of your clicks), `billRead.js` + error mapping + a dev-only test page | Sonnet | S | a sample bill returns JSON on localhost |
-| 3a | `AaiMark` (L1 loop, short, small, static), Safari rules | **Opus** | M | smooth in Safari + iPhone preview, no flicker |
-| 2b | Consent + reading + review + errors + queue (uses `AaiMark` from 3a) | **Opus** | L | 5 sample bills read, every error screen forced once |
-| 3b | Swap the app's loaders for `AaiMark`; motion/haptics polish; reduced motion | Sonnet | S | |
-| 4 | iPhone pass on a test preview channel (Home-Screen PWA, clipboard, photos, offline) → fix list → fixes | Sonnet | M | your OK |
-| 5 | Release: live backup → AI Logic + App Check on LIVE (your yes) → v2.2.0 + What's new + privacy line → merge + deploy (your yes) | Sonnet | S | live works on your phone |
-| 6 | *Optional, later:* Android Share → SplitEase (bills + payment texts), v2.2.1 | Sonnet | S | the Android user shares a Zepto bill in 3 taps |
+| Chat | Steps inside (old numbers) | New chat? | Model · effort | Why this way | Done when |
+|---|---|---|---|---|---|
+| **A · Brain** | Parser, split rules, upi.js, answers.js, chips.js, commands, Node tests (1a + chip logic from 1d) | New | **Sonnet · medium** | Pure logic + tests. There's nothing to match visually, so Sonnet does it well and cheaply. | `npm run test:aai` passes (~120 examples) |
+| **B · Text AAI** | Pill + buddy + sheet + bubble + AAI keyboard digit row + tiles → answer cards + in-card edit + Confirm → save moment → toast/Share + commands + chips on screen + Paste payment + Android copied chip / Install (1b + 1c + 1d UI) | New | **Opus · high** for the first half (pill/sheet/cards visuals) → `/compact` → switch to **Sonnet · medium** for the wiring (chips, paste, commands) | Same files throughout (`components/aai/`); visuals need canvas accuracy, wiring doesn't | text-only AAI works end to end on a Test room, dark + light, at 390×844 |
+| **C · Bill reading** | AI Logic + App Check on the TEST project (your ~10 min of clicks + 2 pastes) + `billRead.js` + errors → `AaiMark` loader (L1 / short / small / static) → consent + reading + review + errors + queue → swap app loaders (2a + 3a + 2b + 3b) | New | Start on **Sonnet · medium** (console + `billRead.js`) → switch to **Opus · high** for `AaiMark` + bill screens → `/compact` → **Sonnet · medium** to swap loaders | It all revolves around reading; the mark is built right before the screen that uses it | your sample bills read on localhost, every error screen forced once, loaders smooth in Safari |
+| **D · iPhone + release** | Preview-channel link → your phone pass → fix list → fixes → live backup → AI Logic/App Check on LIVE → v2.2.0 + What's new + privacy row → merge + deploy (4 + 5) | New | **Sonnet · medium** (switch to Opus only if a tricky visual bug shows up) | Testing and release are checklists; fixes are usually small | live works on your phone; each live step had your yes |
+| *E · Android Share (optional, later)* | Share → SplitEase for bills + payment texts, v2.2.1 (6) | New, whenever | **Sonnet · low** | Small: manifest + service worker + one entry point | the Android user shares a Zepto bill in 3 taps |
 
-Order change from your list: **3a (the mark) moves before 2b**, because the reading screen is built around the big looping mark. 1a also comes first on its own: it's pure logic, cheap on Sonnet, and every card depends on it.
+Tips that save the most: use `/compact` when I suggest it (not more often); send screenshots only when I ask for a visual check; for tiny copy/CSS fixes say "small fix" and stay on Sonnet · low.
 
 ---
 

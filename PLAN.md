@@ -94,8 +94,9 @@ Decisions (her "do whatever is best" → Claude's picks): category delete keeps 
 
 ## Phase 7 · Aryan AI (AAI) — planned, waiting for her "start"
 - Spec: `docs/AAI-Handoff.md` · Tech plan + steps (one chat each, Sonnet/Opus marked): `docs/AAI-Plan.md`
-- [ ] Her decisions: settle-up storage (#1), consent wording (#2), UPI-to-roommate (#3); samples (payment texts, bill screenshots); test-project console steps
-- [ ] 1a parser · 1b pill+sheet · 1c cards · 1d chips · 2a AI setup (test) · 3a AaiMark · 2b bill screens · 3b loaders · 4 iPhone pass · 5 release v2.2.0
+- [ ] Her samples: payment texts (before Chat B), bill screenshots in test-data/bills/ (before Chat C)
+- [x] Her decisions + defaults (3 Oct): Remind only (no Mark settled), free Gemini tier, pay-back note, equal splits only (names win), digit row, Android Share later
+- [ ] Chat A Brain (Sonnet·med) · [ ] Chat B Text AAI (Opus·high → Sonnet) · [ ] Chat C Bill reading (Sonnet → Opus·high → Sonnet) · [ ] Chat D iPhone + release v2.2.0 (Sonnet·med) · [ ] E Android Share (optional)
 
 ## Log
 - 2026-10-01 · Design finalised on the canvas (all screens + motion system). Plan written.
