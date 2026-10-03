@@ -5,18 +5,12 @@ import { exp, USERS, NOW } from './fixtures.js';
 
 const ME = 'u-me', RAVI = 'u-ravi';
 const at = (y, m, d, h = 12) => new Date(y, m - 1, d, h, 0, 0);
-const base = (over = {}) => ({ now: NOW, expenses: [], users: USERS, me: ME, categories: [], platform: 'ios', ...over });
+const base = (over = {}) => ({ now: NOW, expenses: [], users: USERS, me: ME, categories: [], ...over });
 const ids = chips => chips.map(c => c.id);
 const AGO = ms => new Date(NOW.getTime() - ms).toISOString();
 
-test('empty room: question chips + paste chip on iPhone', () => {
-  const c = buildChips(base());
-  assert.deepEqual(ids(c), ['paste-payment', 'not-logged', 'q-owe', 'q-month', 'q-vs']);
-  assert.equal(c[0].label, 'Paste copied text');
-});
-test('Android: "Copied payment" only when the clipboard has a payment', () => {
-  assert.equal(ids(buildChips(base({ platform: 'android', clipboardHasUpi: true })))[0], 'copied-payment');
-  assert.ok(!ids(buildChips(base({ platform: 'android', clipboardHasUpi: false }))).some(i => i.includes('paste') || i === 'copied-payment'));
+test('empty room: only question chips (+ Not logged after 8pm)', () => {
+  assert.deepEqual(ids(buildChips(base())), ['not-logged', 'q-owe', 'q-month', 'q-vs']);
 });
 test('"Biggest spend" only after the 10th', () => {
   assert.ok(ids(buildChips(base({ now: at(2026, 10, 5) }))).every(i => i !== 'q-biggest'));

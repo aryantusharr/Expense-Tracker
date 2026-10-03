@@ -4,10 +4,9 @@
  *
  * buildChips(state) → [{ id, group, label, detail, action }]
  *   action is something Chat B hands to the UI, e.g. { kind:'text', text:'kitna dena hai' },
- *   { kind:'undo' }, { kind:'paste' }, { kind:'remind', personId }, { kind:'expense', draft }, …
+ *   { kind:'undo' }, { kind:'remind', personId }, { kind:'expense', draft }, …
  *
- * state = { now, expenses, users, me, categories, isPersonal, platform:'android'|'ios'|'other',
- *           clipboardHasUpi (Android only), queueCount, lastAai, hidden (ids), installable }
+ * state = { now, expenses, users, me, categories, isPersonal, queueCount, lastAai, hidden (ids), installable }
  */
 import { normalize } from '../utils/categoryGuess.js';
 import { detectRecurringExpenses } from '../utils/recurringExpenses.js';
@@ -80,8 +79,8 @@ function usualNow(expenses, now) {
 
 export function buildChips(state) {
   const {
-    now, expenses = [], users = [], me = null, isPersonal = false, platform = 'other',
-    clipboardHasUpi = false, queueCount = 0, lastAai = null, hidden = [], installable = false,
+    now, expenses = [], users = [], me = null, isPersonal = false,
+    queueCount = 0, lastAai = null, hidden = [], installable = false,
   } = state;
   const todayStr = toDateStr(now);
   const nowMs = now.getTime();
@@ -89,9 +88,6 @@ export function buildChips(state) {
   const add = (id, group, label, detail, action) => chips.push({ id, group, label, detail, action });
 
   // ── Urgent ──
-  if (platform === 'android' && clipboardHasUpi) add('copied-payment', 'urgent', 'Copied payment', 'tap to add', { kind: 'paste', fromClipboard: true });
-  else if (platform !== 'android') add('paste-payment', 'urgent', 'Paste copied text', 'payment or bill text', { kind: 'paste', fromClipboard: false });
-
   if (queueCount > 0) add('bill-waiting', 'urgent', 'Bill waiting', `${queueCount} to read`, { kind: 'bill-queue' });
 
   if (lastAai?.ids?.length && nowMs - lastAai.at < 10 * MIN && expenses.some(e => lastAai.ids.includes(e.id))) {
