@@ -78,7 +78,7 @@ Dashboard header ── AaiPill ──tap──▶ AaiSheet (portal, sits above 
 3. **Date:** `today/aaj`, `yesterday/kal`, `parso` (day before yesterday), `2 oct` / `oct 2` / `2/10`, `last friday`, `friday`. `kal` always means yesterday (expenses are in the past). Future dates are pushed back one week/year.
 4. **Split words / ratios** (read before the amount, so `60/40` isn't taken as a number). **AAI only does equal splits** (her decision; the data model has no unequal shares). Rules, checked against the room's members:
    - `50-50`, `50/50`, `half-half`, `aadha aadha` = equal between **2** people. `33/33/33` = equal between 3. In general, equal parts = equal split between that many people.
-   - The number of parts must match the number of people in the split. People = the payer + the named people (`with ravi`), or the whole room if no one is named.
+   - People = the payer + the named people (`with ravi`), or the whole room if no one is named. **When names are given, the names win** and the ratio is ignored (no question). Only when no names are given and the parts don't match the room size does the buddy ask.
    - Unequal ratios (`60/40`, `70-30`, `50/30/20`) can't be saved, so the buddy says "AAI splits equally · pick who's in" with monogram toggles, all pre-selected.
 
    | Room | Typed | What AAI does |
@@ -86,11 +86,11 @@ Dashboard header ── AaiPill ──tap──▶ AaiSheet (portal, sits above 
    | 2 members | `petrol 2000 50-50` | ✓ equal, you + other |
    | 3 members | `petrol 2000 50-50 with ravi` | ✓ equal, you + Ravi (count matches) |
    | 3 members | `petrol 2000 50-50` | asks "50-50 between who? Pick 2" · toggles, Confirm stays off until exactly 2 are picked · or "Split 3 ways instead" |
-   | 3 members | `petrol 2000 50-50 with ravi meera` | asks "That's 3 people · split 3 ways equally?" Yes / Pick 2 |
+   | 3 members | `petrol 2000 50-50 with ravi meera` | ✓ no question: the names win, equal 3 ways (you + Ravi + Meera) |
    | 3 members | `petrol 2000 33/33/33` | ✓ equal, all 3 |
    | 4 members | `petrol 2000 33/33/33` | asks "Split between 3 · who's out?" (pick 1 to leave out) |
    | any | `petrol 2000 60/40` | "AAI splits equally · pick who's in" (toggles; default = everyone) |
-   | 3 members | `dinner 900 not ravi not meera` | only you are left → asks "Just you? That's not a split" · Add as personal / pick people |
+   | 3 members | `dinner 900 not ravi not meera` | ✓ no question: saved with split = just you (the card shows "split · just you") |
    | any | `only priya` (not in room) | "Priya isn't in this room · pick" |
    | personal room | any ratio / names | ignored; the card says "Personal room · no split" |
 5. **Amount:** `₹450`, `450rs`, `rs 450`, `4.5k`, `1,200`, `120+80` (uses the existing `amountExpr` maths). If several plain numbers are left: a number next to ₹/rs wins, otherwise the largest one, and the card flags the amount so you can tap and check it.
