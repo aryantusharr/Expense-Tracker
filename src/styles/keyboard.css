@@ -51,6 +51,9 @@
   transition: transform .35s cubic-bezier(.34, 1.8, .5, 1), color .15s, background .2s, text-shadow .2s;
 }
 .kb-l { width: calc((100% - 36px) / 10); flex: none; }
+/* AAI field only: digit row 1–0 above QWERTY (her decision 3 Oct) */
+.kb-row--digits { margin-bottom: -2px; }
+.kb-dg { height: 40px; font-size: 18px; border-radius: 10px; background: var(--kb-rail); }
 .kb-k::after { content: ''; position: absolute; left: 32%; right: 32%; bottom: 5px; height: 2px; border-radius: 2px; background: var(--c); opacity: 0; transition: opacity .2s; }
 .kb-k.is-on { color: var(--c); transform: translateY(-6px) scale(1.22) rotate(var(--r)); text-shadow: 0 0 14px var(--c); }
 .kb-k.is-on::after { opacity: 1; box-shadow: 0 0 10px var(--c); }

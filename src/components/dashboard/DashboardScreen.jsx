@@ -10,6 +10,8 @@ import BalanceDeck from './parts/BalanceDeck';
 import { MonthCard, SpendingMatrix, LifetimeSpend } from './parts/MonthAndMatrix';
 import UnmappedCategories from './parts/UnmappedCategories';
 import { Ticker, BudgetCard, LastPaid } from './parts/Personal';
+import AaiPill from '../aai/AaiPill';
+import AaiSheet from '../aai/AaiSheet';
 import './DashboardScreen.css';
 
 function useOnline() {
@@ -38,6 +40,7 @@ export default function DashboardScreen() {
   const selIdx = sel == null || sel >= months.length ? months.length - 1 : sel;
   const selMonth = months[selIdx];
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [aaiOpen, setAaiOpen] = useState(false);
 
   const me = model && userIdentity ? model.byId[userIdentity] : null;
   const now = new Date();
@@ -77,6 +80,8 @@ export default function DashboardScreen() {
               <span>{meta}</span>
             </div>
           </div>
+          <div className="dsh-head__right">
+          <AaiPill open={aaiOpen} onOpen={() => setAaiOpen(true)} />
           {isPersonal ? (
             <Mono m={owner} size={44} radius={14} fontSize={16} />
           ) : (
@@ -91,6 +96,7 @@ export default function DashboardScreen() {
                 : <span className="dsh-mono" style={{ '--c': 'var(--se-text-3)', width: 36, height: 36, borderRadius: 12, fontSize: 14 }}>?</span>}
             </button>
           )}
+          </div>
         </header>
 
         {isPersonal ? (
@@ -116,6 +122,7 @@ export default function DashboardScreen() {
         )}
       </main>
 
+      {aaiOpen && <AaiSheet onClose={() => setAaiOpen(false)} />}
       {isPersonal && <UnmappedCategories roomCode={roomCode} expenses={expenses} categories={categories} />}
       {!isPersonal && (
         <IdentitySheet

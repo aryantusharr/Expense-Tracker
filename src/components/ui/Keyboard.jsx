@@ -114,7 +114,7 @@ export function SuggestBar({ items = [], onPaste, className = '' }) {
   );
 }
 
-function Tray({ kind, press, trayRef, setSlot, shift, capsOn, doneLabel = 'Done' }) {
+function Tray({ kind, press, trayRef, setSlot, shift, capsOn, doneLabel = 'Done', digits = false }) {
   const [layer, setLayer] = useState(0);
   const pick = n => { haptic('tap'); setLayer(n); };
 
@@ -147,6 +147,11 @@ function Tray({ kind, press, trayRef, setSlot, shift, capsOn, doneLabel = 'Done'
         <div className="kb-keys">
           {layer === 0 ? (
             <div className="kb-rows">
+              {digits && (
+                <div className="kb-row kb-row--digits">
+                  {[...'1234567890'].map((k, ki) => <Key key={k} k={k} i={ki + 3} onPress={press} cls="kb-l kb-dg" />)}
+                </div>
+              )}
               {ROWS.map((row, ri) => (
                 <div className="kb-row" key={row}>
                   {[...row].map((k, ki) => <Key key={k} k={k} i={ri * 10 + ki} onPress={press} cls="kb-l">{capsOn ? k : k.toLowerCase()}</Key>)}
@@ -197,12 +202,12 @@ export function KeyboardProvider({ children }) {
     a?.blur?.();
   }, []);
 
-  const focus = useCallback((id, kind, fieldApi, doneLabel) => {
+  const focus = useCallback((id, kind, fieldApi, doneLabel, digits = false) => {
     if (api.current && api.current !== fieldApi) api.current.blur?.();
     api.current = fieldApi;
     activeId.current = id;
     setShift(0);
-    setActive({ id, kind, doneLabel });
+    setActive({ id, kind, doneLabel, digits });
   }, []);
   const isActive = useCallback(id => activeId.current === id, []);
 
@@ -262,7 +267,7 @@ export function KeyboardProvider({ children }) {
   return (
     <KbCtx.Provider value={value}>
       {children}
-      {active && createPortal(<Tray key={active.kind} kind={active.kind} press={press} trayRef={trayRef} setSlot={setSlot} shift={shift} capsOn={shift > 0 || autoCap} doneLabel={active.doneLabel} />, document.body)}
+      {active && createPortal(<Tray key={active.kind} kind={active.kind} press={press} trayRef={trayRef} setSlot={setSlot} shift={shift} capsOn={shift > 0 || autoCap} doneLabel={active.doneLabel} digits={active.digits} />, document.body)}
     </KbCtx.Provider>
   );
 }
@@ -294,11 +299,13 @@ function nextAmount(v, k) {
  * Field that types with the in-app keyboard. onChange gets the new string.
  * kind: 'text' (default) | 'amount' (numpad, expression string) | 'number' (numpad, no operators) | 'code' (CAPS).
  * caps: 'sentences' (default) | 'words' | 'none'.
+ * digitRow: QWERTY gets a 1–0 row on top (AAI field). slotContent: shown above the tray instead of the
+ * Paste/suggestion strip (null = nothing). doneLabel: name of the Done key (e.g. 'Ask').
  */
 export function TextField({
   value = '', onChange, placeholder, maxLength = 80, kind = 'text', caps = 'sentences',
   className = '', autoFocus = false, onDone, onBlur, disabled = false, prefix, suggestions = [],
-  next, fieldRef, ...rest
+  next, fieldRef, digitRow = false, slotContent, doneLabel: doneName = 'Done', ...rest
 }) {
   const kb = useKeyboard();
   const toast = useToast();
@@ -366,15 +373,15 @@ export function TextField({
     } catch { haptic('error'); toast({ message: 'Couldn’t read the clipboard', top: true, duration: 1800 }); }
   };
   // next: another field's fieldRef — the Done key becomes "Next" and jumps there.
-  const doneLabel = next ? 'Next' : 'Done';
+  const doneLabel = next ? 'Next' : doneName;
   useEffect(() => {
     nextField.current = next || null;
-    if (fieldRef) fieldRef.current = { focus: () => kb?.focus(id, pad, fieldApi, doneLabel) };
+    if (fieldRef) fieldRef.current = { focus: () => kb?.focus(id, pad, fieldApi, doneLabel, digitRow) };
   });
-  const open = () => { if (!disabled && kb) { haptic('tap'); kb.focus(id, pad, fieldApi, doneLabel); } };
+  const open = () => { if (!disabled && kb) { haptic('tap'); kb.focus(id, pad, fieldApi, doneLabel, digitRow); } };
 
   useEffect(() => {
-    if (autoFocus && !disabled && kb) kb.focus(id, pad, fieldApi, next ? 'Next' : 'Done');
+    if (autoFocus && !disabled && kb) kb.focus(id, pad, fieldApi, doneLabel, digitRow);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoFocus]);
   // Unmounting while focused closes the tray.
@@ -407,7 +414,7 @@ export function TextField({
       {...rest}
     >
       {prefix}
-      {on && kb.slot && createPortal(<SuggestBar items={suggestions} onPaste={paste} />, kb.slot)}
+      {on && kb.slot && createPortal(slotContent !== undefined ? slotContent : <SuggestBar items={suggestions} onPaste={paste} />, kb.slot)}
       <span className="se-field__in" ref={inner}>
         {v === '' && !on && <span className="se-field__ph">{placeholder}</span>}
         <span className="se-field__txt">
