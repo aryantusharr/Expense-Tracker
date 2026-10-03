@@ -1,6 +1,6 @@
 # Aryan AI (AAI) — tech plan
 
-Status: **draft, waiting for her approval** (written 3 Oct 2026). Nothing is built yet. Spec: `docs/AAI-Handoff.md` (§ numbers below refer to it). Design: canvas rows "Aryan AI (AAI)", "AAI mark · looping loader", "AAI short loader & small mark". Before building each screen, read that board's source and match it, don't guess from the written spec.
+Status: **final draft, waiting for her approval** (written 3 Oct 2026; her decisions added the same day). Nothing is built yet. Spec: `docs/AAI-Handoff.md` (§ numbers below refer to it). Design: canvas rows "Aryan AI (AAI)", "AAI mark · looping loader", "AAI short loader & small mark". Before building each screen, read that board's source and match it, don't guess from the written spec.
 
 ---
 
@@ -31,7 +31,7 @@ Dashboard header ── AaiPill ──tap──▶ AaiSheet (portal, sits above 
 - **Just one new optional field: `source: 'text' | 'paste' | 'bill'`** on expenses created by AAI. Older expenses don't have it, and nothing breaks if it's missing.
 - **The live rules don't need to change.** `validExpense` in `firestore.rules` only checks the required fields and allows extra ones, so `source` gets through. I'll check this on the test project.
 - Old app versions just ignore the field. Personal-room copies don't copy `source` (the sync builds its own field list), which is fine.
-- ⚠ "Mark settled" needs a decision first, see Brainstorm #1.
+- **No settle-up records** (her decision): "Mark settled" is dropped and AAI only offers Remind. Nothing new is saved for settling.
 - New localStorage keys (new names, so nothing existing is affected): `splitease_aai_consent`, `splitease_aai_chips` (chips hidden today), `splitease_aai_draft`, `splitease_aai_last` (what AAI added most recently, used by undo).
 
 ### Gemini + App Check setup (no server, zero cost)
@@ -43,8 +43,8 @@ Dashboard header ── AaiPill ──tap──▶ AaiSheet (portal, sits above 
 - **Structured answer.** The model is told to reply only in a fixed JSON format (`responseSchema`): `{ isBill, merchant, date, items:[{name, qty, amount, unclear, box}], charges:[{label, kind: tax|delivery|platform|packaging|service|tip|discount|roundoff, amount}], subtotal, total }`. The phone then works out the "Taxes & charges" line (only Subtotal is skipped), the mismatch amount, and which lines are flagged. AAI never trusts the model's maths.
 
 ### PWA / manifest changes
-- `manifest.json` gets a `share_target` so Android users can Share → SplitEase. It takes images (POST multipart to `/aai-share`) **and text**, which means a GPay/PhonePe "share receipt" text works too (see Brainstorm #9). iPhone ignores this; nothing changes there.
-- `sw.js` catches that POST, saves the shared files/text in the Cache API, then sends the app to `/dashboard?aai=share`, which opens the sheet with the shared bill or payment.
+- **Not in v2.2.0 (her decision):** Android Share → SplitEase. It moves to optional step 6 after release. When built: `manifest.json` gets a `share_target` (images + text, POST to `/aai-share`), and `sw.js` saves what was shared and opens `/dashboard?aai=share`.
+- Android in v2.2.0: auto-detected "Copied payment" chip, one-tap Install (`beforeinstallprompt`), and vibration feedback (reuses the existing `utils/haptics`).
 - The cache name already gets stamped at every build, so there's nothing to bump by hand. The version goes to **v2.2.0**, with release notes in `src/version/version.js`.
 
 ### Test setup (test project `splitease-test-2026` only)
@@ -61,8 +61,8 @@ Dashboard header ── AaiPill ──tap──▶ AaiSheet (portal, sits above 
 | Screen (board) | Components | Notes |
 |---|---|---|
 | Dashboard header | `AaiPill` (50×14 slot pill, `Buddy size="xs"`, 44×44 hit area, 4 states) | Placed left of the avatar in `DashboardScreen.jsx`. Only the buddy moves (CSS transform loop, 3s). The loop pauses while the sheet is open or the app is in the background. |
-| Sheet | `AaiSheet` (own bottom sheet, ✕ only, radius 30), `BigBuddy` (8×, blink 4s, bob, blush), `SpeechBubble` (greeting + rotating line ≤24 chars), `AaiTiles` (Bill screenshot · Paste payment), `AaiField` (the existing `TextField`, Done label = **Ask**), `SuggestChips` | Uses the existing `KeyboardProvider` tray and opens focused. The draft is saved when the sheet closes. |
-| Answer area | `QuestionEcho` + `AnswerCard` with 10 variants: `ExpenseCard`, `PaymentCard`, `ManyCard`, `RepeatCard`, `BalanceCard`, `SpendCard`, `RemindCard`, `SettleCard`, `EditUndoCard`, `ShareCard`, plus `UnknownCard` and `PickPersonCard` | Card rises and un-blurs (.45s). Buttons: Confirm (gradient) + Edit (glass). |
+| Sheet | `AaiSheet` (own bottom sheet, ✕ only, radius 30), `BigBuddy` (8×, blink 4s, bob, blush), `SpeechBubble` (greeting + rotating line ≤24 chars; no "Settle karein?" line), `AaiTiles` (Bill screenshot · Paste payment), `AaiField` (the existing `TextField`, Done label = **Ask**), `SuggestChips` | Uses the existing `KeyboardProvider` tray and opens focused. **AAI keyboard adds a digit row (1–0) above QWERTY**, only in this field (her decision). The draft is saved when the sheet closes. |
+| Answer area | `QuestionEcho` + `AnswerCard` variants: `ExpenseCard`, `PaymentCard`, `PayBackNote`, `ManyCard`, `RepeatCard`, `BalanceCard`, `SpendCard`, `RemindCard`, `SettleCard`, `EditUndoCard`, `ShareCard`, plus `UnknownCard` and `PickPersonCard` | Card rises and un-blurs (.45s). Buttons: Confirm (gradient) + Edit (glass). **Balances (5) and Settle plan (8) only have Remind**: no Mark settled, no Settle button. |
 | Edit in card | `EditAmount` (−50 −10 +10 +50 + numpad), `EditPeople` (monogram toggles), `EditCategory` (36 icons, reused), `EditDate` (reuses `add/DateChips.jsx`) | Tapping a value gives it a dashed violet outline, and only that control opens. |
 | Bill: consent | `BillConsent` (A\|AI mark + mini demo: screenshot → slot → receipt "READ BY A\|AI") | Shown once (`splitease_aai_consent`). |
 | Bill: reading | `BillReading` (thumbnails, slot buzz, "READING…", ghost lines, torn edge, `AaiMark variant="loop" scale=1.3`, Cancel) | The sheet can close while reading; the pill switches to its reading state and a toast says when the bill is ready. |
@@ -74,7 +74,7 @@ Dashboard header ── AaiPill ──tap──▶ AaiSheet (portal, sits above 
 
 ### Parser rules (run in this order; each step removes the words it used)
 1. **Split the input into several expenses** on newlines, `,` or ` and ` when each part has its own amount → "3 expenses or 1 bill?". Pattern `name total: item amt who, …, rest who` → itemised bill.
-2. **Commands first:** `undo` · `change last to N` · `remove <name> from <desc>` · `remind <name>` · `settle all` / `settle karo` · `kitna dena hai` / `how much do i owe` · `<category> this month` / `last month` / `biggest spend`.
+2. **Commands first:** `undo` · `change last to N` · `remove <name> from <desc>` · `remind <name>` · `settle all` / `settle karo` (shows who owes whom + Remind) · `kitna dena hai` / `how much do i owe` · `<category> this month` / `last month` / `biggest spend`.
 3. **Date:** `today/aaj`, `yesterday/kal`, `parso` (day before yesterday), `2 oct` / `oct 2` / `2/10`, `last friday`, `friday`. `kal` always means yesterday (expenses are in the past). Future dates are pushed back one week/year.
 4. **Split ratio:** `60/40`, `50-50`. This comes before the amount so `60/40` isn't read as a number.
 5. **Amount:** `₹450`, `450rs`, `rs 450`, `4.5k`, `1,200`, `120+80` (uses the existing `amountExpr` maths). If several plain numbers are left: a number next to ₹/rs wins, otherwise the largest one, and the card flags the amount so you can tap and check it.
@@ -106,7 +106,7 @@ Test examples (examples; the real test file has about 120 and runs against a fak
 
 **Live preview:** parsing runs 150ms after the last key press. A card shows once an amount is found; before that, the chips show. Ask is only needed for questions and commands.
 
-**Payment text (`upi.js`):** a regex per app (GPay / PhonePe / Paytm / BHIM, plus a generic UPI fallback) finds the amount, who was paid, the UPI ref and the date/time. If the person paid is a room member, AAI offers "Record as settle-up" (see #1). Otherwise it's an expense to that merchant. **I need real copied samples from you** to write these.
+**Payment text (`upi.js`):** a regex per app (GPay / PhonePe / Paytm / BHIM, plus a generic UPI fallback) finds the amount, who was paid, the UPI ref and the date/time. If the person paid is a room member → `PayBackNote`: "Looks like you paid Ravi back. AAI doesn't record pay-backs." + a small "Add as expense anyway" (her decision). Otherwise it's an expense to that shop. **I need real copied samples from you** to write these.
 
 ### Chip triggers (SG-A, max 8, computed on the phone, ordered by this table)
 | Group | Chip | Shows when | Tap → |
@@ -116,8 +116,8 @@ Test examples (examples; the real test file has about 120 and runs against a fak
 | | Undo last | AAI added something < 10 min ago | EditUndoCard |
 | | Possible duplicate | same amount + description within 24h | card with Delete one |
 | Money owed | Remind X | X has owed you > ₹0 for 7+ days | RemindCard |
-| | Settle all | 2+ open settlements | SettleCard |
-| | Month-end settle | last 3 days of the month and balances not zero | SettleCard |
+| | Who owes whom | 2+ open settlements | SettleCard (Remind buttons) |
+| | Month-end remind | last 3 days of the month and someone owes you | RemindCard |
 | Habits | Same as yesterday | yesterday's expense not repeated today | RepeatCard |
 | | Usual now | `detectRecurringExpenses` + time of day (±1h of usual) | ExpenseCard |
 | | Rent due | recurring expense due in ≤ 3 days | ExpenseCard |
@@ -155,14 +155,15 @@ Each step is meant to fit in one fresh chat. **Sonnet** works for logic and wiri
 |---|---|---|---|---|
 | 1a | Parser + answers + upi + chips logic, Node tests, no UI | Sonnet | M | `npm run test:aai` green |
 | 1b | Pill + buddy + sheet + bubble + AAI field (Ask) + tiles (bill tile shows "soon") | **Opus** | M | matches the canvas in dark + light at 390×844 |
-| 1c | Answer cards + in-card edit + Confirm → save moment → toast/Share; commands (undo/change/remove), remind, settle | Sonnet | L | text-only AAI fully works on the test room |
-| 1d | Chips on screen + Paste payment + Android share target (text) | Sonnet | S | chips order checked against the table |
+| 1c | Answer cards + in-card edit + Confirm → save moment → toast/Share; commands (undo/change/remove), remind, who-owes-whom (Remind only) | Sonnet | L | text-only AAI fully works on the test room |
+| 1d | Chips on screen + Paste payment (+ Android copied-payment chip, one-tap Install) | Sonnet | S | chips order checked against the table |
 | 2a | **You + me:** AI Logic + App Check on the TEST project (console, ~15 min of your clicks), `billRead.js` + error mapping + a dev-only test page | Sonnet | S | a sample bill returns JSON on localhost |
 | 3a | `AaiMark` (L1 loop, short, small, static), Safari rules | **Opus** | M | smooth in Safari + iPhone preview, no flicker |
 | 2b | Consent + reading + review + errors + queue (uses `AaiMark` from 3a) | **Opus** | L | 5 sample bills read, every error screen forced once |
 | 3b | Swap the app's loaders for `AaiMark`; motion/haptics polish; reduced motion | Sonnet | S | |
 | 4 | iPhone pass on a test preview channel (Home-Screen PWA, clipboard, photos, offline) → fix list → fixes | Sonnet | M | your OK |
 | 5 | Release: live backup → AI Logic + App Check on LIVE (your yes) → v2.2.0 + What's new + privacy line → merge + deploy (your yes) | Sonnet | S | live works on your phone |
+| 6 | *Optional, later:* Android Share → SplitEase (bills + payment texts), v2.2.1 | Sonnet | S | the Android user shares a Zepto bill in 3 taps |
 
 Order change from your list: **3a (the mark) moves before 2b**, because the reading screen is built around the big looping mark. 1a also comes first on its own: it's pure logic, cheap on Sonnet, and every card depends on it.
 
@@ -170,34 +171,26 @@ Order change from your list: **3a (the mark) moves before 2b**, because the read
 
 ## 4. What I need from you
 
-1. **Decisions** (Brainstorm #1–#3 below; the rest I'll decide unless you say otherwise).
-2. **Firebase console, test project first** (in the built-in browser; I'll walk you through each click):
-   - AI Logic → Get started → **Gemini Developer API** (turns on the APIs, free).
-   - AI Logic → settings → per-user rate limit ≈ 10/min.
-   - Make a reCAPTCHA v3 key (google.com/recaptcha/admin) with domains `localhost`, `web.app`, `splitease-test-2026.firebaseapp.com`. The **site key** is public, so it's fine to paste it in chat. The **secret key** goes only into Firebase → App Check → register the web app.
-   - App Check → Apps → add a debug token (I generate it, you paste it in).
-   - App Check → APIs → Firebase AI Logic → **Enforce** (after one successful test). **Don't enforce Firestore.**
-   - If the Firebase browser key has API restrictions (Google Cloud → Credentials), add the Firebase AI Logic API to them. I'll check.
-   - The same steps on the live project at release (with your yes), with domain `splitease-7bb6c.web.app` + any custom domain.
-3. **Samples:** 3–5 copied payment texts from GPay / PhonePe / Paytm (change the names), and 4–6 bill screenshots (Zepto/Blinkit/Swiggy/restaurant/DMart, personal details cropped out). These get sent to Gemini on the test project.
-4. **Privacy policy:** I couldn't find one in the app. Where should the line go (a Settings row → small sheet)? Draft:
-   > "Bill screenshots you choose to read are sent to Google's Gemini API (through Firebase) to find the items and total. SplitEase doesn't save your screenshots; only the items you confirm are saved to your room. Google processes them under its Gemini API terms. Text you type to AAI is understood on your phone and never sent anywhere. Bill reading is protected by Google reCAPTCHA."
-5. **Board screenshots** only if I can't read the canvas boards with the Artifact tool when building a screen.
-6. Does any of your 3 users use Android? If not, I'd skip the share target and Android-only clipboard chip for now (saves a step).
+**Decided (3 Oct):** no Mark settled, Remind only · free Gemini tier, consent says "SplitEase doesn't save your screenshots" · pay-back note for payments to roommates · Android: everything except Share (step 6, later) · digit row on the AAI keyboard.
 
----
+1. **Firebase console.** I click through it in the built-in browser after you sign in (you type your own password). I ask before each setting change. Two things you have to paste yourself, because I'm not allowed to type secrets: the **reCAPTCHA secret key** (into App Check) and the **App Check debug token**. The steps, test project first:
+   - AI Logic → Get started → **Gemini Developer API** (free) · per-user limit ≈ 10/min.
+   - reCAPTCHA v3 key (google.com/recaptcha/admin) with domains `localhost`, `web.app`, `splitease-test-2026.firebaseapp.com`. The site key is public; it goes in `.env` files.
+   - App Check → register the web app with reCAPTCHA (you paste the secret) → add the debug token (you paste it) → after one good test, **Enforce for AI Logic only, never Firestore**.
+   - If the browser key has API restrictions, add Firebase AI Logic to them.
+   - The same on the live project at release (your yes), with domain `splitease-7bb6c.web.app`.
+2. **3–5 copied payment texts** (GPay / PhonePe / Paytm). Change the names if you like. Paste them in chat or into `test-data/payments.txt`.
+3. **4–6 bill screenshots** exactly as users would send them (Zepto / Blinkit / Instamart / Swiggy / restaurant / DMart), no cropping needed. Drop them into `test-data/bills/`. I'll make that folder git-ignored so they never reach GitHub. They're only sent to Gemini on the test project.
+4. **Privacy line placement (my pick):** only two quiet places. (a) The one-time consent sheet gets a small "How it works" link. (b) One "Privacy" row at the very bottom of Settings, near the version, which opens a small sheet with the text below. It's nowhere else. Text:
+   > "Bill screenshots you choose to read are sent to Google's Gemini API (through Firebase) to find the items and total. SplitEase doesn't save your screenshots; only the items you confirm are saved to your room. Google processes them under its Gemini API terms. Text you type to AAI is understood on your phone and never sent anywhere. Bill reading is protected by Google reCAPTCHA."
+5. **Your review of section 5, items #4–#8 and #16** (my defaults are written next to each).
 
 ## 5. Brainstorm — risks, unclear bits, simpler ideas
 
-**Needs your decision**
-1. **"Mark settled" has nowhere to be saved.** The app never records settlements; balances are always worked out from expenses. Options:
-   - **A (my pick):** save a settlement as a normal expense (paid by Ravi, split only to you, ₹640) with `source:'settle'`. Balances fix themselves with no schema change. To make it work: hide it from spend totals, charts, budget, exports and personal-room sync (otherwise it shows up as spending), and show it in History as a "Settled" row. Older app versions would still count it as spending until they update (the update toast makes that quick).
-   - B: drop "Mark settled" and keep Remind only. Simplest, but there's less point to the Settle card.
-   - C: add a new `settlements` collection. That's a new data model and a rules change, which goes against "same data model". I'd avoid this.
-2. **"Not stored" on the consent screen may not be accurate.** On the free Gemini tier, Google's terms allow it to keep and use what's sent to improve its products. Options:
-   - **A (my pick):** keep the free tier and change the copy to "Bills are read by Aryan AI. SplitEase doesn't save your screenshots."
-   - B: switch to the paid Vertex AI backend (Google doesn't use the data, but it needs the Blaze plan with a card; the cost would be tiny but not zero).
-3. **Pasting a UPI payment to a roommate is really a settle-up, not a shared expense.** Card 2 ("To Ravi Kumar ₹640") should ask "Settled with Ravi?" when the person paid is in the room, and "Expense?" when it's a shop. This depends on #1.
+**Decided**
+1. ~~Mark settled~~ → dropped; Remind only.
+2. Consent copy → free tier, "Bills are read by Aryan AI. SplitEase doesn't save your screenshots."
+3. Pasted payment to a roommate → pay-back note + "Add as expense anyway".
 
 **Unclear in the spec (my default in brackets)**
 4. "Type items instead / Type items" from the bill screens: where does it go? [an empty review receipt inside AAI, so you stay in the sheet. Add Items would leave AAI, and the spec says AAI isn't on Add]
@@ -207,8 +200,8 @@ Order change from your list: **3a (the mark) moves before 2b**, because the read
 8. `60/40`: whose 60? [the payer's 60, the named person's 40; the card shows it so you can check]
 
 **Simpler / faster for users**
-9. **Android text share:** GPay/PhonePe "Share receipt" → SplitEase gives you a ready payment card in 2 taps, with no clipboard prompt. It's nearly free once the share target exists.
-10. **Number row on the AAI keyboard.** Sentences mix words and numbers ("paid 450 dinner"), and switching ABC↔123 costs taps every time. I suggest a digits row above QWERTY, for the AAI field only. That needs a design call from you.
+9. ~~Android text share~~ → part of optional step 6.
+10. ~~Number row~~ → decided: digit row on the AAI keyboard.
 11. **Screen height.** Keypad + chips + card + tiles + bubble + big buddy is a lot for 844pt. When a card shows, the tiles and bubble could shrink into one row. I'll check against the board and tell you if it doesn't fit; I won't improvise.
 12. **iPhone can't read the clipboard by itself.** So "Payment copied — add it?" (bubble) and the "Copied payment" chip can only appear on Android. On iPhone it's always "Paste copied text". The spec mostly says this already; the bubble line just needs to follow the same rule.
 13. **Real printing vs. print animation.** Showing receipt lines "as they arrive" means streaming broken-up JSON, which is fragile. Simpler: show ghost lines while waiting (3–8s), then print the real lines with the existing stutter-print animation. It looks the same and is far more reliable. "READING 2 OF 3" becomes a thumbnail highlight that moves along with the animation (since it's one request per bill).
