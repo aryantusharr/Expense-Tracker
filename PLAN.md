@@ -92,6 +92,11 @@ Decisions (her "do whatever is best" → Claude's picks): category delete keeps 
 - RELEASE CHECKLIST (every release): bump package.json "version" + write RELEASE notes in src/version/version.js. sw.js CACHE_NAME is now stamped automatically at build (version-build-time) and the update toast compares build ids, so every deploy (even a same-version fix) updates open apps — no manual bump.
 - [ ] Her phone pass (test preview channel), then deploy to live with her yes (fresh backup first, bump sw.js cache to v4)
 
+## Phase 7 · Aryan AI (AAI) — planned, waiting for her "start"
+- Spec: `docs/AAI-Handoff.md` · Tech plan + steps (one chat each, Sonnet/Opus marked): `docs/AAI-Plan.md`
+- [ ] Her decisions: settle-up storage (#1), consent wording (#2), UPI-to-roommate (#3); samples (payment texts, bill screenshots); test-project console steps
+- [ ] 1a parser · 1b pill+sheet · 1c cards · 1d chips · 2a AI setup (test) · 3a AaiMark · 2b bill screens · 3b loaders · 4 iPhone pass · 5 release v2.2.0
+
 ## Log
 - 2026-10-01 · Design finalised on the canvas (all screens + motion system). Plan written.
 - 2026-10-01 · Phase 0 done. Test project splitease-test-2026; env split + live guard; dev server runs against test. Test preview builds: `npm run build:test` then `firebase deploy --config firebase.test.json --only hosting:… --project test` (preview channel: `firebase hosting:channel:deploy <name> --config firebase.test.json --project test`).
@@ -139,3 +144,4 @@ Decisions (her "do whatever is best" → Claude's picks): category delete keeps 
 - 2026-10-02 — Phone-pass polish (builds 99–100 on test link): bottom space above nav trimmed (Dashboard/History/Settings), no gap between sheet and keyboard, even keyboard margins + bigger letter keys, What's new Got it full height/pinned, build number coloured, sync setup sheet closes once copying starts (pill counts, toast at end).
 - 2026-10-02 — Slide to add prints immediately (no "Adding…" wait); save runs during the print, failure cancels the print with an error. Build 102 on test link.
 - 2026-10-02 · LIVE: v2.1.0 build 104 published (her "yes, go live"). Backup first: `backups/splitease-7bb6c-2026-10-02T15-46-09` via new `scripts/backup-rooms.mjs` (rooms by code — strict rules block listing; 4 rooms, 4,590 exp). `redesign` fast-forwarded into main + pushed; `firebase deploy --only hosting --project live` OK. Not done: live check by fetch (blocked by auto mode — check on her phone), optional rule "expense writes need an existing room" (needs her separate yes).
+- 2026-10-03 · AAI tech plan written (`docs/AAI-Plan.md`), no code changed. Waiting for her decisions + "start".
