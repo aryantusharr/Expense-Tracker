@@ -1,6 +1,6 @@
 # Aryan AI (AAI) — tech plan
 
-Status: **final draft, waiting for her approval** (written 3 Oct 2026; her decisions added the same day). Nothing is built yet. Spec: `docs/AAI-Handoff.md` (§ numbers below refer to it). Design: canvas rows "Aryan AI (AAI)", "AAI mark · looping loader", "AAI short loader & small mark". Before building each screen, read that board's source and match it, don't guess from the written spec.
+Status: **final, waiting for her "start"** (written 3 Oct 2026; her decisions added the same day). Nothing is built yet. Spec: `docs/AAI-Handoff.md` (§ numbers below refer to it). Design: canvas rows "Aryan AI (AAI)", "AAI mark · looping loader", "AAI short loader & small mark". Before building each screen, read that board's source and match it, don't guess from the written spec.
 
 ---
 
@@ -76,7 +76,23 @@ Dashboard header ── AaiPill ──tap──▶ AaiSheet (portal, sits above 
 1. **Split the input into several expenses** on newlines, `,` or ` and ` when each part has its own amount → "3 expenses or 1 bill?". Pattern `name total: item amt who, …, rest who` → itemised bill.
 2. **Commands first:** `undo` · `change last to N` · `remove <name> from <desc>` · `remind <name>` · `settle all` / `settle karo` (shows who owes whom + Remind) · `kitna dena hai` / `how much do i owe` · `<category> this month` / `last month` / `biggest spend`.
 3. **Date:** `today/aaj`, `yesterday/kal`, `parso` (day before yesterday), `2 oct` / `oct 2` / `2/10`, `last friday`, `friday`. `kal` always means yesterday (expenses are in the past). Future dates are pushed back one week/year.
-4. **Split ratio:** `60/40`, `50-50`. This comes before the amount so `60/40` isn't read as a number.
+4. **Split words / ratios** (read before the amount, so `60/40` isn't taken as a number). **AAI only does equal splits** (her decision; the data model has no unequal shares). Rules, checked against the room's members:
+   - `50-50`, `50/50`, `half-half`, `aadha aadha` = equal between **2** people. `33/33/33` = equal between 3. In general, equal parts = equal split between that many people.
+   - The number of parts must match the number of people in the split. People = the payer + the named people (`with ravi`), or the whole room if no one is named.
+   - Unequal ratios (`60/40`, `70-30`, `50/30/20`) can't be saved, so the buddy says "AAI splits equally · pick who's in" with monogram toggles, all pre-selected.
+
+   | Room | Typed | What AAI does |
+   |---|---|---|
+   | 2 members | `petrol 2000 50-50` | ✓ equal, you + other |
+   | 3 members | `petrol 2000 50-50 with ravi` | ✓ equal, you + Ravi (count matches) |
+   | 3 members | `petrol 2000 50-50` | asks "50-50 between who? Pick 2" · toggles, Confirm stays off until exactly 2 are picked · or "Split 3 ways instead" |
+   | 3 members | `petrol 2000 50-50 with ravi meera` | asks "That's 3 people · split 3 ways equally?" Yes / Pick 2 |
+   | 3 members | `petrol 2000 33/33/33` | ✓ equal, all 3 |
+   | 4 members | `petrol 2000 33/33/33` | asks "Split between 3 · who's out?" (pick 1 to leave out) |
+   | any | `petrol 2000 60/40` | "AAI splits equally · pick who's in" (toggles; default = everyone) |
+   | 3 members | `dinner 900 not ravi not meera` | only you are left → asks "Just you? That's not a split" · Add as personal / pick people |
+   | any | `only priya` (not in room) | "Priya isn't in this room · pick" |
+   | personal room | any ratio / names | ignored; the card says "Personal room · no split" |
 5. **Amount:** `₹450`, `450rs`, `rs 450`, `4.5k`, `1,200`, `120+80` (uses the existing `amountExpr` maths). If several plain numbers are left: a number next to ₹/rs wins, otherwise the largest one, and the card flags the amount so you can tap and check it.
 6. **Payer:** `<name> paid`, `paid by <name>`, `<name> ne diya`, `maine diya` / `i paid` / `paid` → the phone owner. If AAI doesn't know who owns the phone, it shows the existing IdentitySheet once.
 7. **People:** `with a b`, `all/sab/everyone`, `me+ravi`, `not/except/bina meera`, `only meera`. Names match room members by start of name, ignoring case, the "Test " prefix and one typo. If two members match → `PickPersonCard`. If none match → "Priya isn't in this room · pick". Default: everyone in the room.
@@ -93,7 +109,9 @@ Test examples (examples; the real test file has about 120 and runs against a fak
 | `4.5k rent paid by meera` | ₹4500 · payer Meera · Rent |
 | `auto 120+80 me+ravi` | ₹200 · Auto · Travel · me+Ravi |
 | `swiggy 640 not meera` | ₹640 · split me+Ravi |
-| `petrol 2000 60/40 ravi` | ₹2000 · me 60% / Ravi 40% (*see Brainstorm #8*) |
+| `petrol 2000 50-50 with ravi` | ₹2000 · equal · me + Ravi |
+| `petrol 2000 60/40` | ₹2000 · "AAI splits equally · pick who's in" |
+| `petrol 2000 50-50` (3 in room) | ₹2000 · "50-50 between who? Pick 2" |
 | `maine diya 300 sabzi 2 oct` | ₹300 · payer me · Sabzi · 2 Oct |
 | `3 samosa 60` | ₹60 · "3 samosa" · amount flagged |
 | `chai 20, auto 50, milk 68` | ManyCard "3 found · ₹138" |
@@ -173,7 +191,7 @@ Order change from your list: **3a (the mark) moves before 2b**, because the read
 
 **Decided (3 Oct):** no Mark settled, Remind only · free Gemini tier, consent says "SplitEase doesn't save your screenshots" · pay-back note for payments to roommates · Android: everything except Share (step 6, later) · digit row on the AAI keyboard.
 
-1. **Firebase console.** I click through it in the built-in browser after you sign in (you type your own password). I ask before each setting change. Two things you have to paste yourself, because I'm not allowed to type secrets: the **reCAPTCHA secret key** (into App Check) and the **App Check debug token**. The steps, test project first:
+1. **Firebase console.** The test project + your sign-in are done (Phase 0). **AI Logic and App Check aren't turned on yet**: there's no reCAPTCHA key in the app's settings and nothing in PLAN.md about them. At step 2a I'll first check what's already on, then only do what's missing. I click through it in the built-in browser after you sign in (you type your own password). I ask before each setting change. Two things you have to paste yourself, because I'm not allowed to type secrets: the **reCAPTCHA secret key** (into App Check) and the **App Check debug token**. The steps, test project first:
    - AI Logic → Get started → **Gemini Developer API** (free) · per-user limit ≈ 10/min.
    - reCAPTCHA v3 key (google.com/recaptcha/admin) with domains `localhost`, `web.app`, `splitease-test-2026.firebaseapp.com`. The site key is public; it goes in `.env` files.
    - App Check → register the web app with reCAPTCHA (you paste the secret) → add the debug token (you paste it) → after one good test, **Enforce for AI Logic only, never Firestore**.
@@ -183,7 +201,7 @@ Order change from your list: **3a (the mark) moves before 2b**, because the read
 3. **4–6 bill screenshots** exactly as users would send them (Zepto / Blinkit / Instamart / Swiggy / restaurant / DMart), no cropping needed. Drop them into `test-data/bills/`. I'll make that folder git-ignored so they never reach GitHub. They're only sent to Gemini on the test project.
 4. **Privacy line placement (my pick):** only two quiet places. (a) The one-time consent sheet gets a small "How it works" link. (b) One "Privacy" row at the very bottom of Settings, near the version, which opens a small sheet with the text below. It's nowhere else. Text:
    > "Bill screenshots you choose to read are sent to Google's Gemini API (through Firebase) to find the items and total. SplitEase doesn't save your screenshots; only the items you confirm are saved to your room. Google processes them under its Gemini API terms. Text you type to AAI is understood on your phone and never sent anywhere. Bill reading is protected by Google reCAPTCHA."
-5. **Your review of section 5, items #4–#8 and #16** (my defaults are written next to each).
+5. ✓ Section 5 defaults reviewed (3 Oct).
 
 ## 5. Brainstorm — risks, unclear bits, simpler ideas
 
@@ -193,11 +211,11 @@ Order change from your list: **3a (the mark) moves before 2b**, because the read
 3. Pasted payment to a roommate → pay-back note + "Add as expense anyway".
 
 **Unclear in the spec (my default in brackets)**
-4. "Type items instead / Type items" from the bill screens: where does it go? [an empty review receipt inside AAI, so you stay in the sheet. Add Items would leave AAI, and the spec says AAI isn't on Add]
-5. §9 "Install how-to card / One-tap Install": where does it show? [a chip in the Habits group, only when the app runs in a browser tab rather than installed]
-6. Which expense does "change last" mean? [the last one this phone added through AAI in the past 24h, otherwise the room's newest]
-7. "TAP TO FIX" screenshot snippet: this needs Gemini to say where each line is on the image. That works most of the time but not always. [when the position is missing, show the flagged line without a snippet]
-8. `60/40`: whose 60? [the payer's 60, the named person's 40; the card shows it so you can check]
+4. ✓ "Type items" → an empty receipt inside AAI. The user types **one short line per item** in the same style as the main field (`atta 320 all`, `chips 90 me+ravi`, `delivery 25`). Each line prints onto the receipt as it's typed, then the normal review screen checks the total (her decision).
+5. ✓ §9 "Install how-to card / One-tap Install": where does it show? [a chip in the Habits group, only when the app runs in a browser tab rather than installed]
+6. ✓ Which expense does "change last" mean? [the last one this phone added through AAI in the past 24h, otherwise the room's newest]
+7. ✓ "TAP TO FIX" screenshot snippet: this needs Gemini to say where each line is on the image. That works most of the time but not always. [when the position is missing, show the flagged line without a snippet]
+8. ✓ Ratios → **equal splits only** (her decision); full rules and scenarios in Parser rule 4.
 
 **Simpler / faster for users**
 9. ~~Android text share~~ → part of optional step 6.
@@ -207,4 +225,4 @@ Order change from your list: **3a (the mark) moves before 2b**, because the read
 13. **Real printing vs. print animation.** Showing receipt lines "as they arrive" means streaming broken-up JSON, which is fragile. Simpler: show ghost lines while waiting (3–8s), then print the real lines with the existing stutter-print animation. It looks the same and is far more reliable. "READING 2 OF 3" becomes a thumbnail highlight that moves along with the animation (since it's one request per bill).
 14. **The daily limit is shared by everyone using the project.** That's fine for 3 users, and the per-user cap stops one person (or a stranger) from using it all up.
 15. **Battery:** the pill loop runs forever on the Dashboard. It's transform-only CSS and pauses when hidden, and with reduced motion it's static.
-16. The L1 loader shows "GPT? Claude? Gemini?" as tags, while §1 says never name the provider in the UI. That's fine as a joke (names only, no logos). Just confirming you're OK with it.
+16. ✓ The L1 loader shows "GPT? Claude? Gemini?" as tags, while §1 says never name the provider in the UI. That's fine as a joke (names only, no logos). Just confirming you're OK with it.
