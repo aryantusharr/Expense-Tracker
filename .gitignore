@@ -38,3 +38,6 @@ backups/
 .secrets/
 *serviceAccount*.json
 *-firebase-adminsdk-*.json
+
+# AAI test samples (real bills / payment texts) — never commit
+test-data/
