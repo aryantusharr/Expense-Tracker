@@ -112,14 +112,17 @@ export default function AaiSheet({ onClose }) {
   };
   const [asBill, setAsBill] = useState(false);
 
+  const [lastAai, setLastAai] = useState(() => read(K_LAST, null));
+  const saveLast = v => { write(K_LAST, v); setLastAai(v); };
+
   // Chips (only when no card is showing).
   const [hiddenStore, setHiddenStore] = useState(() => read(K_CHIPS, null));
   const [installable, setInstallable] = useState(canInstall);
   useEffect(() => onInstallable(setInstallable), []);
   const chips = useMemo(() => buildChips({
     now: new Date(), expenses, users, me: meId, categories, isPersonal,
-    lastAai: read(K_LAST, null), hidden: hiddenIds(hiddenStore, new Date()), installable,
-  }), [expenses, users, meId, categories, isPersonal, hiddenStore, installable]);
+    lastAai, hidden: hiddenIds(hiddenStore, new Date()), installable,
+  }), [expenses, users, meId, categories, isPersonal, hiddenStore, installable, lastAai]);
   const hide = c => { const next = hideChip(hiddenStore, c.id, new Date()); write(K_CHIPS, next); setHiddenStore(next); };
   const fieldRef = useRef(null);
   const pickChip = async c => {
@@ -185,7 +188,7 @@ export default function AaiSheet({ onClose }) {
           await shareOut(a.text);
         } else if (a.kind === 'run') {
           const r = await runPlan(ctx, a.plan);
-          if (a.plan.action === 'delete') write(K_LAST, null);
+          if (a.plan.action === 'delete') saveLast(null);
           haptic('success');
           toast(successToast(r.toast));
           clearEntry();
@@ -212,8 +215,8 @@ export default function AaiSheet({ onClose }) {
         res = await saveBill(ctx, payload.bill);
       }
       if (!res) return;
-      if (res.ids.length) write(K_LAST, { ids: res.ids, at: Date.now() });
-      after.current = successToast(res);
+      if (res.ids.length) saveLast({ ids: res.ids, at: Date.now() });
+      after.current = successToast({ ...res.toast, share: res.share });
       setMoment(res.moment);
     } catch (e) { fail(e); } finally { setBusy(false); }
   };
@@ -252,7 +255,7 @@ export default function AaiSheet({ onClose }) {
       case 'bill':
         return <BillCard key="bill" intent={intent} members={members} meId={meId} onConfirm={() => confirm({ type: 'bill', intent })} />;
       case 'command': {
-        const m = commandCard(intent, { expenses, users, meId, categories, isPersonal, now, roomName: room?.name, roomCode, lastAai: read(K_LAST, null) });
+        const m = commandCard(intent, { expenses, users, meId, categories, isPersonal, now, roomName: room?.name, roomCode, lastAai });
         return m && <Card key={`cmd-${intent.cmd}`} {...m} onAction={a => confirm({ type: 'action', action: a, intent })} />;
       }
       default:

@@ -143,3 +143,7 @@
 .se-toast__bar { position: absolute; left: 0; bottom: 0; height: 3px; width: 100%; background: #5FD4C4; transform-origin: left; animation: se-toast-bar linear forwards; }
 @keyframes se-toast-bar { to { transform: scaleX(0); } }
 @media (prefers-reduced-motion: reduce) { .se-toast__bar { animation: none; } }
+:root[data-theme='light'] .se-toast--aai { background: #fff; border-color: rgba(95,212,196,.45); color: #1B1A33; }
+:root[data-theme='light'] .se-toast--aai .se-toast__msg b { color: #1B1A33; }
+:root[data-theme='light'] .se-toast--aai .se-toast__sub { color: #6F6E88; }
+:root[data-theme='light'] .se-toast--aai .se-toast__ic { background: rgba(95,212,196,.15); border: 1px solid rgba(95,212,196,.5); }
