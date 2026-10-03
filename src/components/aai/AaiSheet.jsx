@@ -7,7 +7,10 @@ import { useToast } from '../ui/Toast';
 import { memberStyle, localDateStr } from '../dashboard/dashboardData';
 import { parse } from '../../aai/parse.js';
 import { buildChips, hiddenIds, hideChip } from '../../aai/chips.js';
-import { cleanName } from '../../aai/common.js';
+import { cleanName, fmtINR } from '../../aai/common.js';
+import { remindPlan } from '../../aai/commands.js';
+import SaveMoment from '../add/SaveMoment';
+import { saveExpense, saveMany, saveBill, runPlan, shareOut } from './aaiSave';
 import { BigBuddy } from './Buddy';
 import AaiChips from './AaiChips';
 import { ExpenseCard, ManyCard, BillCard, Card } from './AnswerCard';
@@ -50,7 +53,7 @@ function draftFrom(intent, sessionDate) {
   };
 }
 
-export default function AaiSheet({ onClose, onConfirm }) {
+export default function AaiSheet({ onClose }) {
   const { room, roomCode, expenses, users, categories, userIdentity } = useRoomContext();
   const kb = useKeyboard();
   const toast = useToast();
@@ -134,17 +137,108 @@ export default function AaiSheet({ onClose, onConfirm }) {
       return;
     }
     if (a.kind === 'expense' && a.draft) { say(`${a.draft.amount} ${a.draft.description}`.toLowerCase()); return; }
-    toast({ message: 'Coming in the next update', top: true, duration: 1800 });   // duplicate / bill queue / repeat bill
+    if (a.kind === 'duplicate') {
+      const keep = expenses.find(x => x.id === a.keep); const dup = expenses.find(x => x.id === a.remove);
+      if (keep && dup) setChipCard({ kind: 'duplicate', keep, dup });
+      return;
+    }
+    if (a.kind === 'repeat-bill') {
+      const lines = expenses.filter(x => x.groupId === a.groupId);
+      if (lines.length) setChipCard({ kind: 'repeat-bill', lines });
+      return;
+    }
+    toast({ message: 'Bill queue arrives with bill reading', top: true, duration: 1800 });
   };
 
-  const confirm = payload => {
-    if (onConfirm) { onConfirm(payload); return; }
-    haptic('choose');
-    toast({ message: 'Saving gets wired up in the next step', top: true, duration: 2000 });
+  // ── Saving ──
+  const ctx = { roomCode, room, expenses, users, categories, meId, isPersonal };
+  const [busy, setBusy] = useState(false);
+  const [moment, setMoment] = useState(null);     // SaveMoment props while the receipt prints
+  const after = useRef(null);                     // toast shown once the receipt has landed
+  const [chipCard, setChipCard] = useState(null); // duplicate / repeat-bill chip card (no typing)
+
+  const fail = e => { console.error(e); toast({ kind: 'error', message: <b>{e?.message || 'Couldn’t save — try again'}</b>, top: true }); };
+  const successToast = ({ message, sub, share }) => ({
+    top: true, kind: 'aai', duration: 5000, bar: 5000, message: <b>{message}</b>, sub: sub || undefined,
+    icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>,
+    action: share ? { label: 'Share', onClick: () => shareOut(share) } : undefined,
+  });
+  const clearEntry = () => { setText(''); setEdit({ for: null, draft: null }); setAsBill(false); setChipCard(null); };
+  const done = () => {
+    setMoment(null);
+    clearEntry();
+    if (after.current) { toast(after.current); after.current = null; }
+    setTimeout(() => fieldRef.current?.focus(), 120);
+  };
+  const needsPayer = list => !isPersonal && list.some(x => !x.paidBy);
+
+  const confirm = async payload => {
+    if (busy || moment) return;
+    setBusy(true);
+    try {
+      if (payload.type === 'action') {
+        const a = payload.action;
+        if (a.kind === 'remind') {
+          const p = remindPlan(expenses, users, meId, a.personId, room?.name);
+          if (p.ok) await shareOut(p.text);
+        } else if (a.kind === 'whatsapp') {
+          await shareOut(a.text);
+        } else if (a.kind === 'run') {
+          const r = await runPlan(ctx, a.plan);
+          if (a.plan.action === 'delete') write(K_LAST, null);
+          haptic('success');
+          toast(successToast(r.toast));
+          clearEntry();
+        }
+        return;
+      }
+      let res;
+      if (payload.type === 'expense') {
+        res = await saveExpense(ctx, payload.draft);
+        if (payload.draft.dateGiven) pickSessionDate(payload.draft.date);
+      } else if (payload.type === 'many') {
+        const it = payload.intent;
+        if (needsPayer(it.expenses)) { toast({ kind: 'error', message: <b>Who paid? Pick your name on the Dashboard first</b>, top: true }); return; }
+        res = payload.asBill
+          ? await saveBill(ctx, { name: 'Bill', date: it.expenses[0].date, paidBy: it.expenses[0].paidBy, items: it.billAlt.lines.map((l, i) => ({ ...l, splitAmong: it.expenses[i].splitAmong })) })
+          : await saveMany(ctx, it);
+        if (it.expenses[0].dateGiven) pickSessionDate(it.expenses[0].date);
+      } else if (payload.type === 'bill') {
+        const it = payload.intent;
+        const items = it.lines.map(l => ({ ...l, categoryId: l.categoryId || it.categoryId }));
+        if (it.rest?.amount > 0) items.push({ description: 'Rest', amount: it.rest.amount, categoryId: it.categoryId, splitAmong: it.rest.splitAmong });
+        res = await saveBill(ctx, { name: it.merchant || 'Bill', date: it.date, paidBy: it.paidBy, items });
+      } else if (payload.type === 'repeat-bill') {
+        res = await saveBill(ctx, payload.bill);
+      }
+      if (!res) return;
+      if (res.ids.length) write(K_LAST, { ids: res.ids, at: Date.now() });
+      after.current = successToast(res);
+      setMoment(res.moment);
+    } catch (e) { fail(e); } finally { setBusy(false); }
   };
 
-  const hasCard = intent.type !== 'empty';
+  const hasCard = intent.type !== 'empty' || !!chipCard;
   const card = (() => {
+    if (chipCard && intent.type === 'empty') {
+      if (chipCard.kind === 'duplicate') {
+        const { dup } = chipCard;
+        return (
+          <Card key="dup" title="Possible duplicate" sub={`${dup.description} · same amount twice close together`} value={fmtINR(parseFloat(dup.amount) || 0)} tone="neg"
+            actions={[{ label: 'Remove the newer one', primary: true }, { label: 'Keep both' }]}
+            onAction={a => (a.primary ? confirm({ type: 'action', action: { kind: 'run', plan: { action: 'delete', ids: [dup.id], summary: `${dup.description} · ${fmtINR(parseFloat(dup.amount) || 0)}` } } }) : setChipCard(null))} />
+        );
+      }
+      const g = chipCard.lines; const f = g[0];
+      const total = g.reduce((t, x) => t + (parseFloat(x.amount) || 0), 0);
+      return (
+        <Card key="rb" title={f.groupName || 'Bill'} sub={`${g.length} items · paid by ${f.paidBy === meId ? 'you' : cleanName(users.find(u => u.id === f.paidBy)?.name || '')} · dated today`} value={fmtINR(total)}
+          actions={[{ label: 'Add again', primary: true }]}
+          onAction={() => confirm({ type: 'repeat-bill', bill: { name: f.groupName || 'Bill', date: sessionDate || today, paidBy: f.paidBy, items: g.map(x => ({ description: x.description, amount: parseFloat(x.amount) || 0, categoryId: x.categoryId, splitAmong: x.splitAmong })) } })}>
+          <div className="aai-lines">{g.map(x => <span key={x.id}><b>{x.description}</b>{fmtINR(parseFloat(x.amount) || 0)}</span>)}</div>
+        </Card>
+      );
+    }
     switch (intent.type) {
       case 'expense':
       case 'unknown':
@@ -212,6 +306,7 @@ export default function AaiSheet({ onClose, onConfirm }) {
           {!kbOpen && chipsNode && <AaiChips chips={chips} onPick={pickChip} onHide={hide} inline />}
         </div>
       </div>
+      {moment && <SaveMoment {...moment} className="aai-sm" onDone={done} />}
     </>,
     document.body,
   );

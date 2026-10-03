@@ -228,3 +228,4 @@
   .aai-pb__slip, .aai-pb__dot, .aai-bb__rise, .aai-bb__body, .aai-bb__eye, .aai-card-wrap, .aai-sheet, .aai-edit { animation: none !important; }
   .aai-pb__slip { transform: translateY(0); }
 }
+.sm.aai-sm { z-index: 960; }

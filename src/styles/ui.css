@@ -133,3 +133,13 @@
 .se-toast--warn { border-left: 3px solid #F2B45C; }
 .se-toast--warn .se-toast__sub { color: #F2B45C; }
 :root[data-theme='light'] .se-toast--warn .se-toast__sub { color: #A65A00; }
+
+/* AAI "added" toast (board Bot-Live-Edit-Toast S1): dark panel, teal border, icon square, Share chip, 5s timer bar */
+.se-toast--aai { position: relative; overflow: hidden; background: #12112E; border: 1px solid rgba(95,212,196,.55); color: #F4F2FF; padding-bottom: 15px; }
+.se-toast--aai .se-toast__msg b { color: #F4F2FF; font-weight: 800; }
+.se-toast--aai .se-toast__sub { color: #5FD4C4; }
+.se-toast--aai .se-btn { background: linear-gradient(135deg, #8B7CFF, #5FD4C4); color: #07071A; border: 0; font-weight: 800; }
+.se-toast__ic { flex: none; width: 28px; height: 28px; border-radius: 9px; background: rgba(95,212,196,.16); color: #5FD4C4; display: grid; place-items: center; margin-left: -4px; }
+.se-toast__bar { position: absolute; left: 0; bottom: 0; height: 3px; width: 100%; background: #5FD4C4; transform-origin: left; animation: se-toast-bar linear forwards; }
+@keyframes se-toast-bar { to { transform: scaleX(0); } }
+@media (prefers-reduced-motion: reduce) { .se-toast__bar { animation: none; } }

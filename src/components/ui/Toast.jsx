@@ -9,7 +9,8 @@ const OUT_MS = 200;
  * Toasts replace alert(). Usage:
  *   const toast = useToast();
  *   toast({ message: <><b>Dinner</b> torn off · ₹640</>, sub: 'Removed from synced room too',
- *           action: { label: 'Undo', onClick: restore }, kind: 'success' | 'error', duration: 4000 });
+ *           action: { label: 'Undo', onClick: restore }, kind: 'success' | 'error' | 'aai', duration: 4000,
+ *           icon: <svg/>, bar: 5000 /* timer bar under the toast (AAI) *\/ });
  */
 export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([]);
@@ -34,6 +35,7 @@ export function ToastProvider({ children }) {
 
   const renderToast = t => (
     <div key={t.id} className={`se-toast ${t.kind ? `se-toast--${t.kind}` : ''} ${t.leaving ? 'se-toast-out' : 'se-toast-in'}`}>
+              {t.icon && <span className="se-toast__ic" aria-hidden="true">{t.icon}</span>}
               <div className="se-toast__body">
                 <span className="se-toast__msg">{t.message}</span>
                 {t.sub && <span className="se-toast__sub">{t.sub}</span>}
@@ -47,6 +49,7 @@ export function ToastProvider({ children }) {
                   {t.action.label}
                 </button>
               )}
+              {t.bar && <span className="se-toast__bar" style={{ animationDuration: `${t.bar}ms` }} aria-hidden="true" />}
             </div>
   );
 

@@ -21,7 +21,7 @@ const TICKS = [340, 800, 1180, 1640, 2300];
  * lines: [{ name, amount, iconPath? }] · rows: extra [{ a, b }] lines (e.g. SPLIT 3 WAYS) · paid: "RAVI PAID" or ''.
  * Tap anywhere during the print to skip ahead to the flight.
  */
-export default function SaveMoment({ title, lines, rows = [], total, date, paid, room, onDone }) {
+export default function SaveMoment({ title, lines, rows = [], total, date, paid, room, onDone, className = '' }) {
   const [phase, setPhase] = useState('print');   // print → fly → land
   const [fly, setFly] = useState({ dx: 0, dy: 240, bx: 0, by: 0 });
   const paper = useRef(null);
@@ -59,7 +59,7 @@ export default function SaveMoment({ title, lines, rows = [], total, date, paid,
   }, [phase, quick]);
 
   return createPortal(
-    <div className={`sm sm--${phase}`} onClick={() => phase === 'print' && goFly()} role="status" aria-label="Saving receipt">
+    <div className={`sm sm--${phase} ${className}`} onClick={() => phase === 'print' && goFly()} role="status" aria-label="Saving receipt">
       <div className="sm-win" style={{ '--dx': `${fly.dx}px`, '--dy': `${fly.dy}px` }}>
         <div ref={paper} className={`sm-paper ${phase === 'print' ? 'sm-paper--print' : phase === 'fly' ? 'sm-paper--fly' : 'sm-gone'}`}>
           <b className="sm-paper__title">{title}</b>
