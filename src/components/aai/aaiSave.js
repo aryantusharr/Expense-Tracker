@@ -3,6 +3,7 @@
  * (plus source:'text'). Each helper resolves { ids, moment, toast, share } or throws.
  */
 import { addExpense, addItemisedExpenseGroup, updateExpense, deleteExpense } from '../../services/expenseService';
+import { deleteSyncedExpensesFromPersonalRooms } from '../../utils/deleteSyncedExpenses';
 import { setLastUsedDefaults } from '../../utils/lastUsedDefaults';
 import { addRecentDescription } from '../../utils/recentDescriptions';
 import { resolveCategoryIcon } from '../../design/categoryIcons';
@@ -134,6 +135,8 @@ export async function saveBill(c, { name, date, paidBy, items }) {
 export async function runPlan(c, plan) {
   if (plan.action === 'delete') {
     for (const id of plan.ids) await withTimeout(deleteExpense(c.roomCode, id, c.room));
+    // Undo can land before the (fire-and-forget) synced copy has been written — sweep again once it surely has.
+    if (!c.isPersonal) setTimeout(() => plan.ids.forEach(id => deleteSyncedExpensesFromPersonalRooms(c.room, id).catch(() => {})), 6000);
     return { toast: { message: 'Undone', sub: plan.summary } };
   }
   await withTimeout(updateExpense(c.roomCode, plan.id, plan.updates, c.room, c.expenses.length ? c.expenses : null));

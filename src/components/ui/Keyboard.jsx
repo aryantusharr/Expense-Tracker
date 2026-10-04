@@ -212,7 +212,7 @@ export function KeyboardProvider({ children }) {
   const isActive = useCallback(id => activeId.current === id, []);
 
   const press = useCallback((k, c) => {
-    if (k === 'Done') { haptic('choose'); const a = api.current; close(); a?.done?.(); return; }
+    if (k === 'Done') { haptic('choose'); const a = api.current; if (!a?.keepOpen?.()) close(); a?.done?.(); return; }
     if (k === '⇧') {
       const now = Date.now();
       const dbl = now - lastShift.current < 320;
@@ -301,18 +301,19 @@ function nextAmount(v, k) {
  * caps: 'sentences' (default) | 'words' | 'none'.
  * digitRow: QWERTY gets a 1–0 row on top (AAI field). slotContent: shown above the tray instead of the
  * Paste/suggestion strip (null = nothing). doneLabel: name of the Done key (e.g. 'Ask').
+ * keepOpen: the Done key runs onDone but leaves the keyboard up (chat composer sends and keeps typing).
  */
 export function TextField({
   value = '', onChange, placeholder, maxLength = 80, kind = 'text', caps = 'sentences',
   className = '', autoFocus = false, onDone, onBlur, disabled = false, prefix, suggestions = [],
-  next, fieldRef, digitRow = false, slotContent, doneLabel: doneName = 'Done', ...rest
+  next, fieldRef, digitRow = false, slotContent, doneLabel: doneName = 'Done', keepOpen = false, ...rest
 }) {
   const kb = useKeyboard();
   const toast = useToast();
   const id = useId();
   const ref = useRef(null);
   const props = useRef(null);
-  useLayoutEffect(() => { props.current = { value: String(value ?? ''), onChange, maxLength, kind, caps, onDone, onBlur }; });
+  useLayoutEffect(() => { props.current = { value: String(value ?? ''), onChange, maxLength, kind, caps, onDone, onBlur, keepOpen }; });
   const [fx, setFx] = useState(null);       // { type: 'add' | 'del', n, c, ch }
   const on = kb?.active?.id === id;
   const willCap = kind === 'code' || autoStart(String(value ?? ''), caps);
@@ -323,6 +324,7 @@ export function TextField({
       el: () => ref.current,
       blur: () => { ref.current?.blur(); props.current.onBlur?.(); },
       done: () => { props.current.onDone?.(); nextField.current?.current?.focus(); },
+      keepOpen: () => !!props.current.keepOpen,
       paste: raw => {
         const p = props.current;
         let t = String(raw || '').replace(/\s+/g, ' ');

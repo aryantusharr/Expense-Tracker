@@ -11,7 +11,7 @@ import { MonthCard, SpendingMatrix, LifetimeSpend } from './parts/MonthAndMatrix
 import UnmappedCategories from './parts/UnmappedCategories';
 import { Ticker, BudgetCard, LastPaid } from './parts/Personal';
 import AaiPill from '../aai/AaiPill';
-import AaiSheet from '../aai/AaiSheet';
+import AaiChat from '../aai/chat/AaiChat';
 import './DashboardScreen.css';
 
 function useOnline() {
@@ -122,7 +122,7 @@ export default function DashboardScreen() {
         )}
       </main>
 
-      {aaiOpen && <AaiSheet onClose={() => setAaiOpen(false)} />}
+      {aaiOpen && <AaiChat onClose={() => setAaiOpen(false)} />}
       {isPersonal && <UnmappedCategories roomCode={roomCode} expenses={expenses} categories={categories} />}
       {!isPersonal && (
         <IdentitySheet
