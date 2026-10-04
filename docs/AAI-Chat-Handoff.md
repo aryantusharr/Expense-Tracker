@@ -12,7 +12,7 @@ Canvas: Final app → rows "Aryan AI (AAI) · chat · Dark / Light (final 4 Oct)
 ## 2. Screen parts
 - Header: past-chats (☰) · A|AI mark · New chat · ✕. All 44px.
 - Empty state (02A): time/context greeting (≥5 lines per context, see §8) + member heatmap 2A (3 mini 5-week calendars, one per member, "n/31 days opened", today ringed, one sarcastic line). Tap an empty day → "Adding for <date>".
-- Composer focused (03): "Continue: <chat> · N min ago" pill · heatmap shrinks to 14-day strips · "SAME BILL AGAIN · 1 TAP → REVIEW" row (violet, past bills: name, ₹, items, last date) above "QUICK USUALS" row · ghost example typed in the field · own keypad (digit row).
+- Composer focused (03): "Continue: <chat> · N min ago" pill · heatmap hidden while typing (her call 4 Oct — no 14-day strips) · "SAME BILL AGAIN · 1 TAP → REVIEW" row (violet, past bills: name, ₹, items, last date) above "QUICK USUALS" row · ghost example typed in the field · own keypad (digit row).
 - Personal room: 10A (only your calendar + current/best streak + days opened), 10B (no Paid by/Split rows; bills ask no questions).
 
 ## 3. Thinking
@@ -42,7 +42,7 @@ Canvas: Final app → rows "Aryan AI (AAI) · chat · Dark / Light (final 4 Oct)
 - Offline: amber "SAVED · ON PHONE" stamp + "WILL SYNC WHEN ONLINE"; turns into teal ADDED when synced (11D).
 
 ## 7. Chats + errors
-- A chat lives 2 hours, then becomes read-only in the past-chats sidebar (08) grouped Active / Earlier today / Yesterday, active shows time left. Tapping an added card in an old chat opens that expense in History (History stays the source of truth).
+- A chat becomes read-only 1 minute after it is closed (her call 4 Oct; replaces the old 2-hour life): reopening within that minute continues it, after that it sits read-only in the past-chats sidebar (08) grouped Active / Earlier today / Yesterday (drop the "time left" on active ones — there is no countdown while it is open). Tapping an added card in an old chat opens that expense in History (History stays the source of truth).
 - Errors are AAI replies: tinted box + the app's stamp (UNCLEAR violet, LIMIT amber, OFFLINE grey, DOWN pink, WAIT/SLOW amber, NOT A BILL pink), plain reason, 2 buttons, DETAILS mono line. "Type items" always offered.
 - Edge cases (11): brand-new room (empty heatmap, no usual rows until 3 similar entries), shared room with only you (no split questions + "Invite roommates" chip).
 
@@ -61,7 +61,7 @@ Steps: as on the boards ("parsing 'cig 20'… 119th time. Not judging.", "counti
 
 ## 9. Data
 - New: per-member daily app-open record for the heatmap, e.g. `rooms/{code}/opens/{memberId}_{yyyy-mm-dd}` `{count, last}` — written once per app open (debounced) by the phone's chosen member. Everyone in the room sees everyone (no toggle — her call). Needs a Firestore rules addition → her yes before the live rules deploy.
-- Chats: kept on the phone (IndexedDB/localStorage) — 2h active, read-only list after; nothing new in Firestore.
+- Chats: kept on the phone (IndexedDB/localStorage) — editable until 1 min after close, read-only after; nothing new in Firestore.
 - Free Gemini tier for bills is fine (≈6 entries/day, ~⅓ bills); LIMIT reply covers the cap.
 
 ## 10. Accessibility (applies across the whole app, her call 4 Oct)

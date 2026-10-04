@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { ctx, USERS, NOW, exp } from './fixtures.js';
 import { GREETINGS, greetingContext, pickGreeting } from './greetings.js';
-import { weekGrid, stripDays, tier, memberStats, heatLine } from './heatmap.js';
+import { weekGrid, tier, memberStats, heatLine } from './heatmap.js';
 import { quickUsuals, repeatBills, lastLabel } from './usuals.js';
 import { respond, billTotals, syncRest, dayLabel, billFromPast } from './chatModel.js';
 
@@ -52,8 +52,6 @@ test('weekGrid: 5 week columns of 7, Sun→Sat, nothing after today', () => {
   const wed = weekGrid(new Date(2026, 9, 7, 12));                // Wed 7 Oct
   assert.equal(wed[4][3], '2026-10-07');
   assert.equal(wed[4][4], null);
-  assert.equal(stripDays(sunday, 14).length, 14);
-  assert.equal(stripDays(sunday, 14)[13], '2026-10-04');
 });
 
 test('tier + memberStats + heatLine', () => {

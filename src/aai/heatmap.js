@@ -20,11 +20,6 @@ export function weekGrid(now, weeks = 5) {
   return cols;
 }
 
-/** The last `n` days, oldest first (the focused strip). */
-export function stripDays(now, n = 14) {
-  return Array.from({ length: n }, (_, i) => toDateStr(addDays(now, -(n - 1 - i))));
-}
-
 /** Cell strength: 0 empty · 1 opened · 2 a few · 3 many · 4 loads. */
 export const tier = c => (c >= 7 ? 4 : c >= 4 ? 3 : c >= 2 ? 2 : c >= 1 ? 1 : 0);
 
