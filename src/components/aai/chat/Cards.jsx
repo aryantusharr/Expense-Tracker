@@ -4,7 +4,8 @@ import { TextField } from '../../ui/Keyboard';
 import CategoryIcon from '../../ui/CategoryIcon';
 import { evalExpr } from '../../add/amountExpr';
 import { cleanName } from '../../../aai/common.js';
-import { billTotals, syncRest, liveItems, dayLabel } from '../../../aai/chatModel.js';
+import { billTotals, syncRest, liveItems, dayLabel, uid } from '../../../aai/chatModel.js';
+import { billMismatch } from '../../../aai/billParse.js';
 import { Mg, IcTag } from './parts';
 import { toDateStr, addDays, MONTH_NAMES, fromDateStr } from '../../../aai/common.js';
 
@@ -118,7 +119,7 @@ function AmountEdit({ value, onChange, onClose, small }) {
   );
 }
 
-function TextEdit({ value, onChange, onClose, label, caps = 'sentences', className = '' }) {
+export function TextEdit({ value, onChange, onClose, label, caps = 'sentences', className = '' }) {
   return <TextField value={value} onChange={onChange} autoFocus caps={caps} maxLength={60} className={`ch-inl ${className}`} onDone={onClose} aria-label={label} slotContent={null} />;
 }
 
@@ -248,7 +249,22 @@ export function BillCard({ card, onChange, members, categories, meId, isPersonal
   const t = billTotals(bill);
   const rows = liveItems(bill);
   const payer = members.find(m => m.id === bill.paidBy);
-  const ok = rows.length > 0 && rows.every(i => i.amount > 0) && t.over === 0 && (isPersonal || (bill.paidBy && rows.every(i => i.splitAmong?.length)));
+  const shot = bill.source === 'bill';                     // read from a screenshot: must match the bill total to save
+  const mm = shot ? billMismatch(bill) : null;
+  const real = shot ? rows.filter(i => !(i.failed && !(i.amount > 0))) : rows;
+  const ok = real.length > 0 && real.every(i => i.amount > 0) && t.over === 0 && !(mm && mm.off)
+    && (isPersonal || (bill.paidBy && real.every(i => i.splitAmong?.length)));
+  /** FIX ›: the first unread line's amount; if none, the money is missing from the list → a new line for it; if items are over, the total. */
+  const fix = () => {
+    const f = bill.items.find(i => i.failed && !(i.amount > 0));
+    if (f) { open('iamt', f.id); return; }
+    if (mm.diff > 0) {
+      const id = uid();
+      set({ items: [...bill.items.filter(i => !i.charges), { id, name: '', failed: true, amount: mm.diff, categoryId: bill.items[0]?.categoryId || null, splitAmong: members.map(m => m.id) }, ...bill.items.filter(i => i.charges)] });
+      setEd({ f: 'iname', id });
+    } else open('total');
+  };
+  const fixNo = mm?.failed.length ? `#${mm.failed[0]}` : '';
 
   return (
     <div className={`ch-card ch-bill ${locked ? 'is-saved' : ''}`}>
@@ -258,7 +274,7 @@ export function BillCard({ card, onChange, members, categories, meId, isPersonal
           {is('bname') ? <TextEdit value={bill.name === 'Untitled bill' ? '' : bill.name} onChange={v => set({ name: v, nameUnsure: false })} onClose={() => { if (!bill.name.trim()) set({ name: 'Untitled bill' }); close(); }} label="Bill name" caps="words" className="ch-inl--name" />
             : <Val {...common} id="name" label="Change bill name" onClick={() => open('bname')} className="ch-un ch-bname">{bill.name}</Val>}
           <span className="ch-mono ch-meta">
-            <Val {...common} id="date" on={is('date')} label="Change date" onClick={() => open('date')}>{upDay(bill.date, now)}</Val> · {rows.length} {rows.length === 1 ? 'LINE' : 'LINES'}
+            <Val {...common} id="date" on={is('date')} label="Change date" onClick={() => open('date')}>{upDay(bill.date, now)}</Val> · {shot ? `${rows.filter(i => !i.charges).length} ITEMS` : `${rows.length} ${rows.length === 1 ? 'LINE' : 'LINES'}`}
           </span>
           {!isPersonal && (
             <Val locked={locked} dots={[]} id="paidBy" on={is('payer')} label="Change who paid" onClick={() => open('payer')} className="ch-payer">
@@ -268,11 +284,24 @@ export function BillCard({ card, onChange, members, categories, meId, isPersonal
         </div>
         <div className="ch-bh__r">
           <span className="ch-lab">TOTAL</span>
-          <span className="ch-un ch-bh__tot"><span className="ch-r">₹</span>{fmtAmt(t.total)}</span>
+          {shot && is('total')
+            ? <AmountEdit small value={bill.total} onChange={a => set({ total: a, totalUnsure: false })} onClose={close} />
+            : shot
+              ? <Val {...common} dots={bill.totalUnsure ? ['all'] : dots} id="total" label="Change bill total" onClick={() => open('total')} className="ch-un ch-bh__tot"><span className="ch-r">₹</span>{fmtAmt(t.total)}</Val>
+              : <span className="ch-un ch-bh__tot"><span className="ch-r">₹</span>{fmtAmt(t.total)}</span>}
         </div>
       </div>
       {is('payer') && <PersonGrid label="Who paid" members={members} meId={meId} selected={bill.paidBy ? [bill.paidBy] : []} onToggle={id => { set({ paidBy: id }); close(); }} />}
       {is('date') && <DateGrid value={bill.date} now={now} onPick={d => { set({ date: d }); close(); }} />}
+      {shot && mm.off && !locked && (
+        <button type="button" className="ch-mm" onClick={() => { haptic('tap'); fix(); }}>
+          <span className="ch-mm__t">
+            <span className="ch-mm__h">{mm.failed.length ? `${mm.failed.length} item${mm.failed.length === 1 ? '' : 's'} failed · ${mm.failed.map(n => `#${n}`).join(', ')} on the bill` : mm.diff > 0 ? 'Some of the bill isn’t in the list' : 'The lines add up to more than the bill'}</span>
+            <span className="ch-mono">BILL ₹{fmtAmt(bill.total)} · ITEMS ₹{fmtAmt(mm.sum)} · ₹{fmtAmt(Math.abs(mm.diff))} NOT MATCHED</span>
+          </span>
+          <span className="ch-mono ch-mm__fix">FIX {fixNo}{fixNo ? ' ' : ''}›</span>
+        </button>
+      )}
 
       {rows.map((it, i) => {
         const cat = categories.find(c => c.id === it.categoryId);
@@ -280,16 +309,21 @@ export function BillCard({ card, onChange, members, categories, meId, isPersonal
         const inSplit = members.filter(m => sp.includes(m.id));
         const allIn = members.length > 0 && sp.length === members.length;
         const unsureCat = dots.includes('all') || it.unsure;
+        const unread = it.failed && !(it.amount > 0) && !it.name;
         return (
-          <div key={it.id} className="ch-irw">
+          <div key={it.id} className={`ch-irw ${it.failed && !locked && !(it.amount > 0 && it.name) ? 'is-failed' : ''}`}>
             <div className="ch-ir">
               <div className="ch-ir__l">
                 <span className="ch-ir__n">
-                  <span className="ch-mono ch-num">#{i + 1}</span>
+                  {!it.charges && <span className="ch-mono ch-num">#{i + 1}</span>}
                   {is('iname', it.id)
                     ? <TextEdit value={it.name} onChange={v => setItem(it.id, { name: v })} onClose={close} label={`Item ${i + 1} name`} caps="words" className="ch-inl--item" />
-                    : <Val {...common} id={it.rest ? 'rest' : 'itemname'} label={`Change item ${i + 1} name`} onClick={() => open('iname', it.id)}>{it.name}</Val>}
+                    : <Val {...common} dots={it.failed ? ['all'] : dots} id={it.rest ? 'rest' : 'itemname'} label={`Change item ${i + 1} name`} onClick={() => open('iname', it.id)}>{it.name || (it.failed ? 'Couldn’t read this item' : 'Item')}</Val>}
+                  {it.qty && !is('iname', it.id) ? <span className="ch-mono ch-qty">{it.qty}</span> : null}
                 </span>
+                {unread ? <span className="ch-mono ch-ir__hint">TAP TO TYPE NAME + AMOUNT</span> : it.charges ? (
+                  <span className="ch-mono ch-ir__hint">{it.detail}{!isPersonal ? ` · ${(it.splitAmong || []).length === members.length ? `ALL ${members.length}` : `${(it.splitAmong || []).length} PEOPLE`}` : ''}</span>
+                ) : (
                 <span className="ch-ir__m">
                   <Val locked={locked} dots={unsureCat ? ['all'] : []} id="cat" on={is('icat', it.id)} label={`Change category for ${it.name}`} onClick={() => open('icat', it.id)} className="ch-mono ch-tag">
                     <IcTag />{(cat?.name || 'Category').toUpperCase()}
@@ -303,10 +337,11 @@ export function BillCard({ card, onChange, members, categories, meId, isPersonal
                     </>
                   )}
                 </span>
+                )}
               </div>
               {is('iamt', it.id)
                 ? <AmountEdit small value={it.amount} onChange={a => setItem(it.id, { amount: a })} onClose={close} />
-                : <Val {...common} id={it.rest ? 'rest' : 'amount'} label={`Change amount for ${it.name}`} onClick={() => open('iamt', it.id)} className="ch-un ch-ir__amt">{`₹${fmtAmt(it.amount)}`}</Val>}
+                : <Val {...common} id={it.rest ? 'rest' : 'amount'} label={`Change amount for ${it.name}`} onClick={() => open('iamt', it.id)} className="ch-un ch-ir__amt">{it.failed && !(it.amount > 0) ? '₹—' : `₹${fmtAmt(it.amount)}`}</Val>}
             </div>
             {is('icat', it.id) && <CatGrid categories={categories} value={it.categoryId} onPick={id => { setItem(it.id, { categoryId: id, unsure: false }); close(); }} />}
             {is('isplit', it.id) && (
@@ -318,7 +353,7 @@ export function BillCard({ card, onChange, members, categories, meId, isPersonal
         );
       })}
 
-      {t.over > 0 && !locked && (
+      {t.over > 0 && !locked && !shot && (
         <div className="ch-mismatch" role="alert">
           <span className="ch-mono">ITEMS ₹{fmtAmt(t.sum)} · BILL ₹{fmtAmt(bill.total)}</span>
           <b>₹{fmtAmt(t.over)} OVER</b>
@@ -332,9 +367,11 @@ export function BillCard({ card, onChange, members, categories, meId, isPersonal
         </>
       ) : <NotAdded />) : (
         <div className="ch-foot ch-foot--col">
-          <button type="button" className="ch-btn ch-grad" disabled={!ok || saving} onClick={() => { setEd(null); onConfirm(); }}>{saving ? 'Saving…' : 'Save bill'}</button>
-          {rows.length > 1 && !saving && (
-            <button type="button" className="ch-btn ch-btn--ghost" disabled={!ok} onClick={() => { setEd(null); onSeparate(); }}>Add as {rows.length} separate expenses instead</button>
+          <button type="button" className={`ch-btn ${shot && mm.off ? 'ch-btn--off' : 'ch-grad'}`} disabled={!ok || saving} onClick={() => { setEd(null); onConfirm(); }}>
+            {saving ? 'Saving…' : shot && mm.off ? `Save bill · fix ₹${fmtAmt(Math.abs(mm.diff))} first` : 'Save bill'}
+          </button>
+          {real.length > 1 && !saving && (
+            <button type="button" className="ch-btn ch-btn--ghost" disabled={!ok} onClick={() => { setEd(null); onSeparate(); }}>Add as {real.length} separate expenses instead</button>
           )}
         </div>
       )}

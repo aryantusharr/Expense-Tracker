@@ -5,14 +5,14 @@ import { IcPlus, IcSend } from './parts';
 
 /** The composer pill (+ bill screenshot · field · send) and, while it is focused on an empty chat, the two rows above it. */
 
-export function Composer({ text, setText, onSend, onBill, fieldRef }) {
+export function Composer({ text, setText, onSend, onBill, fieldRef, hint }) {
   const empty = !text.trim();
   return (
     <div className="ch-comp" data-kb>
       <button type="button" className="ch-cb ch-cb--gh" aria-label="Add bill screenshot" onClick={() => { haptic('tap'); onBill(); }}><IcPlus /></button>
       <TextField
         value={text} onChange={setText} maxLength={240} caps="none" digitRow doneLabel="Send" keepOpen slotContent={null}
-        className="ch-field" placeholder="Type an expense or add a bill" fieldRef={fieldRef}
+        className="ch-field" placeholder={hint || 'Type an expense or add a bill'} fieldRef={fieldRef}
         onDone={() => onSend(text)} aria-label="Type an expense or add a bill"
       />
       <button type="button" className="ch-cb ch-send" aria-label="Send" disabled={empty} onClick={() => onSend(text)}><IcSend /></button>

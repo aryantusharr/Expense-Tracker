@@ -84,7 +84,9 @@ export function groupChats(chats, now, openId = null) {
 /** Messages as they are kept: thinking is finished, a card that was mid-save goes back to editable. */
 export function serialiseMessages(messages) {
   return messages.map(m => {
-    if (m.role !== 'ai') return m;
+    if (m.role !== 'ai') { const rest = { ...m }; delete rest.thumbs; return rest; }   // screenshots are never stored — only their count
+    // a bill question still waiting can't be answered after a reload (the screenshots are gone) → stored as closed
+    if (m.ask && !m.ask.answered) m = { ...m, ask: { ...m.ask, answered: true, cancelled: true } };
     const card = m.card && m.card.status === 'saving' ? { ...m.card, status: 'open' } : m.card;
     return { ...m, card, shown: m.steps?.length || 0, done: true };
   });

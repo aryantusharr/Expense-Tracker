@@ -1,6 +1,6 @@
 /**
  * AAI → Firestore. Uses the same save functions as the Add screen, so documents are identical
- * (plus source:'text'). Each helper resolves { ids, moment, toast, share } or throws.
+ * (plus source: 'text', or 'bill' for screenshot bills). Each helper resolves { ids, moment, toast, share } or throws.
  */
 import { addExpense, addItemisedExpenseGroup, updateExpense, deleteExpense } from '../../services/expenseService';
 import { deleteSyncedExpensesFromPersonalRooms } from '../../utils/deleteSyncedExpenses';
@@ -57,7 +57,7 @@ async function addOne(c, d, lates) {
   const e = norm(c, d);
   const p = addExpense(c.roomCode, {
     description: (e.description || 'Expense').trim(), amount: e.amount, paidBy: e.paidBy, splitAmong: e.splitAmong,
-    categoryId: e.categoryId, date: e.date, source: 'text',
+    categoryId: e.categoryId, date: e.date, source: d.source || 'text',
   }, c.room, c.expenses.length ? c.expenses : null);
   p.catch(err => console.error('AAI save failed after timeout', err));
   const res = await withTimeout(p);
@@ -113,13 +113,13 @@ export async function saveMany(c, intent) {
 }
 
 /** One bill with several items (group). items = [{ description, amount, categoryId, splitAmong }] */
-export async function saveBill(c, { name, date, paidBy, items }) {
+export async function saveBill(c, { name, date, paidBy, items, source = 'text' }) {
   const payer = c.isPersonal ? personal(c) : paidBy;
   const rows = items.map(i => ({
     description: (i.description || '').trim() || name, amount: i.amount, categoryId: i.categoryId,
     splitAmong: c.isPersonal ? [payer] : i.splitAmong,
   }));
-  const p = addItemisedExpenseGroup(c.roomCode, name, rows, { paidBy: payer, date, source: 'text' }, c.room, c.expenses.length ? c.expenses : null);
+  const p = addItemisedExpenseGroup(c.roomCode, name, rows, { paidBy: payer, date, source }, c.room, c.expenses.length ? c.expenses : null);
   p.catch(err => console.error('AAI bill save failed after timeout', err));
   const res = await withTimeout(p);
   const last = rows[rows.length - 1];
