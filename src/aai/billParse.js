@@ -162,7 +162,8 @@ export function chargesDetail(charges) {
     const hit = merged.find(m => m.k === k);
     if (hit) hit.a = r2(hit.a + c.amount); else merged.push({ k, a: c.amount });
   }
-  return merged.map(m => `${m.k} ${m.a < 0 ? '−' : ''}${fmtINR(Math.abs(m.a))}`).join(' · ');
+  const inr = v => `₹${Number.isInteger(v) ? v.toLocaleString('en-IN') : v.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return merged.filter(m => Math.abs(m.a) > 0.004).map(m => `${m.k} ${m.a < 0 ? '−' : ''}${inr(Math.abs(m.a))}`).join(' · ');
 }
 
 /** Room category for a read item: the model's pick if it's one of ours, else the keyword/learned guess, else null. */

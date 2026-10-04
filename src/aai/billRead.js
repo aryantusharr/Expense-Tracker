@@ -10,18 +10,24 @@ import app from '../services/firebase';
 import { BILL_SCHEMA, billPrompt, normaliseRead } from './billParse.js';
 import { toDateStr } from './common.js';
 
-/** The one place the model name lives. Free on the Gemini Developer API (checked 4 Oct 2026; 2.5 is closed to new projects). */
-export const BILL_MODEL = 'gemini-3.8-flash';
+/**
+ * The one place the model names live (free on the Gemini Developer API, checked 4 Oct 2026; 2.5 is closed to new projects).
+ * main: best reader, but the free tier allows only 20 reads/day per project. spare: used automatically once main's
+ * daily reads are gone (her call 4 Oct) — LIMIT only shows when both are used up.
+ */
+export const BILL_MODELS = { main: 'gemini-3.8-flash', spare: 'gemini-3.5-flash-lite' };
+const K_SPARE = 'splitease_aai_spare_day';          // this phone already saw main's daily limit today → go straight to spare
 
 const LIVE_PROJECT = 'splitease-7bb6c';
 const MAX_EDGE = 1600;
 const QUALITY = 0.8;
 const HARD_TIMEOUT_MS = 60000;
 
-let model = null;
+let ai = null;
+const models = {};
 
 function setUp() {
-  if (model) return model;
+  if (ai) return ai;
   const siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
   const project = import.meta.env.VITE_FIREBASE_PROJECT_ID;
   // Live stays untouched until her release yes: the live build has no site key, and the live project needs an explicit flag.
@@ -32,13 +38,17 @@ function setUp() {
     self.FIREBASE_APPCHECK_DEBUG_TOKEN = import.meta.env.VITE_APPCHECK_DEBUG_TOKEN;
   }
   initializeAppCheck(app, { provider: new ReCaptchaEnterpriseProvider(siteKey), isTokenAutoRefreshEnabled: false });
-  const ai = getAI(app, { backend: new GoogleAIBackend(), useLimitedUseAppCheckTokens: true });
-  model = getGenerativeModel(ai, {
-    model: BILL_MODEL,
-    generationConfig: { responseMimeType: 'application/json', responseJsonSchema: BILL_SCHEMA, thinkingConfig: { thinkingLevel: 'LOW' } },
-  });
-  return model;
+  ai = getAI(app, { backend: new GoogleAIBackend(), useLimitedUseAppCheckTokens: true });
+  return ai;
 }
+
+const modelFor = which => (models[which] ||= getGenerativeModel(setUp(), {
+  model: BILL_MODELS[which],
+  generationConfig: { responseMimeType: 'application/json', responseJsonSchema: BILL_SCHEMA, ...(which === 'main' ? { thinkingConfig: { thinkingLevel: 'LOW' } } : {}) },
+}));
+const dayLimit = e => e?.customErrorData?.status === 429 && /PerDay|per day/i.test(`${e.message} ${JSON.stringify(e.customErrorData?.errorDetails || '')}`);
+const spareToday = today => { try { return localStorage.getItem(K_SPARE) === today; } catch { return false; } };
+const markSpare = today => { try { localStorage.setItem(K_SPARE, today); } catch { /* private mode */ } };
 
 /** Called when "+" is tapped: set up App Check (loads the reCAPTCHA script) while the photo picker is open. */
 export function warm() { try { setUp(); } catch { /* not set up → the read itself reports it */ } }
@@ -66,7 +76,9 @@ async function shrink(blob) {
  */
 export async function readBill(blobs, { categories = [], signal, now = new Date() } = {}) {
   if (typeof navigator !== 'undefined' && navigator.onLine === false) { const e = new Error('offline'); e.code = 'NET'; throw e; }
-  const m = setUp();
+  setUp();
+  const today = toDateStr(now);
+  let which = spareToday(today) ? 'spare' : 'main';
   const images = await Promise.all(blobs.slice(0, 4).map(shrink));
   const parts = [
     { text: billPrompt({ categories, today: toDateStr(now), count: images.length }) },
@@ -79,10 +91,11 @@ export async function readBill(blobs, { categories = [], signal, now = new Date(
   try {
     for (let attempt = 0; ; attempt++) {
       try {
-        const res = await m.generateContent({ contents: [{ role: 'user', parts }] }, { signal: ctl.signal });
-        return normaliseRead(res.response.text(), { now });
+        const res = await modelFor(which).generateContent({ contents: [{ role: 'user', parts }] }, { signal: ctl.signal });
+        return { ...normaliseRead(res.response.text(), { now }), model: which };
       } catch (e) {
         if (ctl.signal.aborted) { const a = new Error('aborted'); a.code = signal?.aborted ? 'ABORTED' : 'SLOW_ABORT'; throw a; }
+        if (which === 'main' && dayLimit(e)) { markSpare(today); which = 'spare'; attempt--; continue; }   // main's 20 are gone → spare
         if (e?.code === 'PARSE' && attempt === 0) continue;          // a broken JSON reply: one silent retry
         throw e;
       }
