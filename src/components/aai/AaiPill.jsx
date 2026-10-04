@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { haptic } from '../../utils/haptics';
 import { PillBuddy } from './Buddy';
+import './Aai.css';
 
 const LABEL = {
   idle: 'Open Aryan AI',
