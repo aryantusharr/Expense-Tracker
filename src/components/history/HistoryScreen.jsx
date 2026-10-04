@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useRoomContext } from '../../context/RoomContext';
 import { useToast, useToastDismiss } from '../ui/Toast';
 import { haptic } from '../../utils/haptics';
@@ -31,8 +32,25 @@ export default function HistoryScreen() {
 
   const catOf = e => categories.find(c => c.id === e.categoryId);
 
+  // Opened from an AAI chat card ("Open in History"): start on that expense's month, with its edit sheet for a single expense.
+  const location = useLocation();
+  const navigate = useNavigate();
+  const deep = location.state?.openIds || location.state?.date ? location.state : null;
+  const deepHit = useMemo(() => {
+    if (!deep) return null;
+    const ids = deep.openIds || [];
+    let found = null;
+    months.forEach((m, mi) => m.days.forEach(d => d.entries.forEach(en => {
+      const hit = ids.length ? (en.kind === 'bill' ? en.items.some(i => ids.includes(i.id)) : ids.includes(en.id)) : d.key === deep.date;
+      if (!found && hit) found = { mi, en };
+    })));
+    return found;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => { if (deep) navigate(location.pathname, { replace: true, state: null }); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   // ---- month stack ----
-  const [mo, setMo] = useState(0);
+  const [mo, setMo] = useState(() => deepHit?.mi ?? 0);
   const [fan, setFan] = useState(false);
   const selIdx = Math.min(mo, months.length - 1);
   const month = months[selIdx];
@@ -111,7 +129,8 @@ export default function HistoryScreen() {
   const locked = en => toast({ message: <>Synced from <b>{syncedFrom(en.e)}</b> — edit or delete it there.</>, duration: 2600 });
 
   // ---- edit (board 6b) ----
-  const [editing, setEditing] = useState(null);
+  const [editing, setEditing] = useState(() => (deepHit && deepHit.en.kind === 'row' && (deep.openIds || []).length && !isSyncedExp(deepHit.en.e) ? deepHit.en.e : null));
+
   // Close the sheet straight away; Firestore applies the change locally at once and syncs in the background.
   const saveEdit = (updates, newGroupName) => {
     const e = editing;

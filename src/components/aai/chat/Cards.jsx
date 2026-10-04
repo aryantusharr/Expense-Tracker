@@ -135,7 +135,7 @@ function Stamp({ card, roomName, date, top, bill }) {
   );
 }
 
-function SavedFooter({ card, roomName, onUndo }) {
+function SavedFooter({ card, roomName, onUndo, onOpen, readOnly }) {
   const [left, setLeft] = useState(() => Math.max(0, UNDO_MS - (Date.now() - (card.savedAt || 0))));
   useEffect(() => {
     if (left <= 0) return undefined;
@@ -144,12 +144,14 @@ function SavedFooter({ card, roomName, onUndo }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const onPhone = card.status === 'onphone';
-  const can = !onPhone && card.ids?.length > 0 && left > 0;
+  const can = !onPhone && !readOnly && card.ids?.length > 0 && left > 0;
+  const canOpen = !onPhone && !can && !!onOpen;
   const at = new Date(card.savedAt || 0).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' }).toUpperCase();
   return (
     <div className="ch-saved">
       <span className="ch-mono ch-saved__t">{onPhone ? 'WILL SYNC WHEN ONLINE' : `SAVED TO ${(roomName || '').toUpperCase()} · ${left > 0 ? 'JUST NOW' : at}`}</span>
       {can && <button type="button" className="ch-undo" onClick={() => { haptic('tap'); onUndo(); }}>Undo</button>}
+      {canOpen && <button type="button" className="ch-open" onClick={() => { haptic('tap'); onOpen(); }}>Open in History<svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg></button>}
       {can && <span className="ch-saved__bar" aria-hidden="true" style={{ '--f': left / UNDO_MS, animationDuration: `${left}ms` }} />}
     </div>
   );
@@ -157,11 +159,16 @@ function SavedFooter({ card, roomName, onUndo }) {
 
 const isSaved = c => c.status === 'saved' || c.status === 'onphone';
 
+/** An old chat's card that was never added: it can't be confirmed any more. */
+function NotAdded() {
+  return <div className="ch-notadded ch-mono">NOT ADDED · THIS CHAT IS READ ONLY</div>;
+}
+
 // ── quick card ──
-export function QuickCard({ card, onChange, members, categories, meId, isPersonal, roomName, now, onConfirm, onUndo }) {
+export function QuickCard({ card, onChange, members, categories, meId, isPersonal, roomName, now, onConfirm, onUndo, readOnly = false, onOpen }) {
   const [ed, setEd] = useState(null);
   const { draft, dots } = card;
-  const locked = isSaved(card);
+  const locked = isSaved(card) || readOnly;
   const saving = card.status === 'saving';
   const set = patch => onChange({ ...card, draft: { ...draft, ...patch } });
   const open = k => setEd(e => (e === k ? null : k));
@@ -213,12 +220,12 @@ export function QuickCard({ card, onChange, members, categories, meId, isPersona
       <Row k="CATEGORY" editor={ed === 'cat' && !locked && <CatGrid categories={categories} value={draft.categoryId} onPick={id => { set({ categoryId: id }); setEd(null); }} />}>
         <Val {...common} id="category" on={ed === 'cat'} label="Change category" onClick={() => open('cat')}>{cat?.name || 'Pick one'}</Val>
       </Row>
-      {locked ? (
+      {locked ? (isSaved(card) ? (
         <>
           <Stamp card={card} roomName={roomName} date={draft.date} top={84} />
-          <SavedFooter card={card} roomName={roomName} onUndo={onUndo} />
+          <SavedFooter card={card} roomName={roomName} onUndo={onUndo} readOnly={readOnly} onOpen={onOpen} />
         </>
-      ) : (
+      ) : <NotAdded />) : (
         <div className="ch-foot"><button type="button" className="ch-btn ch-grad" disabled={!ok || saving} onClick={() => { setEd(null); onConfirm(); }}>{saving ? 'Saving…' : 'Confirm'}</button></div>
       )}
     </div>
@@ -226,10 +233,10 @@ export function QuickCard({ card, onChange, members, categories, meId, isPersona
 }
 
 // ── bill card ──
-export function BillCard({ card, onChange, members, categories, meId, isPersonal, roomName, now, onConfirm, onSeparate, onUndo }) {
+export function BillCard({ card, onChange, members, categories, meId, isPersonal, roomName, now, onConfirm, onSeparate, onUndo, readOnly = false, onOpen }) {
   const [ed, setEd] = useState(null);                      // { f, id }
   const { bill, dots } = card;
-  const locked = isSaved(card);
+  const locked = isSaved(card) || readOnly;
   const saving = card.status === 'saving';
   const common = { dots, locked };
   const set = patch => onChange({ ...card, bill: syncRest({ ...bill, ...patch }) });
@@ -318,12 +325,12 @@ export function BillCard({ card, onChange, members, categories, meId, isPersonal
         </div>
       )}
 
-      {locked ? (
+      {locked ? (isSaved(card) ? (
         <>
           <Stamp bill card={card} roomName={roomName} date={bill.date} top={150} />
-          <SavedFooter card={card} roomName={roomName} onUndo={onUndo} />
+          <SavedFooter card={card} roomName={roomName} onUndo={onUndo} readOnly={readOnly} onOpen={onOpen} />
         </>
-      ) : (
+      ) : <NotAdded />) : (
         <div className="ch-foot ch-foot--col">
           <button type="button" className="ch-btn ch-grad" disabled={!ok || saving} onClick={() => { setEd(null); onConfirm(); }}>{saving ? 'Saving…' : 'Save bill'}</button>
           {rows.length > 1 && !saving && (

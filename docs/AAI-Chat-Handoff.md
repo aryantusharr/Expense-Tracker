@@ -60,7 +60,7 @@ Heatmap lines (app OPENS, sarcastic, rotate):
 Steps: as on the boards ("parsing 'cig 20'… 119th time. Not judging.", "counting roommates… still 3.", "rounding paise… odd paisa goes to Meera. Again.", "reading screenshot… whoever picked this font owes me ₹10.", "checking total… items ₹948, bill ₹1,240. Kisi ne chupke se khaya.", "spotted GST… the government also ate.").
 
 ## 9. Data
-- New: per-member daily app-open record for the heatmap, e.g. `rooms/{code}/opens/{memberId}_{yyyy-mm-dd}` `{count, last}` — written once per app open (debounced) by the phone's chosen member. Everyone in the room sees everyone (no toggle — her call). Needs a Firestore rules addition → her yes before the live rules deploy.
+- New: per-member daily app-open record for the heatmap, e.g. `rooms/{code}/opens/{memberId}_{yyyy-mm-dd}` `{memberId, day, count, last}` — written once per app open (app load, or back after 30+ min; debounced 60s) by the phone's chosen member (built + rules deployed on the TEST project, 4 Oct). Everyone in the room sees everyone (no toggle — her call). Needs a Firestore rules addition → her yes before the live rules deploy.
 - Chats: kept on the phone (IndexedDB/localStorage) — editable until 1 min after close, read-only after; nothing new in Firestore.
 - Free Gemini tier for bills is fine (≈6 entries/day, ~⅓ bills); LIMIT reply covers the cap.
 

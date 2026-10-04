@@ -1,7 +1,7 @@
 /**
  * AAI chat model — turns a parsed sentence into what the chat shows. Pure (no React, no Firebase).
  *
- *   respond(text, ctx, session) → { steps[], reply, card }
+ *   respond(text, session) → { steps[], reply, card, error?, chips? }   (error = an errors.js reply instead of a card)
  *
  * card is plain data (so a chat can be stored on the phone later):
  *   { kind: 'quick', draft, dots }
@@ -11,6 +11,7 @@
  * AAI only ADDS expenses, so commands (undo / balance / remind …) get a short plain reply and no card.
  */
 import { parse } from './parse.js';
+import { unclearTyped } from './errors.js';
 import { fmtINR, cleanName, MONTH_NAMES, fromDateStr, toDateStr, addDays } from './common.js';
 
 const r2 = n => Math.round(n * 100) / 100;
@@ -72,7 +73,7 @@ const Spoken = (n, one, many) => `${WORDS[n] || n} ${n === 1 ? one : many}`;
  * session = { users, me, categories, expenses, isPersonal, now, date (the "Adding for" date or null),
  *             firstCard (no card yet in this chat) }
  */
-export function respond(text, session) {
+function respondInner(text, session) {
   const { users, me, categories, expenses, isPersonal, now } = session;
   const today = session.today || toStr(now);
   const sess = { ...session, today };
@@ -133,7 +134,10 @@ export function respond(text, session) {
     const rest = items.find(i => i.rest);
     const name = intent.merchant ? `**${intent.merchant}**` : 'bill';
     const lines = intent.lines.length;
-    let reply = `One ${name} bill, ${spoken(lines, 'line', 'lines')}.`;
+    const mine = isPersonal && !session.solo;            // a personal room: nobody to ask (board 10B)
+    let reply = mine
+      ? `Your ${name} bill — ${spoken(items.length, 'item', 'items')}, ${fmtINR(intent.total)}. No questions needed, it's all yours.`
+      : `One ${name} bill, ${spoken(lines, 'line', 'lines')}.`;
     if (left < -0.004) reply = `Those ${spoken(lines, 'line', 'lines')} come to ${fmtINR(-left)} more than ${fmtINR(intent.total)}. Check the amounts.`;
     else if (rest && rest.amount > 0) {
       const sp = rest.splitAmong.length;
@@ -148,13 +152,40 @@ export function respond(text, session) {
     return { steps, reply, card: billCard(bill, unsure, session.firstCard) };
   }
 
-  // expense / unknown → one quick card
+  // no amount → an UNCLEAR reply (its "Add by hand" button makes the card, see handCard)
+  if (intent.type === 'unknown') return { steps, reply: null, card: null, error: unclearTyped(text) };
+
+  // expense → one quick card
   const card = quickCard(intent, sess, session.firstCard);
   let reply = null;
-  if (intent.type === 'unknown') reply = 'I couldn\'t find an amount in that. Tap the ₹ and type it.';
-  else if (intent.questions?.length) reply = intent.questions[0].message || 'Check who it\'s split with before saving.';
+  if (intent.questions?.length) reply = intent.questions[0].message || 'Check who it\'s split with before saving.';
   else if (intent.needsIdentity) reply = 'Who paid? Tap the name on the card.';
   return { steps, reply, card };
+}
+
+/**
+ * AAI's answer to typed text: { steps, reply, card, error?, chips? }.
+ * session.solo (a shared room with only you in it) = no split questions; AAI says so and offers "Invite roommates".
+ */
+export function respond(text, session) {
+  const r = respondInner(text, session);
+  if (session.solo && r.card) {
+    const name = session.roomName ? `**${session.roomName}**` : 'this room';
+    if (r.card.kind === 'quick' && !r.reply) r.reply = `Nobody else is in ${name} yet, so there's nothing to split.`;
+    r.chips = [{ id: 'invite', label: 'Invite roommates · share code' }];
+  }
+  return r;
+}
+
+/** "Add by hand" on an UNCLEAR reply: the same text as a card with amount 0 (the person types the ₹). */
+export function handCard(text, session) {
+  const intent = parse(text, { users: session.users, me: session.me, categories: session.categories, expenses: session.expenses, isPersonal: session.isPersonal, now: session.now });
+  const today = session.today || toDateStr(session.now);
+  return {
+    steps: [],
+    reply: 'Tap the ₹ and type it.',
+    card: quickCard({ ...intent, type: 'unknown' }, { ...session, today }, session.firstCard),
+  };
 }
 
 const toStr = toDateStr;

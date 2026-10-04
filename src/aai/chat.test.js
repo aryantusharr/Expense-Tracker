@@ -2,9 +2,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { ctx, USERS, NOW, exp } from './fixtures.js';
 import { GREETINGS, greetingContext, pickGreeting } from './greetings.js';
-import { weekGrid, tier, memberStats, heatLine } from './heatmap.js';
+import { weekGrid, tier, memberStats, heatLine, opensFromRows, opensSince } from './heatmap.js';
 import { quickUsuals, repeatBills, lastLabel } from './usuals.js';
-import { respond, billTotals, syncRest, dayLabel, billFromPast } from './chatModel.js';
+import { respond, handCard, billTotals, syncRest, dayLabel, billFromPast } from './chatModel.js';
 
 const ME = 'u-me', RAVI = 'u-ravi', MEERA = 'u-meera';
 const sess = (over = {}) => ({ ...ctx(), firstCard: true, date: null, ...over });
@@ -149,14 +149,30 @@ test('rest follows edits; items over the total flag a mismatch', () => {
   assert.ok(billTotals(over).over > 0);
 });
 
-test('commands get a plain reply and no card; no-amount text gets an amount question', () => {
+test('commands get a plain reply and no card; no-amount text gets an UNCLEAR reply, "Add by hand" makes the card', () => {
   const c = respond('undo', sess());
   assert.equal(c.card, null);
   assert.match(c.reply, /only add expenses/);
   const u = respond('something odd', sess());
-  assert.equal(u.card.kind, 'quick');
-  assert.equal(u.card.draft.amount, 0);
-  assert.ok(u.card.dots.includes('amount') || u.card.dots.includes('all'));
+  assert.equal(u.card, null);
+  assert.equal(u.error.type, 'unclear');
+  assert.equal(u.error.stamp, 'UNCLEAR');
+  assert.deepEqual(u.error.actions.map(a => a.id), ['hand', 'type']);
+  const h = handCard('something odd', sess());
+  assert.equal(h.card.kind, 'quick');
+  assert.equal(h.card.draft.amount, 0);
+  assert.ok(h.card.dots.includes('amount') || h.card.dots.includes('all'));
+});
+
+test('a shared room with only you: no split questions, says so, offers "Invite roommates"', () => {
+  const me = USERS[0];
+  const r = respond('dinner 450', sess({ users: [me], me: me.id, isPersonal: true, solo: true, roomName: 'C53' }));
+  assert.equal(r.card.kind, 'quick');
+  assert.deepEqual(r.card.draft.splitAmong, [me.id]);
+  assert.match(r.reply, /Nobody else is in \*\*C53\*\* yet, so there's nothing to split/);
+  assert.deepEqual(r.chips.map(c => c.id), ['invite']);
+  const normal = respond('dinner 450', sess());
+  assert.equal(normal.chips, undefined);
 });
 
 test('personal rooms: no payer or split rows needed', () => {
@@ -181,4 +197,16 @@ test('same-bill-again copies a past bill as a fresh card dated today', () => {
   assert.equal(r.card.bill.total, 164);
   assert.deepEqual(r.card.bill.items[0].splitAmong, [ME, RAVI]);
   assert.match(r.reply, /Same \*\*Blinkit weekly\*\* bill — 2 items, ₹164/);
+});
+
+test('opensFromRows builds { member: { day: count } } and skips bad rows', () => {
+  const o = opensFromRows([
+    { memberId: 'a', day: '2026-10-02', count: 2 }, { memberId: 'a', day: '2026-10-03', count: 1 },
+    { memberId: 'b', day: '2026-10-03', count: 3 }, { memberId: 'b', day: '2026-10-03', count: 0 }, null, { memberId: 7, day: 'x', count: 1 },
+  ]);
+  assert.deepEqual(o, { a: { '2026-10-02': 2, '2026-10-03': 1 }, b: { '2026-10-03': 3 } });
+  assert.deepEqual(opensFromRows(), {});
+  assert.equal(opensSince(NOW), '2026-07-25');
+  const st = memberStats(o, NOW);
+  assert.equal(st.a.streak, 2);
 });

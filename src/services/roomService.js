@@ -285,6 +285,9 @@ export async function deleteRoom(roomCode) {
       ]);
       const deletePromises = snapshot.docs.map(d => deleteDoc(d.ref));
       await Promise.all(deletePromises);
+      // the heatmap's app-open records go with the room
+      const opens = await getDocs(collection(db, 'rooms', roomCode, 'opens'));
+      await Promise.all(opens.docs.map(d => deleteDoc(d.ref)));
     } catch {
       // Silent error
     }

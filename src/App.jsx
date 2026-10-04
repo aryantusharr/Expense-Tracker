@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { useRoomContext } from './context/RoomContext';
+import useRecordOpen from './hooks/useRecordOpen';
 import FloatingNav from './components/layout/FloatingNav';
 import UpdateToast from './components/layout/UpdateToast';
 import LandingScreen from './components/onboarding/LandingScreen';
@@ -31,6 +32,7 @@ function ScrollToTop() {
 
 function AppRoutes() {
   const { roomCode, loading } = useRoomContext();
+  useRecordOpen();
 
   if (loading) {
     return (

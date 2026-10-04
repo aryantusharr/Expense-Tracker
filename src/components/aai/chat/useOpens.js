@@ -1,16 +1,25 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useRoomContext } from '../../../context/RoomContext';
+import { subscribeOpens } from '../../../services/opensService';
+import { opensFromRows, opensSince } from '../../../aai/heatmap.js';
 
 /**
- * Who opened the app, per member per day: { [memberId]: { 'YYYY-MM-DD': count } }.
- * Chat 1 · Part 1 ships the heatmap shell with no data; Part 2 reads/writes rooms/{code}/opens (test project first).
- * In dev builds, `window.__setAaiOpens({...})` lets us look at a filled heatmap without touching any database.
+ * Who opened the app, per member per day: { [memberId]: { 'YYYY-MM-DD': count } }, live from rooms/{code}/opens.
+ * If reading isn't allowed (old rules) or fails, the heatmap simply stays empty.
+ * In dev builds, `window.__setAaiOpens({...})` shows a filled heatmap without touching any database.
  */
 export default function useOpens() {
-  const [opens, setOpens] = useState({});
+  const { roomCode } = useRoomContext();
+  const [rows, setRows] = useState(null);
+  const [dev, setDev] = useState(null);
+  useEffect(() => {
+    if (!roomCode) return undefined;
+    return subscribeOpens(roomCode, opensSince(new Date()), setRows);
+  }, [roomCode]);
   useEffect(() => {
     if (!import.meta.env.DEV) return undefined;
-    window.__setAaiOpens = setOpens;
+    window.__setAaiOpens = setDev;
     return () => { delete window.__setAaiOpens; };
   }, []);
-  return opens;
+  return useMemo(() => dev ?? opensFromRows(rows || []), [dev, rows]);
 }

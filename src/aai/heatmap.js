@@ -57,6 +57,7 @@ const LINES = {
   streak: (n, d) => `${n}'s opened the app ${d} days straight. Very organised. Or very bored.`,
   gone: (n, d) => `${n}'s been gone ${d} days. Probably living off Maggi and vibes.`,
   flattered: n => `You opened it ${n} times today. The app is flattered.`,
+  here: () => 'Opened today. The app is pleasantly surprised.',
   nobody: () => 'Nobody opened yesterday. The expenses didn\'t stop though.',
   past: (d, b) => `${d} days straight. Past you did ${b}. Just saying.`,
   tied: (a, n, o) => `You and ${a}, tied at ${n}. ${o} is not in this race.`,
@@ -78,7 +79,7 @@ export function heatLine({ stats, opens = {}, members, meId, now, personal = fal
     if (me && me.today >= 3) return LINES.flattered(me.today);
     if (me && me.streak >= 2 && me.best > me.streak) return LINES.past(me.streak, me.best);
     if (me && me.today === 0) return 'Today\'s still empty for you. The app is waiting. Patiently. Mostly.';
-    return LINES.flattered(me?.today || 1);
+    return me && me.today >= 3 ? LINES.flattered(me.today) : LINES.here();
   }
 
   const streaker = others.filter(m => stats[m.id].streak >= 5).sort((a, b) => stats[b.id].streak - stats[a.id].streak)[0];
@@ -97,3 +98,16 @@ export function heatLine({ stats, opens = {}, members, meId, now, personal = fal
   if (!Object.values(opens).some(d => d[yest] > 0)) return LINES.nobody();
   return LINES.empty(others[0] ? nm(others[0]) : 'Everyone');
 }
+
+/** Firestore rows [{ memberId, day, count }] → opens { [memberId]: { 'YYYY-MM-DD': count } }. Bad rows are skipped. */
+export function opensFromRows(rows = []) {
+  const out = {};
+  for (const r of rows) {
+    if (!r || typeof r.memberId !== 'string' || typeof r.day !== 'string' || !(r.count > 0)) continue;
+    (out[r.memberId] ||= {})[r.day] = (out[r.memberId][r.day] || 0) + r.count;
+  }
+  return out;
+}
+
+/** Oldest day the heatmap + streaks need: the 5 calendar weeks. (Best streak is "best in what we fetched" — 10 weeks back.) */
+export const opensSince = now => toDateStr(addDays(now, -70));

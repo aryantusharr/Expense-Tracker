@@ -23,6 +23,16 @@ service cloud.firestore {
         && d.date is string && d.date.size() <= 40;
     }
 
+    // "Who opened the app" (AAI heatmap): one document per member per day, id = memberId_yyyy-mm-dd, { memberId, day, count, last }.
+    function validOpen(id, d) {
+      return d.keys().hasOnly(['memberId', 'day', 'count', 'last'])
+        && d.memberId is string && d.memberId.size() > 0 && d.memberId.size() <= 80
+        && d.day is string && d.day.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && id == d.memberId + '_' + d.day
+        && d.count is int && d.count >= 1 && d.count < 100000
+        && d.last is number;
+    }
+
     // Rooms: open by code only. No listing.
     match /rooms/{code} {
       allow get: if validCode(code);
@@ -34,6 +44,13 @@ service cloud.firestore {
         // Reading a room's expenses needs the room code in the path; this path cannot be used to find rooms.
         allow get, list: if validCode(code);
         allow create, update: if validCode(code) && validExpense(request.resource.data);
+        allow delete: if validCode(code);
+      }
+
+      match /opens/{openId} {
+        // Everyone in the room sees everyone's opens (her call 4 Oct). Same "the code is the key" access as expenses.
+        allow get, list: if validCode(code);
+        allow create, update: if validCode(code) && validOpen(openId, request.resource.data);
         allow delete: if validCode(code);
       }
     }

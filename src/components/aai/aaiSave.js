@@ -10,8 +10,11 @@ import { resolveCategoryIcon } from '../../design/categoryIcons';
 import { fmtINR, cleanName } from '../../aai/common.js';
 
 const SAVE_WAIT_MS = 8000;
+const OFFLINE_WAIT_MS = 700;
 // Same as the Add screen: if Firestore is slow, treat as saved — it syncs when the connection returns.
-const withTimeout = p => Promise.race([p, new Promise(res => setTimeout(() => res('timeout'), SAVE_WAIT_MS))]);
+// Offline there's nothing to wait for: the write is queued on the phone, so say so after a blink (board 11D).
+const waitMs = () => (typeof navigator !== 'undefined' && navigator.onLine === false ? OFFLINE_WAIT_MS : SAVE_WAIT_MS);
+const withTimeout = p => Promise.race([p, new Promise(res => setTimeout(() => res('timeout'), waitMs()))]);
 const fmtN = n => Math.round(n * 100) / 100;
 
 /** c = { roomCode, room, expenses, users, categories, meId, isPersonal } */
@@ -49,7 +52,8 @@ function remember(c, e) {
   if (e.description) addRecentDescription(c.roomCode, e.description);
 }
 
-async function addOne(c, d) {
+/** lates (optional) collects a promise per save that was only queued — it resolves to the new id once the server has it. */
+async function addOne(c, d, lates) {
   const e = norm(c, d);
   const p = addExpense(c.roomCode, {
     description: (e.description || 'Expense').trim(), amount: e.amount, paidBy: e.paidBy, splitAmong: e.splitAmong,
@@ -58,16 +62,19 @@ async function addOne(c, d) {
   p.catch(err => console.error('AAI save failed after timeout', err));
   const res = await withTimeout(p);
   remember(c, e);
-  return res === 'timeout' ? null : res.id;
+  if (res === 'timeout') { lates?.push(p.then(x => x.id)); return null; }
+  return res.id;
 }
 
 export async function saveExpense(c, draft) {
   const e = norm(c, draft);
-  const id = await addOne(c, e);
+  const lates = [];
+  const id = await addOne(c, e, lates);
   const title = (e.description || 'Expense').trim();
   const n = e.splitAmong.length;
   return {
     ids: id ? [id] : [],
+    late: lates.length ? Promise.all(lates) : null,   // saved on the phone only → resolves to the ids once synced
     title,
     moment: {
       title, date: e.date, total: e.amount, room: c.room?.name || c.roomCode, paid: payerLabel(c, e.paidBy),
@@ -83,13 +90,15 @@ export async function saveExpense(c, draft) {
 /** Several separate expenses (one document each). */
 export async function saveMany(c, intent) {
   const ids = [];
+  const lates = [];
   for (const x of intent.expenses) {
-    const id = await addOne(c, { ...x, date: x.date });
+    const id = await addOne(c, { ...x, date: x.date }, lates);
     if (id) ids.push(id);
   }
   const last = intent.expenses[intent.expenses.length - 1];
   return {
     ids,
+    late: lates.length ? Promise.all(lates).then(l => [...ids, ...l]) : null,
     title: `${intent.count} expenses`,
     moment: {
       title: `${intent.count} expenses`, date: last.date, total: intent.total, room: c.room?.name || c.roomCode,
@@ -120,6 +129,7 @@ export async function saveBill(c, { name, date, paidBy, items }) {
     ? Math.round(rows.reduce((s, r) => s + (r.splitAmong.includes(c.meId) ? r.amount - r.amount / r.splitAmong.length : r.amount), 0)) : 0;
   return {
     ids: res === 'timeout' ? [] : res.items.map(i => i.id),
+    late: res === 'timeout' ? p.then(r => r.items.map(i => i.id)) : null,
     title: name,
     moment: {
       title: name, date, total, room: c.room?.name || c.roomCode, paid: payerLabel(c, payer),
