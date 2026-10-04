@@ -102,7 +102,7 @@ Build in Claude Code, 3 chats (combined to save credits; spec = docs/AAI-Chat-Ha
   - [x] Part 1 ✅ (4 Oct, checked in the browser 390×844, dark + light, test project): full-screen chat from the pill (loader open), header, greetings, empty state + heatmap shell, composer focus rows (heatmap hides while typing — her call), steps → Show thinking, quick card (tap-a-value edit), save + ADDED stamp + 5s Undo, typed multi-item → one bill card ("Rest of the bill", Paid-by chip, per-item category), dots rule.
   - **/compact** here (after part 1 works in the browser, dark).
   - [x] Part 2 ✅ (4 Oct, test project, dark + light 390×844): past chats drawer (board 8) · errors as replies (board 7) · personal-room heatmap (10A) + personal card/bill copy (10B) · edge cases (11): solo shared room, offline save · light pass · app-opens record + live heatmap data (rules on TEST only).
-- [ ] **Chat 2 · Bill reading + accessibility pass** — NEW chat · Opus · high (Gemini prompt/parsing is the tricky part)
+- [x] **Chat 2 · Bill reading + accessibility pass** ✅ (bill reading done; accessibility skipped) — NEW chat · Opus · high (Gemini prompt/parsing is the tricky part)
   - [x] Part 1 ✅ (4 Oct, test project): bill reading built, console set up, 17 real bills read + fixed, spare-model fallback, one real bill end to end in the chat (read → Who paid → splits → matched card). Saving checked with Test data only.
   - **/compact** here (after bills save correctly on test).
   - [—] Part 2: app-wide accessibility pass — **skipped (her call, 4 Oct)**. Not part of v2.2.0; handoff §10 stays as a reference only.
