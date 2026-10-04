@@ -40,6 +40,9 @@ function setUp() {
   return model;
 }
 
+/** Called when "+" is tapped: set up App Check (loads the reCAPTCHA script) while the photo picker is open. */
+export function warm() { try { setUp(); } catch { /* not set up → the read itself reports it */ } }
+
 /** Shrink one image (≈1600px long edge, JPEG 0.8) → base64. Drawing on a canvas also turns iPhone HEIC into JPEG. */
 async function shrink(blob) {
   const url = URL.createObjectURL(blob);

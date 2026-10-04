@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { normaliseRead, readSums, billFromRead, billMismatch, chargesDetail, classifyReadError, splitLabel, readingSteps } from './billParse.js';
+import { cleanQty, normaliseRead, readSums, billFromRead, billMismatch, chargesDetail, classifyReadError, splitLabel, readingSteps } from './billParse.js';
 
 const now = new Date(2026, 9, 4);
 const users = [{ id: 'a', name: 'Test Asha' }, { id: 'b', name: 'Test Ben' }, { id: 'c', name: 'Test Cy' }];
@@ -65,6 +65,15 @@ test('billFromRead: a net discount is spread over the items; personal room has n
   assert.equal(bill.items.reduce((s, i) => s + i.amount, 0), 60);
   assert.equal(bill.paidBy, 'a');
   assert.deepEqual(bill.items[0].splitAmong, ['a']);
+  assert.equal(billMismatch(bill).off, false);
+});
+
+test('cleanQty + paise rounding is absorbed, ₹0 lines dropped', () => {
+  assert.deepEqual(['1 x', '1.0', '75 g x 1', '1 pack (125 ml)', '2.0', '×2', '1 kg', '500 ml'].map(cleanQty), ['', '', '75 g', '125 ml', '×2', '×2', '1 kg', '500 ml']);
+  const r = normaliseRead({ ...raw, items: [{ name: 'Test Pizza', qty: '1', amount: 93.45, category: 'Snacks', confidence: 0.9 }, { name: 'Test Free', qty: '', amount: 0, category: '', confidence: 0.9 }], charges: [], total: 93.46 }, { now });
+  assert.equal(r.items.length, 1);
+  const { bill } = billFromRead(r, ctx, { paidBy: 'a' });
+  assert.equal(bill.items[0].amount, 93.46);
   assert.equal(billMismatch(bill).off, false);
 });
 

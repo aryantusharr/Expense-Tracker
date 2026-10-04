@@ -62,12 +62,16 @@ export function billPrompt({ categories = [], today, count = 1 }) {
     `Today is ${today}. Reply only with JSON in the given schema.`,
     'Rules:',
     '- isBill: false if this is not a bill/receipt/order summary (a chat, a photo, a payment-only screen with no items).',
-    '- shop: the store or app name as printed (e.g. Blinkit, Zepto, Swiggy, DMart, a restaurant name). Empty if not shown.',
+    '- shop: the restaurant or store name, copied letter for letter as printed (e.g. Blinkit, Zepto, Instamart, KFC, a restaurant).',
+    '  For a food-delivery receipt use the restaurant name. Empty if not shown.',
+    '- Several invoices of the SAME order (one per seller, "1 of 3" pages): read them all as one bill — every item from every',
+    '  invoice, each invoice\'s own "Delivery and other charges" lines as charges, and total = the sum of the invoice totals.',
+    '  Ignore annexure tables that only break down a charge already listed.',
     '- date: the order/bill date as YYYY-MM-DD. If the year is missing use the most recent past date. Empty if not shown.',
     '- items: every purchased line, top to bottom. name = product name as printed, shortened to the useful words (no SKU codes).',
     '  qty = quantity/size as printed ("1 kg", "×2", "500 ml"); "" if none. amount = the rupees actually charged for that line',
     '  (after any per-item discount; quantity × price if only the unit price is printed). Never use the struck-out MRP.',
-    '  If a line\'s amount can\'t be read, keep the line with amount null and a low confidence.',
+    '  If a line\'s amount can\'t be read, keep the line with amount null and a low confidence. Skip free (₹0) lines.',
     `  category = the best match from this exact list: ${cats}.`,
     '- charges: everything between the items and the grand total that is NOT a subtotal/item total: GST, CGST, SGST, cess, service',
     '  charge, delivery fee, handling fee, platform fee, small-cart / packaging fee, tip, donation, round off, and discounts/coupons/',
@@ -82,6 +86,15 @@ const num = v => (typeof v === 'number' && Number.isFinite(v) ? v : typeof v ===
 const r2 = n => Math.round(n * 100) / 100;
 const conf = v => { const n = num(v); return n == null ? 1 : Math.max(0, Math.min(1, n > 1 ? n / 100 : n)); };
 const clean = s => (typeof s === 'string' ? s.replace(/\s+/g, ' ').trim() : '');
+/** "1 x" / "1.0" / "75 g x 1" / "1 pack (125 ml)" → "" / "" / "75 g" / "125 ml"; "2.0" → "×2". */
+export function cleanQty(q) {
+  let s = clean(q).replace(/\s*[x×]\s*1(?:\.0+)?$/i, '').replace(/^1(?:\.0+)?\s*[x×]\s*/i, '')
+    .replace(/^1(?:\.0+)?\s*(?:pc|pcs|pack|packs|unit|units|nos?|piece|pieces)\b\s*/i, '');
+  const n = s.match(/^[x×]?\s*(\d+)(?:\.0+)?$/i);
+  if (n) s = n[1] === '1' ? '' : `×${n[1]}`;
+  return s.replace(/^\((.*)\)$/, '$1').trim();
+}
+export const ROUND_OFF = 1;               // a bill that's off by ≤ ₹1 (paise rounding) still counts as matched
 
 /** Model JSON (object or string) → plain data. Throws { code: 'PARSE' } when it isn't JSON at all. */
 export function normaliseRead(raw, { now = new Date() } = {}) {
@@ -94,8 +107,9 @@ export function normaliseRead(raw, { now = new Date() } = {}) {
   const items = (Array.isArray(j.items) ? j.items : [])
     .map(i => {
       const a = num(i?.amount);
-      return { name: clean(i?.name), qty: clean(i?.qty).replace(/^(?:x|×)?\s*1$/i, ''), amount: a == null ? null : r2(Math.abs(a)), category: clean(i?.category), conf: conf(i?.confidence) };
+      return { name: clean(i?.name), qty: cleanQty(i?.qty), amount: a == null ? null : r2(Math.abs(a)), category: clean(i?.category), conf: conf(i?.confidence) };
     })
+    .filter(i => i.amount !== 0)                                              // free items (₹0) don't need a line
     .filter(i => i.name || i.amount != null || i.conf < UNCLEAR_BELOW);       // an unreadable line stays (it becomes a "failed" row)
 
   const charges = (Array.isArray(j.charges) ? j.charges : [])
@@ -206,7 +220,13 @@ export function billFromRead(read, ctx, answers = {}) {
     items = items.map(i => (i.amount > 0 ? { ...i, discounted: true } : i));
   }
 
+  // paise rounding (bill ₹93.46, lines ₹93.45): fold it into the taxes line, or else the biggest item
   const sums = readSums(read);
+  const gap = r2(sums.total - items.reduce((s, i) => s + i.amount, 0));
+  if (Math.abs(gap) > 0.004 && Math.abs(gap) <= ROUND_OFF && !items.some(i => i.failed)) {
+    const into = items.find(i => i.charges) || items.filter(i => i.amount > 0).sort((a, b) => b.amount - a.amount)[0];
+    if (into) into.amount = r2(into.amount + gap);
+  }
   const shop = answers.shop ?? read.shop;
   const bill = {
     name: shop || 'Untitled bill', nameUnsure: !shop || read.conf.shop < SURE, date: read.date || answers.date || today,
@@ -239,7 +259,7 @@ export function readingSteps(read, seed = Date.now()) {
   steps.push({ text: `found ${n} item${n === 1 ? '' : 's'}… ${chips > 1 ? `${chips} of them are chips.` : n > 12 ? 'someone did a full month\'s shopping.' : 'nothing suspicious. Yet.'}`, bold: `${n} item${n === 1 ? '' : 's'}` });
   if (read.charges.some(c => c.kind === 'tax')) steps.push({ text: 'spotted GST… the government also ate.' });
   if (read.unclear.length) steps.push({ text: `line ${read.unclear[0] + 1} is a blur. Bold of you.` });
-  else if (Math.abs(s.left) > 0.004) steps.push({ text: `checking total… items ${fmtINR(s.items + s.charges)}, bill ${fmtINR(s.total)}. Kisi ne chupke se khaya.` });
+  else if (Math.abs(s.left) > ROUND_OFF) steps.push({ text: `checking total… items ${fmtINR(s.items + s.charges)}, bill ${fmtINR(s.total)}. Kisi ne chupke se khaya.` });
   else steps.push({ text: `checking total… ${fmtINR(s.total)}. Adds up, surprisingly.` });
   return steps.slice(0, 4);
 }

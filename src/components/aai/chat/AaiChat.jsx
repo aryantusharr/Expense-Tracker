@@ -343,7 +343,7 @@ export default function AaiChat({ onClose }) {
   const typeItems = () => { setHint(TYPE_HINT); setTimeout(() => fieldRef.current?.focus(), 60); };
   const pickBill = () => {
     if (busy()) { haptic('error'); pushError(errorReply('wait')); return; }
-    loadReader().catch(() => {});                            // start fetching the reader while the picker is open
+    loadReader().then(m => m.warm()).catch(() => {});        // fetch the reader + set up App Check while the picker is open
     pickFor.current = null;
     fileRef.current?.click();
   };
