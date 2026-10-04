@@ -97,11 +97,18 @@ Decisions (her "do whatever is best" → Claude's picks): category delete keeps 
 - Design final on the canvas (Final app → "AAI · chat · Dark/Light (final 4 Oct)"); old sheet boards moved to Rejected.
 - [x] Chat A Brain ✅ (src/aai/, 237 tests — reused)
 - [x] Chat B Text AAI (sheet UI) — superseded by the chat UI; save path (aaiSave.js) + Toast extensions reusable
-- [ ] Chat B2 · Chat UI: full-screen chat from the pill, greetings, empty state, composer focus rows, steps + Show thinking, quick + bill cards (tap-a-value edit, Paid-by chip, per-item category), typed-bill-first, ADDED stamp + 5s Undo, past chats (2h, local), errors as replies, personal + edge variants, light mode
-- [ ] Chat B3 · App opens + heatmap: daily open record per member + rules addition (needs her yes before live rules)
-- [ ] Chat C · Bill reading in chat: consent reply, Who paid (3s), per-item split questions + "Same for the rest" warn toast, bill card + mismatch bar (Gemini free tier)
-- [ ] Accessibility pass across the whole app (min 11px text, contrast, labels) — her call 4 Oct
-- [ ] Chat D · iPhone pass + release v2.2.0 · [ ] E Android Share (optional)
+Build in Claude Code, 3 chats (combined to save credits; spec = docs/AAI-Chat-Handoff.md):
+- [ ] **Chat 1 · AAI chat UI + app opens** — NEW chat · Sonnet · high
+  - Part 1: full-screen chat from the pill (loader open), header, greetings, empty state + heatmap shell, composer focus rows, steps → Show thinking, quick card (tap-a-value edit), save + ADDED stamp + 5s Undo, typed multi-item → one bill card ("Rest of the bill", Paid-by chip, per-item category), dots rule.
+  - **/compact** here (after part 1 works in the browser, dark).
+  - Part 2: past chats (2h, local, read-only → opens in History), errors as replies, personal room + edge cases, light mode, app-opens record + heatmap data on the TEST project (rules change written + tested on test only).
+- [ ] **Chat 2 · Bill reading + accessibility pass** — NEW chat · Opus · high (Gemini prompt/parsing is the tricky part)
+  - Part 1: consent reply, Who paid (3s), per-item split questions + "Same for the rest" warn toast, bill card + mismatch bar, LIMIT/WAIT/DOWN/SLOW/OFFLINE/UNCLEAR/NOT A BILL replies, free Gemini tier + App Check. Needs her bill screenshots in test-data/bills/.
+  - **/compact** here (after bills save correctly on test).
+  - Part 2: app-wide accessibility pass (min 11px readable text, contrast ≥4.5:1, labels) — can drop to Sonnet · medium with /model.
+- [ ] **Chat 3 · iPhone pass + release v2.2.0** — NEW chat · Sonnet · medium
+  - Test preview → her phone pass → fixes → fresh backup → deploy app → live rules for app opens (her yes per live step) → RELEASE notes + version bump.
+- [ ] E · Android Share (optional, later) — same chat as 3 if time, Sonnet · medium
 
 ## Log
 - 2026-10-01 · Design finalised on the canvas (all screens + motion system). Plan written.
