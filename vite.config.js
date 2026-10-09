@@ -9,8 +9,10 @@ const LIVE_PROJECT_ID = 'splitease-7bb6c'
 
 // App version (package.json), build number (commit count) and release date — shown in the app
 // and written to /version.json so an open app can tell which version it's updating to.
-const VERSION = JSON.parse(readFileSync(new URL('./package.json', import.meta.url))).version
-const BUILD = (() => { try { return execSync('git rev-list --count HEAD').toString().trim() } catch { return '0' } })()
+const PKG = JSON.parse(readFileSync(new URL('./package.json', import.meta.url)))
+const VERSION = PKG.version
+// Build number: package.json "splitEaseBuild" when set (= last live build + the number of changes in RELEASE), else the git commit count.
+const BUILD = PKG.splitEaseBuild != null ? String(PKG.splitEaseBuild) : (() => { try { return execSync('git rev-list --count HEAD').toString().trim() } catch { return '0' } })()
 const DATE = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()
 const BUILD_ID = `${VERSION}-${BUILD}-${Date.now().toString(36)}`
 const versionFile = () => ({
