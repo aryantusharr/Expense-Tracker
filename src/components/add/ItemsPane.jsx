@@ -193,7 +193,7 @@ export default function ItemsPane({ c }) {
           <div className="add-field">
             <span className="add-field__label">CATEGORY</span>
             <div className="add-cats" data-noswipe role="group" aria-label="Category">
-              {cats.map(cat => {
+              {(auto && draft.categoryId ? [...cats].sort((a, b) => (b.id === draft.categoryId) - (a.id === draft.categoryId)) : cats).map(cat => {   // the auto-picked one leads the row
                 const on = draft.categoryId === cat.id;
                 return (
                   <button key={cat.id} type="button" className={`add-cat ${on ? 'add-cat--on' : ''}`} aria-pressed={on} onClick={() => { haptic('choose'); setAuto(false); setManual(true); setDraft(d => ({ ...d, categoryId: cat.id })); }}>

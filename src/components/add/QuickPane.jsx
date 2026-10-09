@@ -58,8 +58,9 @@ export default function QuickPane({ c }) {
 
   // Bring the picked / auto-picked category into view.
   useEffect(() => {
-    catStrip.current?.querySelector('.add-cat--on')?.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
-  }, [form.categoryId, view]);
+    if (c.autoCat) catStrip.current?.scrollTo({ left: 0, behavior: 'smooth' });
+    else catStrip.current?.querySelector('.add-cat--on')?.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
+  }, [form.categoryId, view]);   // eslint-disable-line react-hooks/exhaustive-deps
 
   const setAmountFromExpr = next => { setExpr(next); setField.amount(evalExpr(next) ? String(evalExpr(next)) : ''); };
   const onKey = k => setAmountFromExpr(pressKey(expr, k));
@@ -167,7 +168,7 @@ export default function QuickPane({ c }) {
           <div className="add-field">
             <span className="add-field__label">CATEGORY {!form.categoryId && <em>· auto-picks from your description</em>}</span>
             <div className="add-cats" ref={catStrip} data-noswipe role="group" aria-label="Category">
-              {c.sortedCategories.map(cat => {
+              {(c.autoCat && form.categoryId ? [...c.sortedCategories].sort((a, b) => (b.id === form.categoryId) - (a.id === form.categoryId)) : c.sortedCategories).map(cat => {   // the auto-picked one leads the row
                 const on = form.categoryId === cat.id;
                 return (
                   <button key={cat.id} type="button" className={`add-cat ${on ? 'add-cat--on' : ''}`} aria-pressed={on} onClick={() => { haptic('choose'); c.pickCategory(cat.id); }}>
