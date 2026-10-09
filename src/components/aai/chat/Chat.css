@@ -372,7 +372,6 @@
 .ch-hint { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--ch-mute); }
 .ch-fetched { font-weight: 600; font-family: inherit; font-size: inherit; color: inherit; position: relative; }
 button.ch-fetched::before { content: ''; position: absolute; inset: -12px -4px; }
-.ch-qty { font-size: 12px; color: var(--ch-mute2); font-weight: 500; }
 .ch-inl--fetched { display: inline-flex; min-width: 140px; vertical-align: middle; }
 .ch-askmeta { font-size: 11px; color: var(--ch-mute); }
 

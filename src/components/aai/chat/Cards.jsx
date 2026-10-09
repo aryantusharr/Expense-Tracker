@@ -334,7 +334,6 @@ export function BillCard({ card, onChange, members, categories, meId, isPersonal
                   {is('iname', it.id)
                     ? <TextEdit value={it.name} onChange={v => setItem(it.id, { name: v })} onClose={close} label={`Item ${i + 1} name`} caps="words" className="ch-inl--item" />
                     : <Val {...common} dots={it.failed ? ['all'] : dots} id={it.rest ? 'rest' : 'itemname'} label={`Change item ${i + 1} name`} onClick={() => open('iname', it.id)}>{it.name || (it.failed ? 'Couldn’t read this item' : 'Item')}</Val>}
-                  {it.qty && !is('iname', it.id) ? <span className="ch-mono ch-qty">{it.qty}</span> : null}
                 </span>
                 {unread ? <span className="ch-mono ch-ir__hint">TAP TO TYPE NAME + AMOUNT</span> : it.charges ? (
                   <span className="ch-mono ch-ir__hint">{it.detail}{!isPersonal ? ` · ${(it.splitAmong || []).length === members.length ? `ALL ${members.length}` : `${(it.splitAmong || []).length} PEOPLE`}` : ''}</span>
