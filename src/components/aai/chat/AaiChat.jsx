@@ -551,7 +551,7 @@ export default function AaiChat({ onClose }) {
       flow.current.addAi({ reply: e.reason === 'limit' ? 'New day, new limit — reading the bill you saved for today.' : 'Back online — reading the bill you queued.' });
       flow.current.startBill(e.blobs, { quiet: true });
     };
-    const t = setTimeout(go, LOAD_MS + 400);
+    const t = setTimeout(go, 1600);
     window.addEventListener('online', go);
     return () => { alive = false; clearTimeout(t); window.removeEventListener('online', go); };
   }, [roomCode]);

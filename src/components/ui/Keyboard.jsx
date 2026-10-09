@@ -479,7 +479,7 @@ function NativeField({
   useEffect(() => {
     if (fieldRef) fieldRef.current = { focus: () => { kb?.closePad(); ref.current?.focus(); } };
   });
-  useEffect(() => { if (autoFocus && !disabled) ref.current?.focus(); }, [autoFocus]); // eslint-disable-line react-hooks/exhaustive-deps
+  useLayoutEffect(() => { if (autoFocus && !disabled) ref.current?.focus(); }, [autoFocus]); // eslint-disable-line react-hooks/exhaustive-deps
   const go = () => {
     onDone?.();
     if (next?.current) { ref.current?.blur(); next.current.focus?.(); } else if (!keepOpen) ref.current?.blur();

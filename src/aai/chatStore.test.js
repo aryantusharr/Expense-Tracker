@@ -77,3 +77,8 @@ test('error replies: every type has a stamp, 2 actions and a details line; typed
   assert.equal(saveDown({ code: 'unavailable' }).details, 'SAVE · UNAVAILABLE');
   assert.equal(saveDown(new Error('boom')).type, 'down');
 });
+
+test('chatTitle: a chat that only has bill screenshots does not crash', () => {
+  assert.equal(chatTitle([{ id: 'a', role: 'me', shots: 2 }, { id: 'b', role: 'ai', steps: [], done: true }]), 'Bill screenshots');
+  assert.equal(chatTitle([]), 'New chat');
+});

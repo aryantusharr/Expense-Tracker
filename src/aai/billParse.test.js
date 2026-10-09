@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { cleanQty, normaliseRead, readSums, billFromRead, billMismatch, chargesDetail, classifyReadError, splitLabel, readingSteps } from './billParse.js';
+import { cleanQty, normaliseRead, readSums, billFromRead, billMismatch, chargesDetail, classifyReadError, splitLabel, readingSteps, shortName, TAXES_CATEGORY } from './billParse.js';
 
 const now = new Date(2026, 9, 4);
 const users = [{ id: 'a', name: 'Test Asha' }, { id: 'b', name: 'Test Ben' }, { id: 'c', name: 'Test Cy' }];
@@ -99,4 +99,20 @@ test('splitLabel + reading steps', () => {
   const steps = readingSteps(normaliseRead(raw, { now }), 1);
   assert.ok(steps.some(s => s.text.includes('GST')));
   assert.ok(steps.length <= 4);
+});
+
+test('shortName: no size/pack, 4 words max, tidy caps', () => {
+  assert.equal(shortName('THUMS UP | COLA SPARKLING SOFT DRINK PET BOTTLE 750 ML'), 'Thums Up Cola Sparkling');
+  assert.equal(shortName('MINI PIZZA 100 G'), 'Mini Pizza');
+  assert.equal(shortName('Test Potato'), 'Test Potato');
+  assert.equal(shortName('500 g'), '500 g');
+});
+
+test('billFromRead: taxes row uses the Taxes category (existing one, else the one to create); no date → dateUnsure', () => {
+  const r = normaliseRead({ ...raw, date: '' }, { now });
+  const a = billFromRead(r, ctx, { paidBy: 'a' }).bill;
+  assert.equal(a.items.find(i => i.charges).categoryId, TAXES_CATEGORY.id);
+  assert.equal(a.dateUnsure, true);
+  const b = billFromRead(r, { ...ctx, categories: [...categories, { id: 'tx', name: 'Taxes' }] }, { paidBy: 'a' }).bill;
+  assert.equal(b.items.find(i => i.charges).categoryId, 'tx');
 });
