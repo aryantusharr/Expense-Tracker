@@ -194,13 +194,18 @@ export function KeyboardProvider({ children }) {
   const lastShift = useRef(0);
   const [autoCap, setAutoCap] = useState(false); // field says the next letter starts a sentence / word
 
-  const close = useCallback(() => {
+  const closePad = useCallback(() => {                       // the in-app keypad only
     const a = api.current;
     api.current = null;
     activeId.current = null;
     setActive(null);
     a?.blur?.();
   }, []);
+  const close = useCallback(() => {                          // either keyboard
+    closePad();
+    const n = document.activeElement;
+    if (n?.classList?.contains('se-native')) n.blur();
+  }, [closePad]);
 
   const focus = useCallback((id, kind, fieldApi, doneLabel, digits = false) => {
     if (api.current && api.current !== fieldApi) api.current.blur?.();
@@ -262,8 +267,35 @@ export function KeyboardProvider({ children }) {
     return () => { document.removeEventListener('pointerdown', down, true); document.removeEventListener('keydown', key); };
   }, [active, close, press]);
 
+  // Phone keyboard (native <input>): lift fixed docks / sheets by its height, and tap outside to dismiss it.
+  useEffect(() => {
+    const vv = window.visualViewport;
+    const root = document.documentElement;
+    const native = () => { const a = document.activeElement; return a && a.classList?.contains('se-native') ? a : null; };
+    const sync = () => {
+      if (activeId.current) return;                                   // the in-app keypad owns the layout
+      if (!native()) { root.classList.remove('se-kb-open'); root.style.removeProperty('--se-kb-h'); return; }
+      const h = vv ? Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop)) : 0;
+      root.style.setProperty('--se-kb-h', `${h}px`);
+      root.classList.toggle('se-kb-open', h > 80);
+    };
+    const onIn = () => { sync(); setTimeout(sync, 350); };
+    const onOut = () => setTimeout(sync, 60);
+    const onDown = e => { const a = native(); if (a && !e.target.closest?.('input, textarea, [data-se-field], [data-kb]')) a.blur(); };
+    document.addEventListener('focusin', onIn);
+    document.addEventListener('focusout', onOut);
+    document.addEventListener('pointerdown', onDown, true);
+    vv?.addEventListener('resize', sync);
+    vv?.addEventListener('scroll', sync);
+    return () => {
+      document.removeEventListener('focusin', onIn); document.removeEventListener('focusout', onOut);
+      document.removeEventListener('pointerdown', onDown, true);
+      vv?.removeEventListener('resize', sync); vv?.removeEventListener('scroll', sync);
+    };
+  }, []);
+
   const [slot, setSlot] = useState(null);   // where the focused field puts its suggestion strip
-  const value = useMemo(() => ({ active, focus, close, isActive, slot, setAutoCap }), [active, focus, close, isActive, slot]);
+  const value = useMemo(() => ({ active, focus, close, closePad, isActive, slot, setAutoCap }), [active, focus, close, closePad, isActive, slot]);
   return (
     <KbCtx.Provider value={value}>
       {children}
@@ -296,14 +328,14 @@ function nextAmount(v, k) {
 }
 
 /**
- * Field that types with the in-app keyboard. onChange gets the new string.
+ * Field that types with the in-app keypad (amounts). onChange gets the new string.
  * kind: 'text' (default) | 'amount' (numpad, expression string) | 'number' (numpad, no operators) | 'code' (CAPS).
  * caps: 'sentences' (default) | 'words' | 'none'.
  * digitRow: QWERTY gets a 1–0 row on top (AAI field). slotContent: shown above the tray instead of the
  * Paste/suggestion strip (null = nothing). doneLabel: name of the Done key (e.g. 'Ask').
  * keepOpen: the Done key runs onDone but leaves the keyboard up (chat composer sends and keeps typing).
  */
-export function TextField({
+function PadField({
   value = '', onChange, placeholder, maxLength = 80, kind = 'text', caps = 'sentences',
   className = '', autoFocus = false, onDone, onBlur, disabled = false, prefix, suggestions = [],
   next, fieldRef, digitRow = false, slotContent, doneLabel: doneName = 'Done', keepOpen = false, ...rest
@@ -429,4 +461,46 @@ export function TextField({
       </span>
     </span>
   );
+}
+
+/**
+ * Text (names, descriptions, search, the chat) uses the PHONE keyboard — a real <input>; the in-app keypad is for
+ * amounts only (kind 'amount' | 'number'). Same props as before; suggestions / slotContent / digitRow are keypad-only.
+ */
+function NativeField({
+  value = '', onChange, placeholder, maxLength = 80, kind = 'text', caps = 'sentences', className = '', autoFocus = false,
+  onDone, onBlur, disabled = false, prefix, next, fieldRef, doneLabel = 'Done', keepOpen = false,
+  // eslint-disable-next-line no-unused-vars
+  suggestions, digitRow, slotContent, 'aria-label': ariaLabel, ...rest
+}) {
+  const kb = useKeyboard();
+  const ref = useRef(null);
+  const set = v => onChange?.((kind === 'code' ? v.toUpperCase().replace(/[^A-Z0-9]/g, '') : v).slice(0, maxLength));
+  useEffect(() => {
+    if (fieldRef) fieldRef.current = { focus: () => { kb?.closePad(); ref.current?.focus(); } };
+  });
+  useEffect(() => { if (autoFocus && !disabled) ref.current?.focus(); }, [autoFocus]); // eslint-disable-line react-hooks/exhaustive-deps
+  const go = () => {
+    onDone?.();
+    if (next?.current) { ref.current?.blur(); next.current.focus?.(); } else if (!keepOpen) ref.current?.blur();
+  };
+  return (
+    <span data-se-field className={`se-field se-field--native ${className} ${disabled ? 'is-disabled' : ''}`} onClick={() => ref.current?.focus()} {...rest}>
+      {prefix}
+      <input
+        ref={ref} className="se-native" type="text" value={String(value ?? '')} placeholder={placeholder} disabled={disabled} aria-label={ariaLabel}
+        autoCapitalize={kind === 'code' ? 'characters' : caps === 'words' ? 'words' : caps === 'sentences' ? 'sentences' : 'off'}
+        autoCorrect={kind === 'code' ? 'off' : 'on'} spellCheck={kind !== 'code'} autoComplete="off"
+        enterKeyHint={next ? 'next' : keepOpen ? 'send' : doneLabel === 'Done' ? 'done' : 'go'}
+        onChange={e => set(e.target.value)}
+        onFocus={() => kb?.closePad()}
+        onBlur={() => onBlur?.()}
+        onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); go(); } }}
+      />
+    </span>
+  );
+}
+
+export function TextField(props) {
+  return props.kind === 'amount' || props.kind === 'number' ? <PadField {...props} /> : <NativeField {...props} />;
 }

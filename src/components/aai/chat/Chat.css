@@ -62,7 +62,13 @@
 .ch-hdr__r { display: flex; }
 .ch-ib { width: 44px; height: 44px; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: var(--ch-ib); }
 .ch-ib:active { background: var(--ch-ghost); }
-.ch-mark { display: flex; align-items: center; gap: 3px; font: 800 17px var(--se-font-display); letter-spacing: -.02em; }
+.ch-mark { position: absolute; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 3px; font: 800 17px var(--se-font-display); letter-spacing: -.02em; }
+.ch-mark__ryan { display: inline-block; overflow: hidden; white-space: nowrap; padding-right: 2px; margin-right: -2px; max-width: 0; opacity: 0; margin-left: -3px; animation: ch-ryan 7s cubic-bezier(.3, .7, .3, 1) infinite; }
+@keyframes ch-ryan {
+  0%, 18% { max-width: 0; opacity: 0; }
+  34%, 66% { max-width: 3em; opacity: 1; }
+  82%, 100% { max-width: 0; opacity: 0; }
+}
 .ch-mark__s { width: 3px; height: 17px; border-radius: 2px; background: #000; box-shadow: var(--ch-mark-glow); }
 .ch-mark__ai, .ch-load__ai { background: linear-gradient(135deg, #8B7CFF, #5FD4C4); -webkit-background-clip: text; background-clip: text; color: transparent; }
 :root[data-theme='light'] .ch-mark__ai, :root[data-theme='light'] .ch-load__ai { background-image: linear-gradient(135deg, #5B4BD6, #6D5DF5, #0A8577); }
@@ -263,21 +269,12 @@
 @keyframes ch-pop { from { transform: scale(.7); opacity: 0; } }
 
 /* ── loader (board AAI-Loader-Short · Q1, ~2.4s so the whole peek-and-blink plays, then the chat fades up) ── */
-.ch-load { position: absolute; inset: 0; z-index: 6; display: flex; flex-direction: column; align-items: center; padding-top: 38%; gap: 22px; background: var(--ch-veil); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); animation: ch-lin .2s ease both; }
+.ch-load { position: absolute; inset: 0; z-index: 6; display: flex; flex-direction: column; align-items: center; padding-top: 38%; gap: 22px; background: var(--ch-veil); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); animation: ch-lin .2s ease both; cursor: pointer; justify-content: flex-start; }
 .ch-load.is-out { animation: ch-lout .3s ease both; pointer-events: none; }
 @keyframes ch-lin { from { opacity: 0; } }
 @keyframes ch-lout { to { opacity: 0; } }
-.ch-load__mark { display: inline-flex; align-items: center; gap: 10px; font: 800 40px/44px var(--se-font-display); letter-spacing: -.02em; }
-.ch-load__slot { position: relative; width: 4px; height: 34px; }
-.ch-load__bar { position: absolute; left: 0; top: 0; width: 4px; height: 100%; border-radius: 2px; z-index: 2; background: #000; box-shadow: 0 0 0 1px rgba(255, 255, 255, .22), 0 0 10px rgba(95, 212, 196, .6); animation: ch-glow-p 1.2s ease-in-out infinite; }
-:root[data-theme='light'] .ch-load__bar { box-shadow: 0 0 0 1px rgba(21, 20, 43, .2), 0 0 10px rgba(10, 133, 119, .4); }
-.ch-load__win { position: absolute; left: 4px; top: 8px; width: 12px; height: 18px; overflow: hidden; }
-.ch-load__slip { position: absolute; inset: 0; border-radius: 0 5px 5px 0; background: var(--ch-av-body); display: flex; flex-direction: column; gap: 3px; justify-content: center; align-items: center; animation: ch-peek 2.4s cubic-bezier(.3, .7, .3, 1) both; }
-.ch-load__slip i { display: block; width: 3.5px; height: 3px; border-radius: 50%; background: var(--ch-av-eye); animation: ch-blink 2.4s both; }
-@keyframes ch-peek { 0%, 10% { transform: translateX(-100%); } 35%, 70% { transform: translateX(0); } 90%, 100% { transform: translateX(-100%); } }
-@keyframes ch-blink { 0%, 48%, 56%, 100% { transform: scaleY(1); } 52% { transform: scaleY(.1); } }
-@keyframes ch-glow-p { 50% { box-shadow: 0 0 0 1px rgba(255, 255, 255, .25), 0 0 18px rgba(95, 212, 196, .9); } }
-.ch-load__txt { font: 500 11px var(--se-font-mono); letter-spacing: .14em; color: var(--ch-mute2); animation: ch-pulse 1.6s ease-in-out infinite; }
+.ch-load__box { width: 100%; height: 150px; display: flex; align-items: center; justify-content: center; }
+.ch-load__txt { margin-top: 0; text-align: center; font: 500 11px var(--se-font-mono); letter-spacing: .14em; color: var(--ch-mute2); animation: ch-pulse 1.6s ease-in-out infinite; }
 @keyframes ch-pulse { 50% { opacity: .4; } }
 
 /* ── past chats drawer (board AAI-Chat-8) ── */
@@ -347,8 +344,7 @@
 .ch-solo__mid span { font-size: 11px; font-weight: 500; color: var(--ch-mute); }
 
 @media (prefers-reduced-motion: reduce) {
-  .ch-load__slip { animation: none; transform: translateX(-100%); }
-  .ch-load__bar { animation-duration: 2.4s; }
+  .ch-mark__ryan { animation: none; }
   .ch-card, .ch-say, .ch-me, .ch-step, .ch-edit, .ch-stamp, .ch-err { animation: none; }
   .ch-pcs, .ch-scrim { transition: none; }
   .ch-hdr, .ch-scroll, .ch-dock, .ch-glow { transform: none; }
@@ -372,6 +368,7 @@
 .ch-ring__s { font-size: 11px; color: var(--ch-t); margin-left: 2px; }
 .ch-og__wide { display: flex; gap: 6px; }
 .ch-pchip--wide { flex: 1; border-style: dashed; color: var(--ch-sub); }
+.ch-pchip--full { width: 100%; }
 .ch-pchip--next { flex: none; width: 96px; background: var(--ch-on-bg); border-color: var(--ch-t); }
 .ch-hint { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--ch-mute); }
 .ch-fetched { font-weight: 600; font-family: inherit; font-size: inherit; color: inherit; position: relative; }
@@ -406,3 +403,9 @@ button.ch-fetched::before { content: ''; position: absolute; inset: -12px -4px; 
 .ch-warn__x::before, .ch-warn__ok::before { content: ''; position: absolute; inset: -2px 0; }
 .ch-warn__ok { padding: 0 16px; font-weight: 700; background: var(--ch-warn-ok-bg); color: var(--ch-warn-ok); }
 .ch-file { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+
+/* ── "check me": a guessed / missing value pulses until she looks at it ── */
+.ch-val.is-pulse { border-radius: 8px; animation: ch-check 1.4s ease-in-out infinite; }
+@keyframes ch-check { 0% { box-shadow: 0 0 0 0 rgba(139, 124, 255, .6); background: rgba(139, 124, 255, .22); } 70% { box-shadow: 0 0 0 7px rgba(139, 124, 255, 0); background: rgba(139, 124, 255, .06); } 100% { box-shadow: 0 0 0 0 rgba(139, 124, 255, 0); background: rgba(139, 124, 255, .22); } }
+.ch-check { margin: 4px 16px 0; font-size: 10.5px; letter-spacing: .08em; color: var(--ch-t); }
+@media (prefers-reduced-motion: reduce) { .ch-val.is-pulse { animation: none; background: rgba(139, 124, 255, .2); } }

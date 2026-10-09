@@ -103,6 +103,9 @@ export function shortName(raw) {
   if (t && t === t.toUpperCase() && /[A-Z]/.test(t)) t = t.toLowerCase().replace(/(^|\s)\S/g, c => c.toUpperCase());
   return t || s;
 }
+/** The room category bills' taxes & charges go under. Created in the room the first time a bill is saved (matched by name after that). */
+export const TAXES_CATEGORY = { id: 'cat-taxes', name: 'Taxes & charges', icon: 'line:taxes' };
+export const findTaxesCategory = categories => (categories || []).find(c => /^taxes\b/i.test(c.name)) || null;
 export const ROUND_OFF = 1;               // a bill that's off by ≤ ₹1 (paise rounding) still counts as matched
 
 /** Model JSON (object or string) → plain data. Throws { code: 'PARSE' } when it isn't JSON at all. */
@@ -219,12 +222,10 @@ export function billFromRead(read, ctx, answers = {}) {
       });
     }
   }
-  const cats = items.map(i => i.categoryId).filter(Boolean);
-  const topCat = cats.sort((a, b) => cats.filter(x => x === b).length - cats.filter(x => x === a).length)[0] || null;
   if (charges > 0.004) {
     items.push({
       id: uid(), name: 'Taxes & charges', charges: true, detail: chargesDetail(read.charges), amount: charges,
-      categoryId: topCat, splitAmong: allIds, unsure: false,
+      categoryId: findTaxesCategory(categories)?.id || TAXES_CATEGORY.id, splitAmong: allIds, unsure: false,
     });
   } else if (charges < -0.004) {
     items = items.map(i => (i.amount > 0 ? { ...i, discounted: true } : i));

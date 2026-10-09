@@ -1,4 +1,5 @@
 import { initialOf } from '../../dashboard/dashboardData';
+import LoopMark from './LoopMark';
 
 /** Small shared bits of the AAI chat: monogram, avatar, header, thinking steps, icons. */
 
@@ -25,13 +26,13 @@ export const IcTag = () => <svg width="11" height="11" viewBox="0 0 24 24" strok
 const IcCheck = () => <svg width="13" height="13" viewBox="0 0 24 24" strokeWidth="2.6" {...sv}><path d="M5 12l5 5L20 7" /></svg>;
 const IcChev = ({ up }) => <svg width="14" height="14" viewBox="0 0 24 24" strokeWidth="2" {...sv}><path d={up ? 'M6 15l6-6 6 6' : 'M6 9l6 6 6-6'} /></svg>;
 
-export function Header({ onMenu, onNew, onClose }) {
+export function Header({ onMenu, onNew, onClose, canNew = true }) {
   return (
     <div className="ch-hdr">
       <button type="button" className="ch-ib" aria-label="Past chats" onClick={onMenu}><IcMenu /></button>
-      <div className="ch-mark" aria-label="Aryan AI"><span>A</span><span className="ch-mark__s" /><span className="ch-mark__ai">AI</span></div>
+      <div className="ch-mark" aria-label="Aryan AI"><span>A</span><span className="ch-mark__ryan" aria-hidden="true">ryan</span><span className="ch-mark__s" /><span className="ch-mark__ai">AI</span></div>
       <div className="ch-hdr__r">
-        <button type="button" className="ch-ib" aria-label="New chat" onClick={onNew}><IcNew /></button>
+        {canNew && <button type="button" className="ch-ib" aria-label="New chat" onClick={onNew}><IcNew /></button>}
         <button type="button" className="ch-ib" aria-label="Close" onClick={onClose}><IcClose /></button>
       </div>
     </div>
@@ -78,19 +79,12 @@ export function Thinking({ steps, shown, done, open, onToggle }) {
   );
 }
 
-/** The short A|AI loader: the buddy peeks out of the slot, blinks, slips back (board AAI-Loader-Short · Q1). */
-export function ChatLoader({ out }) {
+/** The open loader: the board's 8s looping mark (L1) on the blurred Dashboard. Tap anywhere to skip to the chat. */
+export function ChatLoader({ out, onSkip }) {
   return (
-    <div className={`ch-load ${out ? 'is-out' : ''}`} role="status" aria-label="Opening Aryan AI">
-      <div className="ch-load__mark" aria-hidden="true">
-        <span>A</span>
-        <span className="ch-load__slot">
-          <span className="ch-load__bar" />
-          <span className="ch-load__win"><span className="ch-load__slip"><i /><i /></span></span>
-        </span>
-        <span className="ch-load__ai">AI</span>
-      </div>
-      <div className="ch-load__txt">WAKING UP…</div>
+    <div className={`ch-load ${out ? 'is-out' : ''}`} role="status" aria-label="Opening Aryan AI" onClick={onSkip}>
+      <div className="ch-load__box"><LoopMark /></div>
+      <div className="ch-load__txt">WAKING UP… · TAP TO SKIP</div>
     </div>
   );
 }

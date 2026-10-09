@@ -5,7 +5,7 @@ import { IcPlus, IcSend } from './parts';
 
 /** The composer pill (+ bill screenshot · field · send) and, while it is focused on an empty chat, the two rows above it. */
 
-export function Composer({ text, setText, onSend, onBill, fieldRef, hint }) {
+export function Composer({ text, setText, onSend, onBill, fieldRef, hint, onFocusChange }) {
   const empty = !text.trim();
   return (
     <div className="ch-comp" data-kb>
@@ -14,6 +14,7 @@ export function Composer({ text, setText, onSend, onBill, fieldRef, hint }) {
         value={text} onChange={setText} maxLength={240} caps="none" digitRow doneLabel="Send" keepOpen slotContent={null}
         className="ch-field" placeholder={hint || 'Type an expense or add a bill'} fieldRef={fieldRef}
         onDone={() => onSend(text)} aria-label="Type an expense or add a bill"
+        onFocus={() => onFocusChange?.(true)} onBlur={() => onFocusChange?.(false)}
       />
       <button type="button" className="ch-cb ch-send" aria-label="Send" disabled={empty} onClick={() => onSend(text)}><IcSend /></button>
     </div>
@@ -28,7 +29,7 @@ const IcBill = () => (
 export function FocusRows({ bills, usuals, isPersonal, onBill, onUsual }) {
   if (!bills.length && !usuals.length) return null;
   return (
-    <div className="ch-rows" data-kb>
+    <div className="ch-rows" data-kb onPointerDown={e => e.preventDefault()}>
       {bills.length > 0 && (
         <div className="ch-row">
           <span className="ch-lab ch-lab--v">SAME BILL AGAIN · 1 TAP → REVIEW</span>

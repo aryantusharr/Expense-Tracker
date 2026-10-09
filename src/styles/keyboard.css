@@ -143,3 +143,9 @@
 :root[data-theme='light'] .kb-shk { color: #4A4390; }
 :root[data-theme='light'] .kb-shk.is-shon { color: #0A7A6D; }
 :root[data-theme='light'] .kb-shk.is-shlock { background: #0A8577; color: #FFFFFF; }
+
+/* Phone-keyboard text field: the span keeps the field's look, the <input> is bare. */
+.se-field--native { cursor: text; }
+.se-native { flex: 1; min-width: 0; width: 100%; background: none; border: 0; outline: 0; padding: 0; margin: 0; font: inherit; font-size: max(16px, 1em); color: inherit; caret-color: var(--se-violet); -webkit-user-select: text; user-select: text; text-overflow: ellipsis; -webkit-appearance: none; appearance: none; border-radius: 0; }
+.se-native::placeholder { color: var(--se-text-4, var(--se-text-3)); font-weight: 500; opacity: 1; }
+.add-input.se-field--native:focus-within, .he__input.se-field--native:focus-within { border-color: var(--se-violet); box-shadow: 0 0 0 3px color-mix(in srgb, var(--se-violet) 25%, transparent); }

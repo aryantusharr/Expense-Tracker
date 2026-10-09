@@ -10,6 +10,7 @@ import { TextField } from '../ui/Keyboard';
 import { useToast } from '../ui/Toast';
 import CategoriesSection from './CategoriesSection';
 import ProfileSync from './ProfileSync';
+import { IdentitySheet } from '../dashboard/parts/Shared';
 import DataSection from './DataSection';
 import { WhatsNewRow } from '../layout/WhatsNew';
 import { VERSION, SHORT, BUILD, DATE, takeUpdateMoment } from '../../version/version';
@@ -35,6 +36,7 @@ export default function SettingsScreen() {
   const [nameDraft, setNameDraft] = useState('');
   const [budDraft, setBudDraft] = useState(0);
   const [pulled, setPulled] = useState(0);
+  const [whoOpen, setWhoOpen] = useState(false);
   const [wipe, setWipe] = useState(null);
 
   const budget = Number(room?.budget) || 0;
@@ -127,6 +129,13 @@ export default function SettingsScreen() {
             <ProfileSync room={room} roomCode={roomCode} users={users} expenses={expenses} userIdentity={userIdentity}
               setUserIdentity={setUserIdentity} savedRooms={savedRooms} updateRoom={updateRoom} />
           )}
+          {!isPersonal && users.some(u => u.id === userIdentity) && (
+            <button type="button" className="st-card wn-row se-press st-who" onClick={() => { haptic('tap'); setWhoOpen(true); }}>
+              <span className="wn-ic st-mono-m" style={{ '--c': memberStyle(Math.max(0, users.findIndex(u => u.id === userIdentity))).color }}>{initialOf(users.find(u => u.id === userIdentity)?.name)}</span>
+              <span className="wn-row__t"><span>You are {users.find(u => u.id === userIdentity)?.name}</span><small>Tap to change your profile</small></span>
+              <span className="wn-row__chev" aria-hidden="true">›</span>
+            </button>
+          )}
           {isPersonal && (
             <button type="button" className="st-bud se-press" onClick={openBudget}>
               <span className="st-bud__top">
@@ -177,6 +186,11 @@ export default function SettingsScreen() {
 
       </main>
 
+      {!isPersonal && (
+        <IdentitySheet open={whoOpen} onClose={() => setWhoOpen(false)}
+          members={users.map((u, i) => ({ id: u.id, name: u.name, color: memberStyle(i).color, initial: initialOf(u.name) }))}
+          meId={userIdentity} onPick={id => { setUserIdentity(id); setWhoOpen(false); }} />
+      )}
       {wipe && <div className="st-wipe" style={{ background: wipe === 'light' ? '#F4F4F8' : '#07071A' }} aria-hidden="true" />}
 
       <Sheet open={sheet === 'name'} onClose={() => setSheet(null)} labelledBy="st-name-t">

@@ -41,6 +41,7 @@ export const CATEGORY_ICONS = [
   ['smoking', 'Smoking', 'M2 14h15v4H2zM12 14v4M20 14v4M19 11c0-2 2-2 2-4s-2-2-2-4', '#8B7CFF'],
   ['weed', 'Weed', 'M12 15C10 10 10.5 6 12 2c1.5 4 2 8 0 13zM12 15C8.5 13 6 10 5 6c3.5 1.5 6 4.5 7 9zM12 15c1-4.5 3.5-7.5 7-9-1 4-3.5 7-7 9zM12 15c-3 .5-6.5-.5-9-2 3-1.5 6.5-1.5 9 2zM12 15c2.5-3.5 6-3.5 9-2-2.5 1.5-6 2.5-9 2zM12 15v7', '#5FD4C4'],
   ['saving', 'Saving', 'M19 5c-1.5 0-2.8 1.4-3 2-3.5-1.5-11-.3-11 5 0 1.8 0 3 2 4.5V20h4v-2h3v2h4v-4c1-.5 1.7-1 2-2h2v-4h-2c0-1-.5-1.5-1-2zM2 9v1a2 2 0 0 0 2 2h1M16 11h.01', '#FF8FB5'],
+  ['taxes', 'Taxes & charges', 'M19 5 5 19M7 9a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM17 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4z', '#F5C26B'],
   ['gadgets', 'Gadgets', 'M8 6h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2zM9 6l1-4h4l1 4M9 18l1 4h4l1-4M12 10v2l1.5 1.5M18 11h1v2h-1', '#F5C26B'],
 ].map(([key, label, path, color]) => ({ key, label, path, color }))
 
@@ -48,6 +49,7 @@ const BY_KEY = Object.fromEntries(CATEGORY_ICONS.map(i => [i.key, i]))
 
 // Name keywords → icon (first match wins; checked against the lower-cased category name).
 const NAME_RULES = [
+  [/\btax(es)?\b|taxes & charges|gst/, 'taxes'],
   [/smok|cigar|cig\b|tobacco|vape|hookah/, 'smoking'],
   [/weed|ganja|cannabis|\bmaal\b|joint/, 'weed'],
   [/saving|invest|\bsip\b|deposit|piggy/, 'saving'],

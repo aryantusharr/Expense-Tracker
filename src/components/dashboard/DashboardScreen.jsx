@@ -84,11 +84,11 @@ export default function DashboardScreen() {
           <AaiPill open={aaiOpen} onOpen={() => setAaiOpen(true)} />
           {isPersonal ? (
             <Mono m={owner} size={44} radius={14} fontSize={16} />
-          ) : (
+          ) : !me && (
             <button
               type="button"
               className="dsh-me se-press"
-              aria-label={me ? `You are ${me.name}. Change member profile` : 'Pick your member profile'}
+              aria-label="Pick your member profile"
               onClick={() => { haptic('tap'); setPickerOpen(true); }}
             >
               {me

@@ -25,11 +25,11 @@ const each = (amount, n) => (n ? fmtAmt(Math.round((amount / n) * 100) / 100) : 
 const upDay = (d, now) => dayLabel(d, now).toUpperCase();
 
 /** A tappable value. locked (saved) → plain text. */
-function Val({ id, dots, locked, on, onClick, label, children, className = '' }) {
+function Val({ id, dots, locked, on, onClick, label, children, className = '', pulse = false }) {
   if (locked) return <span className={`ch-val is-locked ${className}`}><span>{children}</span></span>;
   const dotted = dots.includes('all') || dots.includes(id);
   return (
-    <button type="button" className={`ch-val ${on ? 'is-on' : ''} ${className}`} aria-label={label} aria-expanded={on}
+    <button type="button" className={`ch-val ${on ? 'is-on' : ''} ${pulse ? 'is-pulse' : ''} ${className}`} aria-label={label} aria-expanded={on}
       onClick={() => { haptic('tap'); onClick(); }}>
       <span className={dotted ? 'ch-ed' : ''}>{children}</span>
     </button>
@@ -244,7 +244,9 @@ export function BillCard({ card, onChange, members, categories, meId, isPersonal
   const common = { dots, locked };
   const set = patch => onChange({ ...card, bill: syncRest({ ...bill, ...patch }) });
   const setItem = (id, patch) => set({ items: bill.items.map(i => (i.id === id ? { ...i, ...patch } : i)) });
-  const open = (f, id = '') => setEd(e => (e && e.f === f && e.id === id ? null : { f, id }));
+  const [seen, setSeen] = useState({});                  // fields she has looked at → their "check me" pulse stops
+  const open = (f, id = '') => { setSeen(x => ({ ...x, [f + id]: true })); setEd(e => (e && e.f === f && e.id === id ? null : { f, id })); };
+  const pu = (key, flag) => !locked && !!flag && !seen[key];
   const is = (f, id = '') => !!ed && ed.f === f && ed.id === id && !locked;
   const close = () => setEd(null);
 
@@ -274,12 +276,12 @@ export function BillCard({ card, onChange, members, categories, meId, isPersonal
         <div className="ch-bh__l">
           <span className="ch-lab">BILL</span>
           {is('bname') ? <TextEdit value={bill.name === 'Untitled bill' ? '' : bill.name} onChange={v => set({ name: v, nameUnsure: false })} onClose={() => { if (!bill.name.trim()) set({ name: 'Untitled bill' }); close(); }} label="Bill name" caps="words" className="ch-inl--name" />
-            : <Val {...common} id="name" label="Change bill name" onClick={() => open('bname')} className="ch-un ch-bname">{bill.name}</Val>}
+            : <Val {...common} id="name" pulse={pu('bname', bill.nameUnsure)} label="Change bill name" onClick={() => open('bname')} className="ch-un ch-bname">{bill.name}</Val>}
           <span className="ch-mono ch-meta">
-            <Val {...common} id="date" on={is('date')} label="Change date" onClick={() => open('date')}>{upDay(bill.date, now)}</Val> · {shot ? `${rows.filter(i => !i.charges).length} ITEMS` : `${rows.length} ${rows.length === 1 ? 'ITEM' : 'ITEMS'}`}
+            <Val {...common} id="date" pulse={pu('date', bill.dateUnsure)} on={is('date')} label="Change date" onClick={() => open('date')}>{upDay(bill.date, now)}</Val> · {shot ? `${rows.filter(i => !i.charges).length} ITEMS` : `${rows.length} ${rows.length === 1 ? 'ITEM' : 'ITEMS'}`}
           </span>
           {!isPersonal && (
-            <Val locked={locked} dots={[]} id="paidBy" on={is('payer')} label="Change who paid" onClick={() => open('payer')} className="ch-payer">
+            <Val locked={locked} dots={[]} id="paidBy" pulse={pu('payer', !bill.paidBy)} on={is('payer')} label="Change who paid" onClick={() => open('payer')} className="ch-payer">
               {payer ? <Mg m={payer} /> : null}<span>Paid by <span className={dots.includes('all') || dots.includes('paidBy') ? 'ch-ed' : ''}>{payer ? (payer.id === meId ? 'You' : cleanName(payer.name)) : 'who?'}</span></span>
             </Val>
           )}
@@ -289,12 +291,12 @@ export function BillCard({ card, onChange, members, categories, meId, isPersonal
           {shot && is('total')
             ? <AmountEdit small value={bill.total} onChange={a => set({ total: a, totalUnsure: false })} onClose={close} />
             : shot
-              ? <Val {...common} dots={bill.totalUnsure ? ['all'] : dots} id="total" label="Change bill total" onClick={() => open('total')} className="ch-un ch-bh__tot"><span className="ch-r">₹</span>{fmtAmt(t.total)}</Val>
+              ? <Val {...common} dots={bill.totalUnsure ? ['all'] : dots} id="total" pulse={pu('total', bill.totalUnsure)} label="Change bill total" onClick={() => open('total')} className="ch-un ch-bh__tot"><span className="ch-r">₹</span>{fmtAmt(t.total)}</Val>
               : <span className="ch-un ch-bh__tot"><span className="ch-r">₹</span>{fmtAmt(t.total)}</span>}
         </div>
       </div>
       {is('payer') && <PersonGrid label="Who paid" members={members} meId={meId} selected={bill.paidBy ? [bill.paidBy] : []} onToggle={id => { set({ paidBy: id }); close(); }} />}
-      {is('date') && <DateGrid value={bill.date} now={now} onPick={d => { set({ date: d }); close(); }} />}
+      {is('date') && <DateGrid value={bill.date} now={now} onPick={d => { set({ date: d, dateUnsure: false }); close(); }} />}
       {shot && mm.off && !locked && (
         <button type="button" className="ch-mm" onClick={() => { haptic('tap'); fix(); }}>
           <span className="ch-mm__t">
@@ -327,7 +329,7 @@ export function BillCard({ card, onChange, members, categories, meId, isPersonal
                   <span className="ch-mono ch-ir__hint">{it.detail}{!isPersonal ? ` · ${(it.splitAmong || []).length === members.length ? `ALL ${members.length}` : `${(it.splitAmong || []).length} PEOPLE`}` : ''}</span>
                 ) : (
                 <span className="ch-ir__m">
-                  <Val locked={locked} dots={unsureCat ? ['all'] : []} id="cat" on={is('icat', it.id)} label={`Change category for ${it.name}`} onClick={() => open('icat', it.id)} className="ch-mono ch-tag">
+                  <Val locked={locked} dots={unsureCat ? ['all'] : []} id="cat" pulse={pu('icat' + it.id, it.unsure && !it.charges)} on={is('icat', it.id)} label={`Change category for ${it.name}`} onClick={() => open('icat', it.id)} className="ch-mono ch-tag">
                     {cat ? <span className="ch-tag__ic" style={{ color: resolveCategoryIcon(cat).color }}><LineIcon path={resolveCategoryIcon(cat).path} size={13} strokeWidth={2} /></span> : <IcTag />}{(cat?.name || 'Category').toUpperCase()}
                   </Val>
                   {!isPersonal && (
@@ -362,6 +364,11 @@ export function BillCard({ card, onChange, members, categories, meId, isPersonal
         </div>
       )}
 
+      {(() => {
+        const n = [pu('bname', bill.nameUnsure), pu('date', bill.dateUnsure), !isPersonal && pu('payer', !bill.paidBy), pu('total', bill.totalUnsure)].filter(Boolean).length
+          + rows.filter(i => pu('icat' + i.id, i.unsure && !i.charges)).length;
+        return n > 0 ? <div className="ch-mono ch-check" role="status">{n} THING{n === 1 ? '' : 'S'} TO CHECK · THE PULSING ONES</div> : null;
+      })()}
       {locked ? (isSaved(card) ? (
         <>
           <Stamp bill card={card} roomName={roomName} date={bill.date} top={150} />

@@ -13,19 +13,20 @@ import { cleanName, MONTH_NAMES, fromDateStr } from '../../../aai/common.js';
 import { respond, handCard, billFromPast, uid, billTotals, liveItems } from '../../../aai/chatModel.js';
 import { saveDown, errorReply } from '../../../aai/errors.js';
 import { learnPatterns } from '../../../utils/categoryGuess.js';
-import { normaliseRead, billFromRead, billMismatch, readingSteps, splitLabel, classifyReadError, shortDate } from '../../../aai/billParse.js';
+import { normaliseRead, billFromRead, billMismatch, readingSteps, splitLabel, classifyReadError, shortDate, TAXES_CATEGORY } from '../../../aai/billParse.js';
 import { queueBill, unqueueBill, queuedBills, readyToRead } from '../../../aai/billQueue.js';
 import { loadChats, saveChat, closeStored, patchStoredCard, settleStored, pickResume, isEditable, serialiseMessages } from '../../../aai/chatStore.js';
 import { greetingContext, pickGreeting } from '../../../aai/greetings.js';
 import { memberStats, heatLine } from '../../../aai/heatmap.js';
 import { quickUsuals, repeatBills } from '../../../aai/usuals.js';
 import { saveExpense, saveBill, saveMany, runPlan } from '../aaiSave';
+import { updateCategories } from '../../../services/roomService';
 import { Header, Av, Say, Thinking, ChatLoader, Mg } from './parts';
 import { withStyle } from './members';
 import { EmptyState } from './Heatmap';
 import { QuickCard, BillCard, UNDO_MS } from './Cards';
 import ErrorReply from './Errors';
-import { Shots, ConsentAsk, PayerAsk, SplitAsk, SameWarn, FetchedName, ItemLine } from './Bill';
+import { Shots, ConsentAsk, PayerAsk, SplitAsk, FetchedName, ItemLine } from './Bill';
 import PastChats from './PastChats';
 import { Composer, FocusRows } from './Composer';
 import useOpens from './useOpens';
@@ -38,13 +39,12 @@ import './Chat.css';
  * screen's own functions, source 'text' | 'bill'.
  */
 
-const LOAD_MS = 2400;
+const LOAD_MS = 8000;                                       // one full L1 loop; tap skips
 const CLOSE_MS = 220;
 const STEP_MS = 440;
 const K_SEEN = 'splitease_aai_lastseen';
 const K_GREET = 'splitease_aai_greet';
 const K_CONSENT = 'splitease_aai_consent';
-const K_SAME = 'splitease_aai_same_noask';
 const MAX_SHOTS = 4;
 const SLOW_MS = 12000;
 const TYPE_HINT = 'Blinkit 612: potato 40, milk 68';
@@ -69,11 +69,13 @@ export default function AaiChat({ onClose }) {
   // ── open: loader → chat ──
   const [phase, setPhase] = useState('loading');      // loading → ready
   const [loaderGone, setLoaderGone] = useState(false);
+  const [skipped, setSkipped] = useState(false);
   useEffect(() => {
-    const t1 = setTimeout(() => setPhase('ready'), reduced() ? 500 : LOAD_MS);
-    const t2 = setTimeout(() => setLoaderGone(true), (reduced() ? 500 : LOAD_MS) + 350);
+    const ms = skipped ? 0 : reduced() ? 500 : LOAD_MS;
+    const t1 = setTimeout(() => setPhase('ready'), ms);
+    const t2 = setTimeout(() => setLoaderGone(true), ms + 350);
     return () => { clearTimeout(t1); clearTimeout(t2); };
-  }, []);
+  }, [skipped]);
 
   const [closing, setClosing] = useState(false);
   const close = useCallback(() => {
@@ -214,14 +216,20 @@ export default function AaiChat({ onClose }) {
         const rows = liveItems(b).filter(i => !(i.failed && !(i.amount > 0)))
           .map(i => ({ ...i, name: [i.name || (i.failed ? 'Unread item' : 'Item'), shot ? '' : i.qty].filter(Boolean).join(' ') }));
         const source = shot ? 'bill' : 'text';
+        let sctx = ctx;
+        if (rows.some(i => i.categoryId === TAXES_CATEGORY.id)) {   // first bill with taxes in this room → the category is created now
+          const next = [...categories, TAXES_CATEGORY];
+          await Promise.race([updateCategories(roomCode, next), new Promise(r => setTimeout(r, 4000))]).catch(() => {});
+          sctx = { ...ctx, categories: next, room: { ...room, categories: next } };
+        }
         if (mode === 'separate') {
           const total = billTotals(b).total;
-          res = await saveMany(ctx, {
+          res = await saveMany(sctx, {
             count: rows.length, total,
             expenses: rows.map(i => ({ description: i.name, amount: i.amount, categoryId: i.categoryId || otherId, date: b.date, paidBy: b.paidBy, splitAmong: i.splitAmong, source })),
           });
         } else {
-          res = await saveBill(ctx, {
+          res = await saveBill(sctx, {
             name: b.name || 'Bill', date: b.date, paidBy: b.paidBy, source,
             items: rows.map(i => ({ description: i.name, amount: i.amount, categoryId: i.categoryId || otherId, splitAmong: i.splitAmong })),
           });
@@ -328,8 +336,6 @@ export default function AaiChat({ onClose }) {
   const pickFor = useRef(null);                              // "Add screenshot" on UNCLEAR → those shots join that bill
   const reader = useRef(null);
   const [hint, setHint] = useState(null);
-  const [paused, setPaused] = useState(false);               // touching the chat pauses the 3s ring
-  const [warn, setWarn] = useState(null);
   const [asking, setAsking] = useState(null);                // the bill whose questions are on screen (its names can be renamed)
   const thumbsMade = useRef([]);
   useEffect(() => () => thumbsMade.current.forEach(u => URL.revokeObjectURL(u)), []);
@@ -387,7 +393,7 @@ export default function AaiChat({ onClose }) {
     const ask = asksPayer && job.paidBy == null;
     const readId = addAi({ jobId: job.id, steps: [{ text: 'reading screenshot… whoever picked this font owes me ₹10.' }], shown: 0, done: false, live: true,
       reply: ask && !job.payerMsg ? 'Reading it now. Quick one while I finish —' : null });
-    if (ask && !job.payerMsg) { job.payerMsg = addAi({ jobId: job.id, reply: 'Who paid?', ask: { kind: 'payer' } }); setPaused(false); }
+    if (ask && !job.payerMsg) { job.payerMsg = addAi({ jobId: job.id, reply: 'Who paid?', ask: { kind: 'payer' } }); }
     job.ctl = new AbortController();
     job.slowMsg = null;
     const slow = setTimeout(() => { job.slowMsg = addAi({ jobId: job.id, error: errorReply('slow') }); }, SLOW_MS);
@@ -454,16 +460,10 @@ export default function AaiChat({ onClose }) {
   const next = job => {
     if (job.stage !== 'asking') return;
     if (asksPayer && job.paidBy == null) return;             // the "Who paid?" answer comes first
-    if (!alone) {
-      const ks = askable(job);
-      if (job.same) ks.forEach(k => { if (!job.splits[k]) job.splits[k] = job.same; });
-      const k = ks.find(x => !job.splits[x]);
-      if (k != null) {
-        const it = job.read.items[k];
-        addAi({ jobId: job.id, ask: { kind: 'split', index: k, pos: ks.indexOf(k), of: ks.length, name: job.names[k] ?? it.name, qty: it.qty, amount: it.amount, picked: job.last || null } });
-        setPaused(false);
-        return;
-      }
+    if (!alone && !job.splitDone && askable(job).length) {   // one question for the whole bill
+      job.splitDone = true;
+      addAi({ jobId: job.id, reply: 'Split with?', ask: { kind: 'split', picked: job.last || null } });
+      return;
     }
     showCard(job);
   };
@@ -498,34 +498,16 @@ export default function AaiChat({ onClose }) {
     job.paidBy = id;
     closeAsk(m.id);
     addMe({ text: id === meId ? 'You paid' : `${cleanName(users.find(u => u.id === id)?.name)} paid`, payer: id, ans: true });
-    setPaused(false);
     next(job);
   };
-  const answerSplit = (m, ids, label) => {
+  const answerSplit = (m, ids) => {
     const job = jobs.current[m.jobId];
     if (!job) return;
-    job.splits[m.ask.index] = ids;
+    askable(job).forEach(k => { job.splits[k] = ids; });
     job.last = ids;
     closeAsk(m.id, { picked: ids });
-    addMe({ text: label || splitLabel(ids, users, meId), ans: true });
+    addMe({ text: splitLabel(ids, users, meId), ans: true });
     next(job);
-  };
-  const askSame = (m, sel) => {
-    const job = jobs.current[m.jobId];
-    if (!job) return;
-    const left = askable(job).filter(k => k !== m.ask.index && !job.splits[k]).length;
-    const w = { msgId: m.id, sel, count: left, label: splitLabel(sel, users, meId) };
-    if (rd(K_SAME, false) || left === 0) applySame(w, false);
-    else { setPaused(true); setWarn(w); }
-  };
-  const applySame = (w, never) => {
-    setWarn(null);
-    if (never) wr(K_SAME, true);
-    const m = msgRef.current.find(x => x.id === w.msgId);
-    const job = m && jobs.current[m.jobId];
-    if (!job) return;
-    job.same = w.sel;
-    answerSplit(m, w.sel, `Same for the rest · ${w.label}`);
   };
 
   /** Error buttons for a bill (true = handled here). */
@@ -591,15 +573,13 @@ export default function AaiChat({ onClose }) {
 
   /** One AAI bill question (consent / who paid / split) — live only while its bill is still in progress. */
   const renderAsk = m => {
-    const live = !ro && !m.ask.answered && !warn;
+    const live = !ro && !m.ask.answered;
     if (m.ask.kind === 'consent') return <ConsentAsk key="ask" live={live} onAnswer={a => answerConsent(m, a)} />;
-    if (m.ask.kind === 'payer') return <PayerAsk key="ask" members={members} meId={meId} live={live} paused={paused} onAnswer={id => answerPayer(m, id)} />;
+    if (m.ask.kind === 'payer') return <PayerAsk key="ask" members={members} meId={meId} live={live} onAnswer={id => answerPayer(m, id)} />;
     return (
       <Fragment key="ask">
-        <div className="ch-say"><ItemLine ask={m.ask} editable={live} onRename={v => { const j = jobs.current[m.jobId]; if (j) j.names[m.ask.index] = v; patchMsg(m.id, x => ({ ...x, ask: { ...x.ask, name: v } })); }} /></div>
-        <SplitAsk ask={m.ask} members={members} meId={meId} live={live} paused={paused} onResume={() => setPaused(false)}
-          onAnswer={ids => answerSplit(m, ids)} onSame={sel => askSame(m, sel)} />
-        {live && <div className="ch-mono ch-askmeta">ITEM {m.ask.pos + 1} OF {m.ask.of}</div>}
+        {m.ask.index != null && <div className="ch-say"><ItemLine ask={m.ask} editable={false} /></div>}
+        <SplitAsk ask={m.ask} members={members} meId={meId} live={live} onAnswer={ids => answerSplit(m, ids)} />
       </Fragment>
     );
   };
@@ -629,7 +609,7 @@ export default function AaiChat({ onClose }) {
   }, [shownMessages.length, last?.shown, last?.done, last?.card?.status, view?.id]);
 
   const empty = messages.length === 0 && !view;
-  const focused = !!kb?.active?.digits;                    // the composer (the only digit-row field) has the keyboard
+  const [focused, setFocused] = useState(false);           // the composer has the phone keyboard
   const cardProps = { members, categories, meId, isPersonal: alone, roomName, now, readOnly: ro };
   const heat = { members: heatMembers, opens, stats, now, line, onPickDay: d => { haptic('choose'); pickSessionDate(d); fieldRef.current?.focus(); } };
 
@@ -637,9 +617,9 @@ export default function AaiChat({ onClose }) {
     <div className={`ch ${closing ? 'is-out' : ''} ${phase === 'ready' ? 'is-ready' : ''}`} role="dialog" aria-modal="true" aria-label="Aryan AI">
       <div className="ch-glow ch-glow--v" aria-hidden="true" />
       <div className="ch-glow ch-glow--t" aria-hidden="true" />
-      <Header onMenu={openMenu} onNew={newChat} onClose={close} />
+      <Header onMenu={openMenu} onNew={newChat} onClose={close} canNew={!empty} />
 
-      <div className="ch-scroll" ref={scroller} onPointerDown={e => { if (!e.target.closest('.ch-og')) setPaused(true); }}>
+      <div className="ch-scroll" ref={scroller}>
         {empty ? (
           <EmptyState greeting={greeting} compact={focused} heat={heat} />
         ) : (
@@ -668,7 +648,6 @@ export default function AaiChat({ onClose }) {
       </div>
 
       <div className="ch-dock">
-        {warn && <SameWarn label={warn.label} count={warn.count} onApply={never => applySame(warn, never)} onCancel={() => { setWarn(null); setPaused(true); }} />}
         <input ref={fileRef} className="ch-file" type="file" accept="image/*" multiple tabIndex={-1} aria-hidden="true" onChange={onFiles} />
         {empty && focused && <FocusRows bills={bills} usuals={usuals} isPersonal={alone} onBill={sendBillAgain} onUsual={sendUsual} />}
         {sessionDate && (
@@ -691,13 +670,13 @@ export default function AaiChat({ onClose }) {
             </div>
           </div>
         ) : (
-          <Composer text={text} setText={setText} onSend={send} fieldRef={fieldRef} hint={hint} onBill={pickBill} />
+          <Composer text={text} setText={setText} onSend={send} fieldRef={fieldRef} hint={hint} onBill={pickBill} onFocusChange={setFocused} />
         )}
       </div>
 
       {menu && <PastChats chats={chats} openId={chatId} current={view ? view.id : chatId} onPick={pickChat} onNew={newChat} onClose={() => setMenu(false)} />}
 
-      {!loaderGone && <ChatLoader out={phase === 'ready'} />}
+      {!loaderGone && <ChatLoader out={phase === 'ready'} onSkip={() => { haptic('tap'); setSkipped(true); }} />}
     </div>,
     document.body,
   );
