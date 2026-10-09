@@ -226,6 +226,7 @@
 .ch-ir__m { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
 .ch-tag { font: 500 11px var(--se-font-mono); color: var(--ch-mute2); gap: 4px; text-transform: uppercase; }
 .ch-tag > span { gap: 4px; }
+.ch-tag__ic { display: inline-flex; }
 .ch-sep { color: var(--ch-mute3); font-size: 11px; }
 .ch-ir__amt { font-size: 15px; flex: none; }
 .ch-mismatch { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; padding: 10px 16px; border-top: 1px solid var(--ch-line2); background: color-mix(in srgb, var(--ch-pink) 10%, transparent); font-size: 11px; color: var(--ch-mute2); }
@@ -261,7 +262,7 @@
 .ch-datepill button::before { content: ''; position: absolute; inset: -9px; }
 @keyframes ch-pop { from { transform: scale(.7); opacity: 0; } }
 
-/* ── loader (board AAI-Loader-Short · Q1, ~1.2s, then the chat fades up) ── */
+/* ── loader (board AAI-Loader-Short · Q1, ~2.4s so the whole peek-and-blink plays, then the chat fades up) ── */
 .ch-load { position: absolute; inset: 0; z-index: 6; display: flex; flex-direction: column; align-items: center; padding-top: 38%; gap: 22px; background: var(--ch-veil); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); animation: ch-lin .2s ease both; }
 .ch-load.is-out { animation: ch-lout .3s ease both; pointer-events: none; }
 @keyframes ch-lin { from { opacity: 0; } }
@@ -271,8 +272,8 @@
 .ch-load__bar { position: absolute; left: 0; top: 0; width: 4px; height: 100%; border-radius: 2px; z-index: 2; background: #000; box-shadow: 0 0 0 1px rgba(255, 255, 255, .22), 0 0 10px rgba(95, 212, 196, .6); animation: ch-glow-p 1.2s ease-in-out infinite; }
 :root[data-theme='light'] .ch-load__bar { box-shadow: 0 0 0 1px rgba(21, 20, 43, .2), 0 0 10px rgba(10, 133, 119, .4); }
 .ch-load__win { position: absolute; left: 4px; top: 8px; width: 12px; height: 18px; overflow: hidden; }
-.ch-load__slip { position: absolute; inset: 0; border-radius: 0 5px 5px 0; background: var(--ch-av-body); display: flex; flex-direction: column; gap: 3px; justify-content: center; align-items: center; animation: ch-peek 1.2s cubic-bezier(.3, .7, .3, 1) both; }
-.ch-load__slip i { display: block; width: 3.5px; height: 3px; border-radius: 50%; background: var(--ch-av-eye); animation: ch-blink 1.2s both; }
+.ch-load__slip { position: absolute; inset: 0; border-radius: 0 5px 5px 0; background: var(--ch-av-body); display: flex; flex-direction: column; gap: 3px; justify-content: center; align-items: center; animation: ch-peek 2.4s cubic-bezier(.3, .7, .3, 1) both; }
+.ch-load__slip i { display: block; width: 3.5px; height: 3px; border-radius: 50%; background: var(--ch-av-eye); animation: ch-blink 2.4s both; }
 @keyframes ch-peek { 0%, 10% { transform: translateX(-100%); } 35%, 70% { transform: translateX(0); } 90%, 100% { transform: translateX(-100%); } }
 @keyframes ch-blink { 0%, 48%, 56%, 100% { transform: scaleY(1); } 52% { transform: scaleY(.1); } }
 @keyframes ch-glow-p { 50% { box-shadow: 0 0 0 1px rgba(255, 255, 255, .25), 0 0 18px rgba(95, 212, 196, .9); } }

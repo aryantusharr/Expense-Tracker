@@ -146,7 +146,7 @@ export function SameWarn({ label, count, onApply, onCancel }) {
         </span>
         <div className="ch-warn__t">
           <span id="chWarnM"><b>{label}</b> will apply to all <b>{count} remaining</b> item{count === 1 ? '' : 's'}</span>
-          <span id="chWarnS" className="ch-warn__s">You can still change any line on the bill card</span>
+          <span id="chWarnS" className="ch-warn__s">You can still change any item on the bill card</span>
         </div>
       </div>
       <div className="ch-warn__b">

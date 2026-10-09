@@ -207,7 +207,7 @@ export function BillCard({ bill, catOf, users, meId, isPersonal, dim, removed, o
                     <span className="hb__name">{(it.description || '').toUpperCase()}</span>
                     {!isPersonal && <span className="hb__who">{who.map((w, k) => <span key={k}>{w}</span>)}</span>}
                     <span className="hb__dots" />
-                    <span>{(parseFloat(it.amount) || 0).toFixed(2)}</span>
+                    <span className="hb__amt">{(parseFloat(it.amount) || 0).toFixed(2)}</span>
                   </button>
                 );
               })}

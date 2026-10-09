@@ -36,8 +36,10 @@ export function chatTitle(messages) {
     if (t && !names.some(x => x.toLowerCase() === t.toLowerCase())) names.push(t);
   }
   if (names.length) return clip(cap(names.slice(0, 3).join(', ')), 34);
-  const first = messages.find(m => m.role === 'me');
-  return first ? clip(cap(first.text.trim()), 34) : 'New chat';
+  const first = messages.find(m => m.role === 'me' && typeof m.text === 'string' && m.text.trim());
+  if (first) return clip(cap(first.text.trim()), 34);
+  const shots = messages.find(m => m.role === 'me' && m.shots);          // a chat that only has bill screenshots
+  return shots ? 'Bill screenshots' : 'New chat';
 }
 
 /** "3 ADDED · ₹180" · "9 ITEMS · ₹612" · "1 TO ADD". locked → the chat can't be changed any more. */

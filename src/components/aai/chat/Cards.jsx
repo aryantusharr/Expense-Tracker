@@ -7,6 +7,8 @@ import { cleanName } from '../../../aai/common.js';
 import { billTotals, syncRest, liveItems, dayLabel, uid } from '../../../aai/chatModel.js';
 import { billMismatch } from '../../../aai/billParse.js';
 import { Mg, IcTag } from './parts';
+import { LineIcon } from '../../ui/CategoryIcon';
+import { resolveCategoryIcon } from '../../../design/categoryIcons';
 import { toDateStr, addDays, MONTH_NAMES, fromDateStr } from '../../../aai/common.js';
 
 /**
@@ -274,7 +276,7 @@ export function BillCard({ card, onChange, members, categories, meId, isPersonal
           {is('bname') ? <TextEdit value={bill.name === 'Untitled bill' ? '' : bill.name} onChange={v => set({ name: v, nameUnsure: false })} onClose={() => { if (!bill.name.trim()) set({ name: 'Untitled bill' }); close(); }} label="Bill name" caps="words" className="ch-inl--name" />
             : <Val {...common} id="name" label="Change bill name" onClick={() => open('bname')} className="ch-un ch-bname">{bill.name}</Val>}
           <span className="ch-mono ch-meta">
-            <Val {...common} id="date" on={is('date')} label="Change date" onClick={() => open('date')}>{upDay(bill.date, now)}</Val> · {shot ? `${rows.filter(i => !i.charges).length} ITEMS` : `${rows.length} ${rows.length === 1 ? 'LINE' : 'LINES'}`}
+            <Val {...common} id="date" on={is('date')} label="Change date" onClick={() => open('date')}>{upDay(bill.date, now)}</Val> · {shot ? `${rows.filter(i => !i.charges).length} ITEMS` : `${rows.length} ${rows.length === 1 ? 'ITEM' : 'ITEMS'}`}
           </span>
           {!isPersonal && (
             <Val locked={locked} dots={[]} id="paidBy" on={is('payer')} label="Change who paid" onClick={() => open('payer')} className="ch-payer">
@@ -296,7 +298,7 @@ export function BillCard({ card, onChange, members, categories, meId, isPersonal
       {shot && mm.off && !locked && (
         <button type="button" className="ch-mm" onClick={() => { haptic('tap'); fix(); }}>
           <span className="ch-mm__t">
-            <span className="ch-mm__h">{mm.failed.length ? `${mm.failed.length} item${mm.failed.length === 1 ? '' : 's'} failed · ${mm.failed.map(n => `#${n}`).join(', ')} on the bill` : mm.diff > 0 ? 'Some of the bill isn’t in the list' : 'The lines add up to more than the bill'}</span>
+            <span className="ch-mm__h">{mm.failed.length ? `${mm.failed.length} item${mm.failed.length === 1 ? '' : 's'} failed · ${mm.failed.map(n => `#${n}`).join(', ')} on the bill` : mm.diff > 0 ? 'Some of the bill isn’t in the list' : 'The items add up to more than the bill'}</span>
             <span className="ch-mono">BILL ₹{fmtAmt(bill.total)} · ITEMS ₹{fmtAmt(mm.sum)} · ₹{fmtAmt(Math.abs(mm.diff))} NOT MATCHED</span>
           </span>
           <span className="ch-mono ch-mm__fix">FIX {fixNo}{fixNo ? ' ' : ''}›</span>
@@ -326,7 +328,7 @@ export function BillCard({ card, onChange, members, categories, meId, isPersonal
                 ) : (
                 <span className="ch-ir__m">
                   <Val locked={locked} dots={unsureCat ? ['all'] : []} id="cat" on={is('icat', it.id)} label={`Change category for ${it.name}`} onClick={() => open('icat', it.id)} className="ch-mono ch-tag">
-                    <IcTag />{(cat?.name || 'Category').toUpperCase()}
+                    {cat ? <span className="ch-tag__ic" style={{ color: resolveCategoryIcon(cat).color }}><LineIcon path={resolveCategoryIcon(cat).path} size={13} strokeWidth={2} /></span> : <IcTag />}{(cat?.name || 'Category').toUpperCase()}
                   </Val>
                   {!isPersonal && (
                     <>

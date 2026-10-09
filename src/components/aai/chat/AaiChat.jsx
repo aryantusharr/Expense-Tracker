@@ -38,7 +38,7 @@ import './Chat.css';
  * screen's own functions, source 'text' | 'bill'.
  */
 
-const LOAD_MS = 1200;
+const LOAD_MS = 2400;
 const CLOSE_MS = 220;
 const STEP_MS = 440;
 const K_SEEN = 'splitease_aai_lastseen';
@@ -212,7 +212,7 @@ export default function AaiChat({ onClose }) {
         const b = m.card.bill;
         const shot = b.source === 'bill';
         const rows = liveItems(b).filter(i => !(i.failed && !(i.amount > 0)))
-          .map(i => ({ ...i, name: [i.name || (i.failed ? 'Unread item' : 'Item'), i.qty].filter(Boolean).join(' ') }));
+          .map(i => ({ ...i, name: [i.name || (i.failed ? 'Unread item' : 'Item'), shot ? '' : i.qty].filter(Boolean).join(' ') }));
         const source = shot ? 'bill' : 'text';
         if (mode === 'separate') {
           const total = billTotals(b).total;
@@ -440,7 +440,7 @@ export default function AaiChat({ onClose }) {
     if (r.unclear.length && !job.unclearOk) {
       job.stage = 'unclear';
       const n = r.unclear.length;
-      addAi({ jobId: job.id, error: errorReply('unclear', { title: `Couldn’t read ${n} line${n === 1 ? '' : 's'}`, body: `Part of the screenshot is blurry or cut off. I read the other ${r.items.length - n}.` }) });
+      addAi({ jobId: job.id, error: errorReply('unclear', { title: `Couldn’t read ${n} item${n === 1 ? '' : 's'}`, body: `Part of the screenshot is blurry or cut off. I read the other ${r.items.length - n}.` }) });
       return;
     }
     job.stage = 'asking';

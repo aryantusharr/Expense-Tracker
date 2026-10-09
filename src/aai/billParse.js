@@ -68,7 +68,7 @@ export function billPrompt({ categories = [], today, count = 1 }) {
     '  invoice, each invoice\'s own "Delivery and other charges" lines as charges, and total = the sum of the invoice totals.',
     '  Ignore annexure tables that only break down a charge already listed.',
     '- date: the order/bill date as YYYY-MM-DD. If the year is missing use the most recent past date. Empty if not shown.',
-    '- items: every purchased line, top to bottom. name = product name as printed, shortened to the useful words (no SKU codes).',
+    '- items: every purchased line, top to bottom. name = the short product name: brand + product, 2–4 words, no size/pack/flavour details, no SKU codes.',
     '  qty = quantity/size as printed ("1 kg", "×2", "500 ml"); "" if none. amount = the rupees actually charged for that line',
     '  (after any per-item discount; quantity × price if only the unit price is printed). Never use the struck-out MRP.',
     '  If a line\'s amount can\'t be read, keep the line with amount null and a low confidence. Skip free (₹0) lines.',
@@ -94,6 +94,15 @@ export function cleanQty(q) {
   if (n) s = n[1] === '1' ? '' : `×${n[1]}`;
   return s.replace(/^\((.*)\)$/, '$1').trim();
 }
+const SIZE = /\b\d+(?:\.\d+)?\s?(?:kg|gms?|g|mg|ml|ltr|litres?|liters?|l|pcs?|packs?|pieces?)\b/gi;
+/** "THUMS UP | COLA SPARKLING SOFT DRINK PET BOTTLE 750 ML" → "Thums Up Cola Sparkling": no size/pack, at most 4 words, tidy caps. */
+export function shortName(raw) {
+  const s = String(raw || '').trim();
+  let t = s.replace(SIZE, ' ').replace(/[|,]/g, ' ').replace(/\s+/g, ' ').trim();
+  t = t.split(' ').slice(0, 4).join(' ');
+  if (t && t === t.toUpperCase() && /[A-Z]/.test(t)) t = t.toLowerCase().replace(/(^|\s)\S/g, c => c.toUpperCase());
+  return t || s;
+}
 export const ROUND_OFF = 1;               // a bill that's off by ≤ ₹1 (paise rounding) still counts as matched
 
 /** Model JSON (object or string) → plain data. Throws { code: 'PARSE' } when it isn't JSON at all. */
@@ -107,7 +116,7 @@ export function normaliseRead(raw, { now = new Date() } = {}) {
   const items = (Array.isArray(j.items) ? j.items : [])
     .map(i => {
       const a = num(i?.amount);
-      return { name: clean(i?.name), qty: cleanQty(i?.qty), amount: a == null ? null : r2(Math.abs(a)), category: clean(i?.category), conf: conf(i?.confidence) };
+      return { name: shortName(clean(i?.name)), qty: cleanQty(i?.qty), amount: a == null ? null : r2(Math.abs(a)), category: clean(i?.category), conf: conf(i?.confidence) };
     })
     .filter(i => i.amount !== 0)                                              // free items (₹0) don't need a line
     .filter(i => i.name || i.amount != null || i.conf < UNCLEAR_BELOW);       // an unreadable line stays (it becomes a "failed" row)
