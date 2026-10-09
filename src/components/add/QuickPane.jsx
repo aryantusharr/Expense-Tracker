@@ -55,6 +55,7 @@ export default function QuickPane({ c }) {
   const [saved, setSaved] = useState(null);
   const amount = parseFloat(form.amount) || 0;
   const catStrip = useRef(null);
+  const [descOn, setDescOn] = useState(false);              // the suggestion strips show while the field has the keyboard
 
   // Bring the picked / auto-picked category into view.
   useEffect(() => {
@@ -161,8 +162,8 @@ export default function QuickPane({ c }) {
         <div className="add-form se-in">
           <div className="add-field">
             <span className="add-field__label">DESCRIPTION</span>
-            <TextField className="add-input" value={form.description} onChange={c.setDescription} placeholder="What was it for?" maxLength={80} aria-label="Description" />
-            <DescStrips used={c.quickSugs.used} recent={c.quickSugs.recent} typed={form.description} onPick={c.setDescription} />
+            <TextField className="add-input" value={form.description} onChange={c.setDescription} placeholder="What was it for?" maxLength={80} aria-label="Description" onFocus={() => setDescOn(true)} onBlur={() => setDescOn(false)} />
+            <DescStrips show={descOn} used={c.quickSugs.used} recent={c.quickSugs.recent} typed={form.description} onPick={c.setDescription} />
           </div>
 
           <div className="add-field">

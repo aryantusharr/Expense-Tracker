@@ -244,8 +244,6 @@ export function BillCard({ card, onChange, members, categories, meId, isPersonal
   const common = { dots, locked };
   const set = patch => onChange({ ...card, bill: syncRest({ ...bill, ...patch }) });
   const setItem = (id, patch) => set({ items: bill.items.map(i => (i.id === id ? { ...i, ...patch } : i)) });
-  const [restOpen, setRestOpen] = useState(false);          // "Same for the rest" picker
-  const [restSel, setRestSel] = useState(() => members.map(m => m.id));
   const [seen, setSeen] = useState({});                  // fields she has looked at → their "check me" pulse stops
   const open = (f, id = '') => { setSeen(x => ({ ...x, [f + id]: true })); setEd(e => (e && e.f === f && e.id === id ? null : { f, id })); };
   const pu = (key, flag) => !locked && !!flag && !seen[key];
@@ -260,6 +258,14 @@ export function BillCard({ card, onChange, members, categories, meId, isPersonal
   const real = shot ? rows.filter(i => !(i.failed && !(i.amount > 0))) : rows;
   const needSplit = !isPersonal && members.length > 1;      // every item's split must be ticked before saving
   const todo = needSplit ? real.filter(i => !i.charges && !i.splitOk) : [];
+  /** "Same for the rest": the split of the last ticked item (none yet → everyone) goes to every unticked item, and they are ticked. */
+  const sameForRest = () => {
+    haptic('choose'); setEd(null);
+    const last = [...real].reverse().find(i => !i.charges && i.splitOk && i.splitAmong?.length);
+    const ids = last ? last.splitAmong : members.map(m => m.id);
+    const open = new Set(todo.map(t => t.id));
+    set({ items: bill.items.map(i => (open.has(i.id) ? { ...i, splitAmong: ids, splitOk: true } : i)) });
+  };
   const ok = real.length > 0 && real.every(i => i.amount > 0) && t.over === 0 && !(mm && mm.off)
     && (isPersonal || (bill.paidBy && real.every(i => i.splitAmong?.length)))
     && todo.length === 0;
@@ -341,7 +347,7 @@ export function BillCard({ card, onChange, members, categories, meId, isPersonal
                     <>
                       <span className="ch-sep">·</span>
                       <Val locked={locked} dots={allIn || !inSplit.length ? dots : []} id="split" on={is('isplit', it.id)} label={`Change who splits ${it.name}`} onClick={() => open('isplit', it.id)} className="ch-mono ch-tag">
-                        {allIn ? `ALL ${sp.length}` : inSplit.length ? inSplit.map(m => <Mg key={m.id} m={m} />) : 'PICK'}
+                        {inSplit.length && members.length <= 4 ? inSplit.map(m => <Mg key={m.id} m={m} />) : allIn ? `ALL ${sp.length}` : inSplit.length ? inSplit.map(m => <Mg key={m.id} m={m} />) : 'PICK'}
                       </Val>
                       {needSplit && !locked && (
                         <button type="button" className={`ch-tick ${it.splitOk ? 'is-on' : 'is-pulse'}`} aria-pressed={!!it.splitOk} disabled={!sp.length}
@@ -386,23 +392,9 @@ export function BillCard({ card, onChange, members, categories, meId, isPersonal
         </>
       ) : <NotAdded />) : (
         <div className="ch-foot ch-foot--col">
-          {restOpen && todo.length > 0 && (
-            <>
-              <PersonGrid multi label="Same split for the rest" members={members} meId={meId} selected={restSel}
-                onToggle={id => setRestSel(s => (s.includes(id) ? (s.length > 1 ? s.filter(x => x !== id) : s) : members.map(m => m.id).filter(x => x === id || s.includes(x))))}
-                onAll={() => setRestSel(members.map(m => m.id))} />
-              <button type="button" className="ch-btn ch-grad" onClick={() => {
-                haptic('choose');
-                const ids = new Set(todo.map(t => t.id));
-                set({ items: bill.items.map(i => (ids.has(i.id) ? { ...i, splitAmong: restSel, splitOk: true } : i)) });
-                setRestOpen(false);
-              }}>Apply to {todo.length} item{todo.length === 1 ? '' : 's'}</button>
-            </>
-          )}
           <div className="ch-savebar">
             {todo.length > 0 && (
-              <button type="button" className={`ch-btn ch-btn--rest ${restOpen ? 'is-on' : ''}`} aria-expanded={restOpen}
-                onClick={() => { haptic('tap'); setEd(null); setRestOpen(o => !o); }}>
+              <button type="button" className="ch-btn ch-btn--rest" onClick={sameForRest}>
                 {todo.length === real.filter(i => !i.charges).length ? 'Same for all' : 'Same for the rest'} · {todo.length}
               </button>
             )}

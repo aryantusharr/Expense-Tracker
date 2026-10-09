@@ -264,7 +264,7 @@
 .ch-bchip:active, .ch-uchip:active { transform: scale(.97); }
 .ch-datepill { align-self: flex-start; display: inline-flex; align-items: center; gap: 2px; height: 32px; padding: 0 2px 0 12px; margin: 0 4px 8px; border-radius: 999px; background: color-mix(in srgb, var(--ch-v) 16%, transparent); border: 1px solid color-mix(in srgb, var(--ch-v) 45%, transparent); color: var(--ch-vlab); font: 700 11px var(--se-font-mono); letter-spacing: .1em; text-transform: uppercase; animation: ch-pop .35s var(--se-ease-strong) both; }
 .ch-datepill button { position: relative; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; color: inherit; }
-.ch-datepill button::before { content: ''; position: absolute; inset: -9px; }
+.ch-datepill button::before { content: ''; position: absolute; inset: -12px; }
 @keyframes ch-pop { from { transform: scale(.7); opacity: 0; } }
 
 /* ── loader (board AAI-Loader-Short · Q1, ~2.4s so the whole peek-and-blink plays, then the chat fades up) ── */
@@ -410,13 +410,14 @@ button.ch-fetched::before { content: ''; position: absolute; inset: -12px -4px; 
 @media (prefers-reduced-motion: reduce) { .ch-val.is-pulse { animation: none; background: rgba(139, 124, 255, .2); } }
 
 /* split confirm: a tick per item (pulses until confirmed) · Save bill halved until every tick is done */
-.ch-tick { width: 26px; height: 26px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; flex: none; border: 1.5px solid var(--ch-t); color: var(--ch-t); background: transparent; }
+.ch-tick svg { width: 10px; height: 10px; }
+.ch-tick { width: 19px; height: 19px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; flex: none; border: 1.5px solid var(--ch-t); color: var(--ch-t); background: transparent; }
 .ch-tick::before { content: ''; position: absolute; inset: -9px; }
 .ch-tick { position: relative; }
 .ch-tick.is-pulse { animation: ch-tickp 1.3s ease-in-out infinite; }
 .ch-tick.is-on { background: var(--ch-t); color: var(--ch-bg); animation: none; }
 .ch-tick:disabled { opacity: .4; animation: none; }
-@keyframes ch-tickp { 0% { box-shadow: 0 0 0 0 rgba(95, 212, 196, .65); } 70% { box-shadow: 0 0 0 8px rgba(95, 212, 196, 0); } 100% { box-shadow: 0 0 0 0 rgba(95, 212, 196, 0); } }
+@keyframes ch-tickp { 0% { box-shadow: 0 0 0 0 rgba(95, 212, 196, .65); } 70% { box-shadow: 0 0 0 6px rgba(95, 212, 196, 0); } 100% { box-shadow: 0 0 0 0 rgba(95, 212, 196, 0); } }
 .ch-savebar { display: flex; gap: 8px; }
 .ch-savebar .ch-btn { flex: 1 1 0; min-width: 0; }
 .ch-btn--rest { background: var(--ch-ghost); border: 1px solid var(--ch-t); color: var(--ch-t); font-size: 13px; animation: ch-restin .25s ease both; }

@@ -72,6 +72,7 @@ export default function ItemsPane({ c }) {
   const [drafting, setDrafting] = useState(false);
   const [draft, setDraft] = useState({ description: '', amount: '', categoryId: '', splitAmong: [] });
   const [auto, setAuto] = useState(false);
+  const [descOn, setDescOn] = useState(false);           // suggestion strips show while the field has the keyboard
   const [manual, setManual] = useState(false); // tapped a category for this line — don't auto-change it
   const [shake, setShake] = useState(0);
   const [slideShake, setSlideShake] = useState(0);
@@ -163,8 +164,8 @@ export default function ItemsPane({ c }) {
         <div className="add-form se-in">
           <div className="add-field">
             <span className="add-field__label">BILL NAME</span>
-            <TextField className="add-input" value={c.billName} onChange={c.setBillName} placeholder="e.g. Dinner at Social" maxLength={60} caps="words" aria-label="Bill name" next={totalField} />
-            <DescStrips recent={names} typed={c.billName} onPick={c.setBillName} recentLabel="PAST BILLS" />
+            <TextField className="add-input" value={c.billName} onChange={c.setBillName} placeholder="e.g. Dinner at Social" maxLength={60} caps="words" aria-label="Bill name" next={totalField} onFocus={() => setDescOn(true)} onBlur={() => setDescOn(false)} />
+            <DescStrips show={descOn} recent={names} typed={c.billName} onPick={c.setBillName} recentLabel="PAST BILLS" />
           </div>
           <div className="add-field">
             <span className="add-field__label">TOTAL</span>
@@ -184,8 +185,8 @@ export default function ItemsPane({ c }) {
         <div className="add-form se-in ib-panel">
           <div className="add-field">
             <span className="add-field__label">ITEM</span>
-            <TextField className="add-input" value={draft.description} onChange={setDesc} placeholder="What was it for?" maxLength={80} aria-label="Item" next={amountField} />
-            <DescStrips used={c.itemSugs.used} recent={c.itemSugs.recent} typed={draft.description} onPick={setDesc} />
+            <TextField className="add-input" value={draft.description} onChange={setDesc} placeholder="What was it for?" maxLength={80} aria-label="Item" next={amountField} onFocus={() => setDescOn(true)} onBlur={() => setDescOn(false)} />
+            <DescStrips show={descOn} used={c.itemSugs.used} recent={c.itemSugs.recent} typed={draft.description} onPick={setDesc} />
           </div>
           <div className="add-field">
             <span className="add-field__label">AMOUNT</span>

@@ -6,14 +6,14 @@ import { matchChips } from './addHelpers';
  * strip 2 = recent. Typing narrows both; a chip already shown in strip 1 isn't repeated in strip 2.
  * onPointerDown keeps the keyboard up while you tap.
  */
-export default function DescStrips({ used = [], recent = [], typed = '', onPick, usedLabel = 'MOST USED', recentLabel = 'RECENT' }) {
+export default function DescStrips({ used = [], recent = [], typed = '', onPick, show = true, usedLabel = 'Most used', recentLabel = 'Recent' }) {
   const u = matchChips(used, typed, 14);
   const shown = new Set(u.map(x => x.toLowerCase()));
   const r = matchChips(recent, typed, 14).filter(x => !shown.has(x.toLowerCase()));
-  if (!u.length && !r.length) return null;
+  if (!show || (!u.length && !r.length)) return null;
   const strip = (label, list) => !list.length ? null : (
     <div className="add-sg" data-noswipe role="group" aria-label={label}>
-      <span className="add-sg__lab se-mono">{label}</span>
+      <span className="add-sg__lab" aria-hidden="true" title={label}>{label === usedLabel ? '★' : '↺'}</span>
       {list.map(d => (
         <button key={d} type="button" className="add-sg__chip" onPointerDown={e => e.preventDefault()} onClick={() => { haptic('choose'); onPick(d); }}>{d}</button>
       ))}
