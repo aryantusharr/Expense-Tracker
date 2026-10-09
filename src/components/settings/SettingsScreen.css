@@ -327,3 +327,7 @@
 .ps-pill--who { background: rgba(139, 124, 255, .1); border: 1px solid rgba(139, 124, 255, .4); color: #C9C2FF; }
 :root[data-theme='light'] .ps-pill--who { color: #5B4BD6; }
 .ps-pill--who .ps-ecg path { animation: none; opacity: .3; stroke-dasharray: 3 5; }
+
+.st-syncrow { display: flex; align-items: center; gap: 8px; }
+.st-syncrow > .ps-pill { align-self: center; }
+.st-me { width: 34px; height: 34px; border-radius: 11px; font-size: 14px; cursor: pointer; }

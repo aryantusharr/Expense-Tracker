@@ -126,15 +126,17 @@ export default function SettingsScreen() {
             </div>
           </div>
           {!isPersonal && (
-            <ProfileSync room={room} roomCode={roomCode} users={users} expenses={expenses} userIdentity={userIdentity}
-              setUserIdentity={setUserIdentity} savedRooms={savedRooms} updateRoom={updateRoom} />
-          )}
-          {!isPersonal && users.some(u => u.id === userIdentity) && (
-            <button type="button" className="st-card wn-row se-press st-who" onClick={() => { haptic('tap'); setWhoOpen(true); }}>
-              <span className="wn-ic st-mono-m" style={{ '--c': memberStyle(Math.max(0, users.findIndex(u => u.id === userIdentity))).color }}>{initialOf(users.find(u => u.id === userIdentity)?.name)}</span>
-              <span className="wn-row__t"><span>You are {users.find(u => u.id === userIdentity)?.name}</span><small>Tap to change your profile</small></span>
-              <span className="wn-row__chev" aria-hidden="true">›</span>
-            </button>
+            <div className="st-syncrow">
+              <ProfileSync room={room} roomCode={roomCode} users={users} expenses={expenses} userIdentity={userIdentity}
+                setUserIdentity={setUserIdentity} savedRooms={savedRooms} updateRoom={updateRoom} />
+              {users.some(u => u.id === userIdentity) && (
+                <button type="button" className="st-mono-m st-me se-press" aria-label={`You are ${users.find(u => u.id === userIdentity)?.name}. Change profile`}
+                  style={{ '--c': memberStyle(Math.max(0, users.findIndex(u => u.id === userIdentity))).color }}
+                  onClick={() => { haptic('tap'); setWhoOpen(true); }}>
+                  {initialOf(users.find(u => u.id === userIdentity)?.name)}
+                </button>
+              )}
+            </div>
           )}
           {isPersonal && (
             <button type="button" className="st-bud se-press" onClick={openBudget}>
