@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "build:test": "vite build --mode test",
+    "test": "node --test \"src/**/*.test.js\"",
     "test:aai": "node --test \"src/aai/**/*.test.js\""
   },
   "dependencies": {

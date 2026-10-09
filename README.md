@@ -1,141 +1,73 @@
-# SplitEase 💸
+# SplitEase
 
-SplitEase is a modern, beautifully designed Progressive Web App (PWA) for tracking personal expenses and splitting bills with roommates or friends. Built with React and Vite, it features an iOS-inspired, glassmorphic UI with buttery-smooth animations and instant, offline-first performance.
+A phone-first web app (PWA) for tracking your own spending and splitting bills with friends or flatmates. Add it to your iPhone or Android home screen and it works like a native app.
 
-[**Live Demo**](https://splitease-7bb6c.web.app)
-
----
-
-## ✨ Features
-
-- **📱 PWA Ready**: Install it directly to your home screen on iOS or Android for a native app experience.
-- **🌗 Smart Theming**: Fully responsive Light and Dark modes with instant toggling.
-- **🔄 Explicit Profile-Sync**: Explicitly map shared room roommate profiles to personal rooms. Synced expenses appear automatically, show a dynamic `🔄 Synced from [RoomName]` badge, and are maintained as read-only copies to prevent duplicate entries.
-- **📥 CSV Bulk Import Engine**: Robust, case-insensitive column mapper to import historical expense data in bulk. Includes categories, paid by, and split mapping with a multi-batch (500 doc chunking) visual progress loader.
-- **📈 Spending Matrix**: A powerful, horizontally scrollable pivot table that breaks down expenses by category and tracks month-over-month trends.
-- **🧑‍🤝‍🧑 Personal & Shared Rooms**: Track your own solo budget or invite roommates to automatically calculate who owes whom.
-- **🧮 Smart Settlements**: A settlement engine that minimizes the total number of transactions needed to settle debts between friends.
-- **🔄 Interactive 3D Balance Cards**: Flip cards with a 🔄 visual indicator to switch between current month stats and overall historical balances.
-- **⚡ Optimistic CRUD & Snappy Timings**: Fire-and-forget background Firestore writes and tuned transition animations to make the UI feel instantaneous.
+**Live app:** https://splitease-7bb6c.web.app · **Version:** 3.0 · [MIT licence](LICENSE)
 
 ---
 
-## 📂 Project Structure & Working Tree
+## What it does
+
+- **Personal and shared rooms.** Track your own budget, or share a room with a short code so everyone sees who owes whom. There are no accounts to create: the room code is the key.
+- **Quick and detailed expenses.** Type an amount, pick a category, choose who paid and who shares it. A bill can also be entered item by item, each with its own people.
+- **Aryan AI.** A chat that logs an expense or a whole bill from plain words ("dinner 840 with Riya and Sam"). It can also read a bill from screenshots: shop, date, items and taxes. Each item gets its own split before you save. It learns your categories and descriptions over time.
+- **Smart settlements.** Works out the fewest payments needed to settle everyone up.
+- **Dashboard, History and Spending matrix.** Monthly balances, category charts, searchable history, and a month-by-category table.
+- **Import and export.** Bring in old data from CSV; export to PDF or Excel.
+- **Light and dark themes**, a custom in-app keypad for amounts, and your phone's own keyboard for text.
+
+## How it is built
+
+React 19 · Vite 8 · Framer Motion · Chart.js · react-router 7 · Firebase Firestore and Hosting. Bill reading uses Gemini through Firebase AI Logic, protected by App Check. There is no Firebase Auth: access is by room code, enforced by [`firestore.rules`](firestore.rules).
 
 ```text
-Expense-Tracker/
-├── public/                 # Static assets, icons, and manifest.json
-├── src/
-│   ├── assets/             # SVG icons and static images
-│   ├── components/         # Modular React Components
-│   │   ├── categories/     # Category CRUD and scrollable lists
-│   │   │   └── CategoryManager.jsx
-│   │   ├── common/         # Global reusable UI (modals, swipe handlers)
-│   │   │   ├── ConfirmModal.jsx
-│   │   │   ├── Modal.jsx
-│   │   │   ├── SwipeableItem.jsx
-│   │   │   └── SwipeableItem.css
-│   │   ├── dashboard/      # Main dashboard stats, charts, balance flip cards
-│   │   │   ├── DashboardPage.jsx
-│   │   │   ├── Dashboard.css
-│   │   │   ├── ExpenseChart.jsx
-│   │   │   └── SettlementList.jsx
-│   │   ├── expenses/       # Add expenses and history lists (swipe-to-delete)
-│   │   │   ├── AddExpense.jsx
-│   │   │   ├── ExpenseList.jsx
-│   │   │   └── Expenses.css
-│   │   ├── layout/         # Core layout, custom headers, and aligned bottom nav
-│   │   │   ├── BottomNav.jsx
-│   │   │   ├── BottomNav.css
-│   │   │   └── Header.jsx
-│   │   ├── settings/       # App preferences, data exports, and CSV importer
-│   │   │   ├── SettingsPage.jsx
-│   │   │   ├── Settings.css
-│   │   │   ├── ImportCSVModal.jsx
-│   │   │   └── ImportCSVModal.css
-│   │   └── setup/          # Onboarding, join code entry, landing screen
-│   │       ├── CreateRoom.jsx
-│   │       ├── JoinRoom.jsx
-│   │       ├── LandingPage.jsx
-│   │       ├── PersonalSetup.jsx
-│   │       ├── Setup.css
-│   │       └── ShareRoom.jsx
-│   ├── context/            # React Context stores for theme and data subscriptions
-│   │   ├── RoomContext.jsx
-│   │   └── ThemeContext.jsx
-│   ├── services/           # Firebase Firestore config and CRUD methods
-│   │   ├── csvImportService.js
-│   │   ├── expenseService.js
-│   │   ├── firebase.js
-│   │   └── roomService.js
-│   ├── utils/              # Helper utilities and data exporters (PDF, Excel)
-│   │   ├── excelExport.js
-│   │   ├── helpers.js
-│   │   ├── pdfExport.js
-│   │   └── splitCalculator.js
-│   ├── App.jsx             # Main Router and routes definition
-│   ├── index.css           # Global custom iOS design system & variables
-│   └── main.jsx            # React root mount definition
-├── eslint.config.js
-├── firebase.json
-├── package.json
-└── vite.config.js
+src/
+├── aai/           Aryan AI brain: parsing, splits, bill reading (pure logic + tests)
+├── components/    Screens: dashboard, add, history, settings, aai chat, onboarding
+├── services/      Firestore reads and writes
+├── design/        Category icons
+├── styles/        Tokens and shared styles
+└── version/       Version, build number and the "What's new" notes
+public/            Manifest, icons, service worker
+scripts/           Backup, restore and data-check tools (Node)
+docs/              Design system, Aryan AI plan, QA checklist
 ```
 
----
+## Run it yourself
 
-## 🛠️ Tech Stack
+You need [Node.js](https://nodejs.org/) and your own Firebase project (Firestore enabled).
 
-- **Frontend Framework**: React 18
-- **Build Tool**: Vite
-- **Database / Backend**: Firebase Firestore
-- **Styling**: Vanilla CSS (CSS Variables, custom Glassmorphism, and responsive layout)
-- **Animations**: Framer Motion
-- **Charts**: Chart.js (`react-chartjs-2`)
-- **Data Exporting**: ExcelJS & jsPDF
-- **Hosting**: Firebase Hosting
+```bash
+git clone https://github.com/aryantusharr/Expense-Tracker.git
+cd Expense-Tracker
+npm install
+```
 
----
+Create a `.env` file (it is git-ignored) with your Firebase web config:
 
-## 🚀 Getting Started
+```env
+VITE_FIREBASE_API_KEY=...
+VITE_FIREBASE_AUTH_DOMAIN=...
+VITE_FIREBASE_PROJECT_ID=...
+VITE_FIREBASE_STORAGE_BUCKET=...
+VITE_FIREBASE_MESSAGING_SENDER_ID=...
+VITE_FIREBASE_APP_ID=...
+```
 
-### Prerequisites
-Make sure you have [Node.js](https://nodejs.org/) installed.
+| Command | What it does |
+| --- | --- |
+| `npm run dev` | Start the app locally against the test project |
+| `npm test` | Run the unit tests (Aryan AI brain and add-screen helpers) |
+| `npm run lint` | Check the code style |
+| `npm run build:test` | Build against the test project |
+| `npm run build` | Production build (needs the live project's env file) |
 
-### Installation & Run
+Bill reading needs `VITE_RECAPTCHA_SITE_KEY` (an App Check reCAPTCHA key) and `VITE_AAI_BILLS_LIVE=yes` in a production build; without them the chat still works for typed expenses.
 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/yourusername/splitease.git
-   cd splitease
-   ```
+## Releasing
 
-2. **Install dependencies:**
-   ```bash
-   npm install
-   ```
+Bump `version` and `splitEaseBuild` in `package.json`, rewrite `RELEASE` in `src/version/version.js`, build, deploy the Firestore rules first, then Hosting. Take a backup with `scripts/backup-rooms.mjs` before touching live data.
 
-3. **Configure Environment Variables:**
-   Create a `.env` file in the root directory and add your Firebase credentials:
-   ```env
-   VITE_FIREBASE_API_KEY=your_api_key
-   VITE_FIREBASE_AUTH_DOMAIN=your_auth_domain
-   VITE_FIREBASE_PROJECT_ID=your_project_id
-   VITE_FIREBASE_STORAGE_BUCKET=your_storage_bucket
-   VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
-   VITE_FIREBASE_APP_ID=your_app_id
-   ```
+## A note on privacy
 
-4. **Start the development server:**
-   ```bash
-   npm run dev
-   ```
-
-5. **Build for production:**
-   ```bash
-   npm run build
-   ```
-
----
-
-Designed and built with ❤️ by Tushar.
+Room codes are access keys. Never commit a real code, a `.env` file or a backup. Data lives in Firestore under the room code, and anyone with the code can open that room.
