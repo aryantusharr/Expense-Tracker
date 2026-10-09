@@ -193,7 +193,7 @@ export default function ProfileSync({ room, roomCode, users, expenses, userIdent
         </span>
         <span className="ps-l2" aria-hidden="true">
           {pill === 'who' ? 'TAP TO PICK · THEN SEE YOUR SYNC' : pill === 'off' ? (linkGone ? 'ROOM DELETED · TAP TO PICK ANOTHER' : 'TAP TO PICK A PERSONAL ROOM')
-            : `→ ${linkedName.toUpperCase()} · ${pill === 'on' ? 'COPYING' : pill === 'wait' ? 'WAITING' : 'UP TO DATE'}`}
+            : `${linkedName.toUpperCase()} · ${pill === 'on' ? 'COPYING' : pill === 'wait' ? 'WAITING' : 'UP TO DATE'}`}
         </span>
       </button>
 
