@@ -291,3 +291,10 @@
 .add-sg__lab { flex: none; width: 14px; font-size: 12px; line-height: 1; color: var(--se-text-3); text-align: center; }
 .add-sg__chip { flex: none; height: 26px; padding: 0 10px; border-radius: 999px; border: 1px solid var(--se-line-2); background: var(--se-fill-1); color: var(--se-text); font: 600 12px var(--se-font); cursor: pointer; white-space: nowrap; }
 .add-sg__chip:active { transform: scale(.96); }
+
+/* Quick: PAID BY · SPLIT is muted at ₹0 and glows once an amount is typed */
+.add-slips-w { transition: opacity .35s ease, filter .35s ease; }
+.add-slips-w.is-muted { opacity: .38; filter: saturate(.35); }
+.add-slips-w.is-live .add-slips { border-color: rgba(95, 212, 196, .45); box-shadow: 0 0 0 1px rgba(95, 212, 196, .3), 0 0 22px rgba(95, 212, 196, .22); animation: add-live .9s ease-out; }
+@keyframes add-live { from { box-shadow: 0 0 0 1px rgba(95, 212, 196, .8), 0 0 36px rgba(95, 212, 196, .6); } }
+@media (prefers-reduced-motion: reduce) { .add-slips-w, .add-slips-w.is-live .add-slips { transition: none; animation: none; } }

@@ -141,14 +141,16 @@ export default function QuickPane({ c }) {
             ))}
           </div>
           {!isPersonal && (
-            <SlipsStrip
-              members={members}
-              paidBy={form.paidBy}
-              splitAmong={form.splitAmong}
-              amount={amount}
-              onPayer={id => setField.paidBy(id)}
-              onToggle={c.toggleSplit}
-            />
+            <div className={`add-slips-w ${amount > 0 ? 'is-live' : 'is-muted'}`}>   {/* muted until there's an amount, then it lights up */}
+              <SlipsStrip
+                members={members}
+                paidBy={form.paidBy}
+                splitAmong={form.splitAmong}
+                amount={amount}
+                onPayer={id => setField.paidBy(id)}
+                onToggle={c.toggleSplit}
+              />
+            </div>
           )}
           <div className="add-padzone">
             <SuggestBar className="kb-sugg--page" items={c.recurringExpensesList.slice(0, 8).map(r => ({
