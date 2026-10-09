@@ -15,9 +15,9 @@ export default function DescStrips({ used = [], recent = [], typed = '', onPick,
     <div className="add-sg" data-noswipe role="group" aria-label={label}>
       <span className="add-sg__lab" aria-hidden="true" title={label}>{label === usedLabel ? '★' : '↺'}</span>
       {list.map(d => (
-        <button key={d} type="button" className="add-sg__chip" onPointerDown={e => e.preventDefault()} onClick={() => { haptic('choose'); onPick(d); }}>{d}</button>
+        <button key={d} type="button" className="add-sg__chip" onClick={() => { haptic('choose'); onPick(d); }}>{d}</button>
       ))}
     </div>
   );
-  return <div className="add-sgs">{strip(usedLabel, u)}{strip(recentLabel, r)}</div>;
+  return <div className="add-sgs" data-kb>{strip(usedLabel, u)}{strip(recentLabel, r)}</div>;
 }

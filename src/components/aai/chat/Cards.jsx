@@ -349,8 +349,8 @@ export function BillCard({ card, onChange, members, categories, meId, isPersonal
                       <Val locked={locked} dots={allIn || !inSplit.length ? dots : []} id="split" on={is('isplit', it.id)} label={`Change who splits ${it.name}`} onClick={() => open('isplit', it.id)} className="ch-mono ch-tag">
                         {inSplit.length && members.length <= 4 ? inSplit.map(m => <Mg key={m.id} m={m} />) : allIn ? `ALL ${sp.length}` : inSplit.length ? inSplit.map(m => <Mg key={m.id} m={m} />) : 'PICK'}
                       </Val>
-                      {needSplit && !locked && (
-                        <button type="button" className={`ch-tick ${it.splitOk ? 'is-on' : 'is-pulse'}`} aria-pressed={!!it.splitOk} disabled={!sp.length}
+                      {needSplit && !locked && !it.splitOk && (
+                        <button type="button" className="ch-tick is-pulse" aria-pressed={!!it.splitOk} disabled={!sp.length}
                           aria-label={it.splitOk ? `Split confirmed for ${it.name}` : `Confirm split for ${it.name}`}
                           onClick={() => { haptic('choose'); setItem(it.id, { splitOk: !it.splitOk }); }}><IcCheck /></button>
                       )}

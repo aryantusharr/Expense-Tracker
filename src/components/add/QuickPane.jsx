@@ -163,7 +163,7 @@ export default function QuickPane({ c }) {
           <div className="add-field">
             <span className="add-field__label">DESCRIPTION</span>
             <TextField className="add-input" value={form.description} onChange={c.setDescription} placeholder="What was it for?" maxLength={80} aria-label="Description" onFocus={() => setDescOn(true)} onBlur={() => setDescOn(false)} />
-            <DescStrips show={descOn} used={c.quickSugs.used} recent={c.quickSugs.recent} typed={form.description} onPick={c.setDescription} />
+            <DescStrips show={descOn || !form.description.trim()} used={c.quickSugs.used} recent={c.quickSugs.recent} typed={form.description} onPick={c.setDescription} />
           </div>
 
           <div className="add-field">
