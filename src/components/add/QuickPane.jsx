@@ -12,7 +12,7 @@ import SaveMoment from './SaveMoment';
 import DateChips from './DateChips';
 import { resolveCategoryIcon } from '../../design/categoryIcons';
 import { evalExpr, hasOperator, pressKey } from './amountExpr';
-import { matchChips } from './addHelpers';
+import DescStrips from './DescStrips';
 
 const QUICK_ADDS = [50, 100, 200, 500];
 const nameOf = m => (m?.name || '').replace(/^test[\s_-]+/i, '') || m?.name || '';
@@ -161,8 +161,8 @@ export default function QuickPane({ c }) {
         <div className="add-form se-in">
           <div className="add-field">
             <span className="add-field__label">DESCRIPTION</span>
-            <TextField className="add-input" value={form.description} onChange={c.setDescription} placeholder="What was it for?" maxLength={80} aria-label="Description"
-              suggestions={matchChips(c.filteredChips, form.description).map(d => ({ label: d, onPick: () => c.setDescription(d) }))} />
+            <TextField className="add-input" value={form.description} onChange={c.setDescription} placeholder="What was it for?" maxLength={80} aria-label="Description" />
+            <DescStrips used={c.quickSugs.used} recent={c.quickSugs.recent} typed={form.description} onPick={c.setDescription} />
           </div>
 
           <div className="add-field">

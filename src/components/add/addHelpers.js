@@ -83,3 +83,27 @@ export const matchChips = (list, typed, n = 8) => {
   const q = (typed || '').trim().toLowerCase();
   return list.filter(d => !q || (d.toLowerCase().includes(q) && d.toLowerCase() !== q)).slice(0, n);
 };
+
+/**
+ * Description suggestions from past expenses: `used` = most used of ALL time, `recent` = latest. (Same description, any case, is one.)
+ * itemised: only lines of itemised bills (Items mode). Synced copies in a personal room are skipped.
+ */
+export function descriptionLists(expenses, { itemised = false, personal = false, n = 14 } = {}) {
+  const groups = new Map();
+  for (const e of expenses || []) {
+    if (personal && e.isSynced) continue;
+    if (itemised && !e.isItemised) continue;
+    const d = (e.description || '').trim();
+    if (!d || /^taxes (&|and) charges$/i.test(d)) continue;     // the bill's taxes line isn't something to type again
+    const t = new Date(e.lastUsedAt || e.createdAt || e.date || 0).getTime() || 0;
+    const g = groups.get(d.toLowerCase()) || { d, n: 0, last: 0 };
+    g.n += Math.max(1, Number(e.usageCount) || 1);
+    if (t >= g.last) { g.last = t; g.d = d; }
+    groups.set(d.toLowerCase(), g);
+  }
+  const all = [...groups.values()];
+  return {
+    used: [...all].sort((a, b) => b.n - a.n || b.last - a.last).slice(0, n).map(g => g.d),
+    recent: [...all].sort((a, b) => b.last - a.last || b.n - a.n).slice(0, n).map(g => g.d),
+  };
+}

@@ -13,7 +13,7 @@ import { cleanName, MONTH_NAMES, fromDateStr } from '../../../aai/common.js';
 import { respond, handCard, billFromPast, uid, billTotals, liveItems } from '../../../aai/chatModel.js';
 import { saveDown, errorReply } from '../../../aai/errors.js';
 import { learnPatterns } from '../../../utils/categoryGuess.js';
-import { normaliseRead, billFromRead, billMismatch, readingSteps, splitLabel, classifyReadError, shortDate, TAXES_CATEGORY } from '../../../aai/billParse.js';
+import { normaliseRead, billFromRead, billMismatch, readingSteps, classifyReadError, shortDate, TAXES_CATEGORY } from '../../../aai/billParse.js';
 import { queueBill, unqueueBill, queuedBills, readyToRead } from '../../../aai/billQueue.js';
 import { loadChats, saveChat, closeStored, patchStoredCard, settleStored, pickResume, isEditable, serialiseMessages } from '../../../aai/chatStore.js';
 import { greetingContext, pickGreeting } from '../../../aai/greetings.js';
@@ -26,7 +26,7 @@ import { withStyle } from './members';
 import { EmptyState } from './Heatmap';
 import { QuickCard, BillCard, UNDO_MS } from './Cards';
 import ErrorReply from './Errors';
-import { Shots, ConsentAsk, PayerAsk, SplitAsk, FetchedName, ItemLine } from './Bill';
+import { Shots, ConsentAsk, PayerAsk, FetchedName } from './Bill';
 import PastChats from './PastChats';
 import { Composer, FocusRows } from './Composer';
 import useOpens from './useOpens';
@@ -393,7 +393,7 @@ export default function AaiChat({ onClose }) {
     const ask = asksPayer && job.paidBy == null;
     const readId = addAi({ jobId: job.id, steps: [{ text: 'reading screenshot… whoever picked this font owes me ₹10.' }], shown: 0, done: false, live: true,
       reply: ask && !job.payerMsg ? 'Reading it now. Quick one while I finish —' : null });
-    if (ask && !job.payerMsg) { job.payerMsg = addAi({ jobId: job.id, reply: 'Who paid?', ask: { kind: 'payer' } }); }
+    if (ask && !job.payerMsg) { job.payerMsg = addAi({ jobId: job.id, reply: 'Who paid?', ask: { kind: 'payer' } }); setPaused(false); }
     job.ctl = new AbortController();
     job.slowMsg = null;
     const slow = setTimeout(() => { job.slowMsg = addAi({ jobId: job.id, error: errorReply('slow') }); }, SLOW_MS);
@@ -456,15 +456,9 @@ export default function AaiChat({ onClose }) {
     next(job);
   };
 
-  const askable = job => job.read.items.map((it, k) => (it.amount == null ? -1 : k)).filter(k => k >= 0);
   const next = job => {
     if (job.stage !== 'asking') return;
     if (asksPayer && job.paidBy == null) return;             // the "Who paid?" answer comes first
-    if (!alone && !job.splitDone && askable(job).length) {   // one question for the whole bill
-      job.splitDone = true;
-      addAi({ jobId: job.id, reply: 'Split with?', ask: { kind: 'split', picked: job.last || null } });
-      return;
-    }
     showCard(job);
   };
 
@@ -480,7 +474,7 @@ export default function AaiChat({ onClose }) {
       ? `Done. ${n} items — I couldn't read ${mm.failed.map(x => `**#${x}**`).join(', ')}${mm.diff > 0 ? `, so ${inr(mm.diff)} is missing` : ''}. Tap it to fix.`
       : mm.off
         ? `Done. ${n} items, but they come to ${inr(mm.sum)} and the bill says ${inr(bill.total)}. Tap **FIX** to sort it.`
-        : `Done. ${n} items, ${inr(bill.total)}. Check it, then save.`;
+        : alone ? `Done. ${n} items, ${inr(bill.total)}. Check it, then save.` : `Done. ${n} items, ${inr(bill.total)}. Tick each item's split (pre-filled with everyone), then save.`;
     addAi({ jobId: job.id, reply, card: { kind: 'bill', bill, dots: session().firstCard ? ['all'] : dots } });
     job.blobs = null;                                        // the screenshots are dropped now
   };
@@ -497,19 +491,10 @@ export default function AaiChat({ onClose }) {
     if (!job) return;
     job.paidBy = id;
     closeAsk(m.id);
+    setPaused(false);
     addMe({ text: id === meId ? 'You paid' : `${cleanName(users.find(u => u.id === id)?.name)} paid`, payer: id, ans: true });
     next(job);
   };
-  const answerSplit = (m, ids) => {
-    const job = jobs.current[m.jobId];
-    if (!job) return;
-    askable(job).forEach(k => { job.splits[k] = ids; });
-    job.last = ids;
-    closeAsk(m.id, { picked: ids });
-    addMe({ text: splitLabel(ids, users, meId), ans: true });
-    next(job);
-  };
-
   /** Error buttons for a bill (true = handled here). */
   const billAction = (m, a) => {
     const job = jobs.current[m.jobId];
@@ -575,13 +560,8 @@ export default function AaiChat({ onClose }) {
   const renderAsk = m => {
     const live = !ro && !m.ask.answered;
     if (m.ask.kind === 'consent') return <ConsentAsk key="ask" live={live} onAnswer={a => answerConsent(m, a)} />;
-    if (m.ask.kind === 'payer') return <PayerAsk key="ask" members={members} meId={meId} live={live} onAnswer={id => answerPayer(m, id)} />;
-    return (
-      <Fragment key="ask">
-        {m.ask.index != null && <div className="ch-say"><ItemLine ask={m.ask} editable={false} /></div>}
-        <SplitAsk ask={m.ask} members={members} meId={meId} live={live} onAnswer={ids => answerSplit(m, ids)} />
-      </Fragment>
-    );
+    if (m.ask.kind === 'payer') return <PayerAsk key="ask" members={members} meId={meId} live={live} paused={paused} onAnswer={id => answerPayer(m, id)} />;
+    return null;                                              // (old chats had one split question per item — nothing to show any more)
   };
   /** "Your Blinkit bill from 2 Oct — 9 items." — fetched names dotted; tap the shop for the keypad on it. */
   const renderFound = m => {
@@ -609,6 +589,7 @@ export default function AaiChat({ onClose }) {
   }, [shownMessages.length, last?.shown, last?.done, last?.card?.status, view?.id]);
 
   const empty = messages.length === 0 && !view;
+  const [paused, setPaused] = useState(false);               // touching the chat pauses Who paid's 4s ring
   const [focused, setFocused] = useState(false);           // the composer has the phone keyboard
   const cardProps = { members, categories, meId, isPersonal: alone, roomName, now, readOnly: ro };
   const heat = { members: heatMembers, opens, stats, now, line, onPickDay: d => { haptic('choose'); pickSessionDate(d); fieldRef.current?.focus(); } };
@@ -619,7 +600,7 @@ export default function AaiChat({ onClose }) {
       <div className="ch-glow ch-glow--t" aria-hidden="true" />
       <Header onMenu={openMenu} onNew={newChat} onClose={close} canNew={!empty} />
 
-      <div className="ch-scroll" ref={scroller}>
+      <div className="ch-scroll" ref={scroller} onPointerDown={e => { if (!e.target.closest('.ch-og')) setPaused(true); }}>
         {empty ? (
           <EmptyState greeting={greeting} compact={focused} heat={heat} />
         ) : (

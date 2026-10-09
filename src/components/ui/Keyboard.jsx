@@ -272,7 +272,13 @@ export function KeyboardProvider({ children }) {
     const vv = window.visualViewport;
     const root = document.documentElement;
     const native = () => { const a = document.activeElement; return a && a.classList?.contains('se-native') ? a : null; };
+    // The visible area (above the phone keyboard) — always current, so nothing can get "stuck" after it closes.
+    const view = () => {
+      root.style.setProperty('--se-vv-h', vv ? `${Math.round(vv.height)}px` : '100%');
+      root.style.setProperty('--se-vv-top', vv ? `${Math.round(vv.offsetTop)}px` : '0px');
+    };
     const sync = () => {
+      view();
       if (activeId.current) return;                                   // the in-app keypad owns the layout
       if (!native()) { root.classList.remove('se-kb-open'); root.style.removeProperty('--se-kb-h'); return; }
       const h = vv ? Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop)) : 0;
@@ -280,7 +286,8 @@ export function KeyboardProvider({ children }) {
       root.classList.toggle('se-kb-open', h > 80);
     };
     const onIn = () => { sync(); setTimeout(sync, 350); };
-    const onOut = () => setTimeout(sync, 60);
+    const onOut = () => { sync(); setTimeout(sync, 60); setTimeout(sync, 400); };
+    sync();
     const onDown = e => { const a = native(); if (a && !e.target.closest?.('input, textarea, [data-se-field], [data-kb]')) a.blur(); };
     document.addEventListener('focusin', onIn);
     document.addEventListener('focusout', onOut);

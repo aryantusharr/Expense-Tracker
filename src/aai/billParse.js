@@ -6,7 +6,7 @@
  * Plain data: { isBill, shop, date, items:[{ name, qty, amount|null, category, conf }], charges:[{ label, kind, amount }],
  *               total|null, conf:{ shop, date, total }, unclear:[index…] }
  */
-import { guessCategory, findMatchingCategory } from '../utils/categoryGuess.js';
+import { learnedCategory, keywordCategory, findMatchingCategory } from '../utils/categoryGuess.js';
 import { toDateStr, fromDateStr, addDays, fmtINR, MONTH_NAMES, cleanName } from './common.js';
 
 export const SURE = 0.7;                 // below this a field gets the dotted "not sure" underline
@@ -178,11 +178,13 @@ export function chargesDetail(charges) {
   return merged.filter(m => Math.abs(m.a) > 0.004).map(m => `${m.k} ${m.a < 0 ? '−' : ''}${inr(Math.abs(m.a))}`).join(' · ');
 }
 
-/** Room category for a read item: the model's pick if it's one of ours, else the keyword/learned guess, else null. */
+/** Room category for a read item: what this room has learned for that name wins, then the model's pick if it's one of ours, then the keyword list. */
 export function categoryFor(item, { categories, learned }) {
+  const l = learnedCategory(item.name, learned);
+  if (l) return { id: l, sure: true };
   const exact = item.category && categories.find(c => c.name.toLowerCase() === item.category.toLowerCase());
   if (exact) return { id: exact.id, sure: true };
-  const g = guessCategory(item.name, learned, categories);
+  const g = keywordCategory(item.name, categories);
   if (g) return { id: g, sure: true };
   const near = item.category && findMatchingCategory(item.category, categories);
   return near ? { id: near.id, sure: false } : { id: null, sure: false };

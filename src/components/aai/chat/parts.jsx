@@ -23,7 +23,7 @@ export const IcClose = () => <svg width="20" height="20" viewBox="0 0 24 24" str
 export const IcPlus = () => <svg width="22" height="22" viewBox="0 0 24 24" strokeWidth="2" {...sv}><path d="M12 5v14M5 12h14" /></svg>;
 export const IcSend = () => <svg width="20" height="20" viewBox="0 0 24 24" strokeWidth="2.4" {...sv}><path d="M12 19V5M5 12l7-7 7 7" /></svg>;
 export const IcTag = () => <svg width="11" height="11" viewBox="0 0 24 24" strokeWidth="2.2" {...sv}><path d="M20.6 13.4l-7.2 7.2a2 2 0 01-2.8 0L3 13V3h10l7.6 7.6a2 2 0 010 2.8z" /><circle cx="7.5" cy="7.5" r="1.5" /></svg>;
-const IcCheck = () => <svg width="13" height="13" viewBox="0 0 24 24" strokeWidth="2.6" {...sv}><path d="M5 12l5 5L20 7" /></svg>;
+export const IcCheck = () => <svg width="13" height="13" viewBox="0 0 24 24" strokeWidth="2.6" {...sv}><path d="M5 12l5 5L20 7" /></svg>;
 const IcChev = ({ up }) => <svg width="14" height="14" viewBox="0 0 24 24" strokeWidth="2" {...sv}><path d={up ? 'M6 15l6-6 6 6' : 'M6 9l6 6 6-6'} /></svg>;
 
 export function Header({ onMenu, onNew, onClose, canNew = true }) {

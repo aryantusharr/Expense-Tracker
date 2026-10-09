@@ -92,13 +92,14 @@ function respondInner(text, session) {
 
   const n = users.length;
   const allIds = users.map(u => u.id);
+  const stated = ids => !!ids && ids.length > 0 && ids.length < n;           // she typed who's in → nothing to confirm
   const dateFor = it => (!it.dateGiven && sess.date ? sess.date : it.date || today);
 
   if (intent.type === 'many') {
     const exps = intent.expenses;
     const items = exps.map(e => ({
       id: uid(), name: e.description || 'Item', amount: e.amount, categoryId: e.categoryId,
-      splitAmong: e.splitAmong, unsure: !e.categoryId,
+      splitAmong: e.splitAmong, splitOk: stated(e.splitAmong), unsure: !e.categoryId,
     }));
     const bill = {
       name: 'Untitled bill', nameUnsure: true, date: dateFor(exps[0]), paidBy: first(exps).paidBy,
@@ -116,7 +117,7 @@ function respondInner(text, session) {
   if (intent.type === 'bill') {
     const items = intent.lines.map(l => ({
       id: uid(), name: l.description || 'Item', amount: l.amount, categoryId: l.categoryId || intent.categoryId,
-      splitAmong: l.splitAmong, unsure: !(l.categoryId || intent.categoryId),
+      splitAmong: l.splitAmong, splitOk: stated(l.splitAmong), unsure: !(l.categoryId || intent.categoryId),
     }));
     // a "rest" line — typed, or made up when the items don't reach the total
     const left = intent.restAmount;
@@ -125,6 +126,7 @@ function respondInner(text, session) {
         id: uid(), name: 'Rest of the bill', rest: true, amount: Math.max(left, 0),
         categoryId: intent.categoryId || items[0]?.categoryId || null,
         splitAmong: intent.rest ? intent.rest.splitAmong : (isPersonal ? [me || users[0]?.id] : allIds),
+        splitOk: intent.rest ? stated(intent.rest.splitAmong) : false,
       });
     }
     const bill = {
@@ -264,7 +266,7 @@ export function billFromPast(group, session) {
   const today = session.today || toDateStr(session.now);
   const items = group.items.map(e => ({
     id: uid(), name: e.description || 'Item', amount: parseFloat(e.amount) || 0, categoryId: e.categoryId || null,
-    splitAmong: isPersonal ? [me || users[0]?.id] : (e.splitAmong || users.map(u => u.id)), unsure: !e.categoryId,
+    splitAmong: isPersonal ? [me || users[0]?.id] : (e.splitAmong || users.map(u => u.id)), splitOk: true, unsure: !e.categoryId,
   }));
   const f = group.items[0];
   const payer = isPersonal ? (me || users[0]?.id) : (users.some(u => u.id === f.paidBy) ? f.paidBy : me);

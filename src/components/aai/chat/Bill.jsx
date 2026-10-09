@@ -1,12 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { haptic } from '../../../utils/haptics';
-import { cleanName, fmtINR } from '../../../aai/common.js';
+import { cleanName } from '../../../aai/common.js';
 import { Mg } from './parts';
 import { TextEdit } from './Cards';
 
 /**
- * Bill screenshots in the chat: thumbnails in my message, the consent reply, "Who paid?" and ONE "Split with?" for the
- * whole bill (every item starts with it; fine-tune per item on the bill card). No timers — a tap answers.
+ * Bill screenshots in the chat: thumbnails in my message, the consent reply and "Who paid?" (4s ring, You pre-picked).
+ * Who splits what is NOT asked here — every item starts as All N and is confirmed with its tick on the bill card.
  */
 
 /** My message: the screenshots as thumbnails (blob URLs while the chat is open; grey slips once the chat is stored). */
@@ -23,6 +23,8 @@ export function Shots({ thumbs, count }) {
   );
 }
 
+export const RING_MS = 4000;
+
 const ordered = (members, meId) => [...members].sort((a, b) => (a.id === meId ? -1 : b.id === meId ? 1 : 0));
 const nameOf = (m, meId) => (m.id === meId ? 'You' : cleanName(m.name));
 const cols = n => ({ gridTemplateColumns: `repeat(${Math.min(n, 4)}, 1fr)` });
@@ -38,45 +40,45 @@ export function ConsentAsk({ live, onAnswer }) {
   );
 }
 
-/** "Who paid?" — one tap answers. */
-export function PayerAsk({ members, meId, live, onAnswer }) {
+/** The ring that runs around the pre-picked chip; it empties in 4s. */
+function Ring({ paused }) {
+  return (
+    <svg className={`ch-ring ${paused ? 'is-paused' : ''}`} viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true">
+      <rect x="1" y="1" width="98" height="38" rx="12" fill="none" pathLength="151" vectorEffect="non-scaling-stroke" />
+    </svg>
+  );
+}
+
+/** 4s countdown → onFire. Stops while paused (she touched the chat) or when not live. Returns seconds left. */
+function useCountdown({ live, paused, onFire }) {
+  const [left, setLeft] = useState(RING_MS);
+  const fire = useRef(onFire);
+  useEffect(() => { fire.current = onFire; });
+  useEffect(() => {
+    const start = Date.now();
+    const t0 = setTimeout(() => setLeft(RING_MS), 0);
+    if (!live || paused) return () => clearTimeout(t0);
+    const iv = setInterval(() => setLeft(Math.max(0, RING_MS - (Date.now() - start))), 250);
+    const t = setTimeout(() => fire.current(), RING_MS);
+    return () => { clearTimeout(t0); clearInterval(iv); clearTimeout(t); };
+  }, [live, paused]);
+  return Math.ceil(left / 1000);
+}
+
+/** "Who paid?" — You first, pre-picked with the 4s ring (it answers by itself); a tap answers sooner. */
+export function PayerAsk({ members, meId, live, paused, onAnswer }) {
   const list = ordered(members, meId);
+  const pre = meId || list[0]?.id;
+  const secs = useCountdown({ live, paused, onFire: () => onAnswer(pre, true) });
   if (!live) return null;
   return (
     <div className="ch-og" style={cols(list.length)} role="group" aria-label="Who paid">
       {list.map(m => (
-        <button key={m.id} type="button" className="ch-pchip" onClick={() => { haptic('choose'); onAnswer(m.id); }}>
+        <button key={m.id} type="button" className={`ch-pchip ${m.id === pre ? 'on' : ''}`} aria-pressed={m.id === pre} onClick={() => { haptic('choose'); onAnswer(m.id); }}>
           <Mg m={m} /><span>{nameOf(m, meId)}</span>
+          {m.id === pre && <><Ring paused={paused} /><span className="ch-mono ch-ring__s">{paused ? '' : `${secs}s`}</span></>}
         </button>
       ))}
-    </div>
-  );
-}
-
-/** "Split with?" — once for the whole bill. Pre-picked = the last answer (first time: All). Names toggle; Next › confirms. */
-export function SplitAsk({ ask, members, meId, live, onAnswer }) {
-  const all = members.map(m => m.id);
-  const [sel, setSel] = useState(ask.picked?.length ? ask.picked : all);
-  if (!live) return null;
-  const allOn = sel.length === all.length;
-  const toggle = id => {
-    haptic('choose');
-    setSel(s => (s.includes(id) ? (s.length > 1 ? s.filter(x => x !== id) : s) : all.filter(x => x === id || s.includes(x))));
-  };
-  return (
-    <div className="ch-og" style={cols(members.length + 1)} role="group" aria-label="Who splits the bill">
-      <button type="button" className={`ch-pchip ${allOn ? 'on' : ''}`} aria-pressed={allOn} onClick={() => { haptic('choose'); setSel(all); }}>All {all.length}</button>
-      {ordered(members, meId).map(m => {
-        const on = !allOn && sel.includes(m.id);
-        return (
-          <button key={m.id} type="button" className={`ch-pchip ${on ? 'on' : ''}`} aria-pressed={sel.includes(m.id)} onClick={() => toggle(m.id)}>
-            <Mg m={m} dim={!sel.includes(m.id)} /><span>{nameOf(m, meId)}</span>
-          </button>
-        );
-      })}
-      <div className="ch-og__wide" style={{ gridColumn: '1 / -1' }}>
-        <button type="button" className="ch-pchip ch-pchip--next ch-pchip--full" onClick={() => { haptic('choose'); onAnswer(sel); }}>Next ›</button>
-      </div>
     </div>
   );
 }
@@ -90,14 +92,4 @@ export function FetchedName({ value, fallback, editable, onRename, label }) {
     return <TextEdit value={v} onChange={setV} onClose={() => { setOn(false); if (v.trim() && v.trim() !== value) onRename(v.trim()); else setV(value); }} label={label} caps="words" className="ch-inl--fetched" />;
   }
   return <button type="button" className="ch-fetched ch-ed" aria-label={label} onClick={() => { haptic('tap'); setOn(true); }}>{value || fallback}</button>;
-}
-
-/** "Potato 1 kg · ₹40 — split with?" */
-export function ItemLine({ ask, editable, onRename }) {
-  return (
-    <>
-      <FetchedName value={ask.name} fallback={`Item ${ask.index + 1}`} editable={editable} onRename={onRename} label={`Rename item ${ask.index + 1}`} />
-      {ask.qty ? <span className="ch-mono ch-qty"> {ask.qty}</span> : null} · {ask.amount == null ? '₹—' : fmtINR(ask.amount)} — split with?
-    </>
-  );
 }

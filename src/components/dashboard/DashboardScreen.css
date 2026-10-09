@@ -86,6 +86,7 @@
 .dsh-nudge__ticker { flex: 1; overflow: hidden; }
 .dsh-nudge__ticker .se-marquee { font-family: var(--se-font-mono); font-size: 11px; font-weight: 700; letter-spacing: .06em; color: #E8C48E; }
 .dsh-nudge__ticker .se-marquee > span { padding-right: 28px; }
+.dsh-nudge__txt { font-family: var(--se-font-mono); font-size: 11px; font-weight: 700; letter-spacing: .06em; color: #E8C48E; padding-left: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .dsh-sep { opacity: .5; }
 @keyframes dsh-pulse { 50% { opacity: 1; } }
 .dsh-synced {
@@ -98,7 +99,7 @@
   border-color: rgba(214,120,0,0.22);
 }
 :root[data-theme='light'] .dsh-nudge__tag { background: rgba(194,106,0,0.10); color: #A65A00; border-right-color: rgba(214,120,0,0.2); }
-:root[data-theme='light'] .dsh-nudge__ticker .se-marquee { color: #8A4B00; }
+:root[data-theme='light'] .dsh-nudge__ticker .se-marquee, :root[data-theme='light'] .dsh-nudge__txt { color: #8A4B00; }
 :root[data-theme='light'] .dsh-synced { background: #E3F6F3; color: #0A7A6D; border-color: rgba(10,133,119,0.35); }
 
 /* ---- Hero ---- */

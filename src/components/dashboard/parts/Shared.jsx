@@ -3,7 +3,7 @@ import { DropNumber } from '../../ui/Numbers';
 import Sheet from '../../ui/Sheet';
 import Button from '../../ui/Button';
 import { haptic } from '../../../utils/haptics';
-import { fmt, shortDay } from '../dashboardData';
+import { fmt, shortDay, MONTHS_SHORT } from '../dashboardData';
 
 export function Mono({ m, size, radius, fontSize, className = '' }) {
   return (
@@ -40,16 +40,11 @@ export function NudgeStrip({ members, meId }) {
       </div>
     );
   }
-  const items = missing.map(m => {
-    const who = m.id === meId ? 'YOU' : m.name.toUpperCase();
-    return `${who} · ${m.lastDate ? `LAST ENTRY ${shortDay(m.lastDate)}` : 'NO ENTRIES YET'}`;
-  });
-  const aria = `Not logged today: ${missing.map(m => `${m.id === meId ? 'You' : m.name}, ${m.lastDate ? `last entry ${shortDay(m.lastDate, { upper: false })}` : 'no entries yet'}`).join('. ')}.`;
-  const run = (
-    <span>
-      {items.map((t, i) => <span key={i}>{t} <span className="dsh-sep">///</span> </span>)}
-    </span>
-  );
+  // Only the person who has been silent the longest (never logged = longest): "TEST C SINCE 02 OCT".
+  const long = [...missing].sort((x, y) => (x.lastDate || '').localeCompare(y.lastDate || ''))[0];
+  const who = long.id === meId ? 'YOU' : long.name.toUpperCase();
+  const since = long.lastDate ? `SINCE ${long.lastDate.slice(8, 10)} ${MONTHS_SHORT[Number(long.lastDate.slice(5, 7)) - 1].toUpperCase()}` : 'NO ENTRIES YET';
+  const aria = `Not logged today: ${long.id === meId ? 'You' : long.name}, ${long.lastDate ? `since ${shortDay(long.lastDate, { upper: false })}` : 'no entries yet'}.`;
   return (
     <div className="dsh-nudge" role="status" aria-label={aria} style={{ animationDelay: '60ms' }}>
       <span className="dsh-nudge__tag" aria-hidden="true">
@@ -57,7 +52,7 @@ export function NudgeStrip({ members, meId }) {
         NOT LOGGED
       </span>
       <div className="dsh-nudge__ticker" aria-hidden="true">
-        <div className="se-marquee">{run}{run}</div>
+        <div className="dsh-nudge__txt">{who} {since}</div>
       </div>
     </div>
   );

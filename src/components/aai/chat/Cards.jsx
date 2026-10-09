@@ -6,7 +6,7 @@ import { evalExpr } from '../../add/amountExpr';
 import { cleanName } from '../../../aai/common.js';
 import { billTotals, syncRest, liveItems, dayLabel, uid } from '../../../aai/chatModel.js';
 import { billMismatch } from '../../../aai/billParse.js';
-import { Mg, IcTag } from './parts';
+import { Mg, IcTag, IcCheck } from './parts';
 import { LineIcon } from '../../ui/CategoryIcon';
 import { resolveCategoryIcon } from '../../../design/categoryIcons';
 import { toDateStr, addDays, MONTH_NAMES, fromDateStr } from '../../../aai/common.js';
@@ -244,6 +244,8 @@ export function BillCard({ card, onChange, members, categories, meId, isPersonal
   const common = { dots, locked };
   const set = patch => onChange({ ...card, bill: syncRest({ ...bill, ...patch }) });
   const setItem = (id, patch) => set({ items: bill.items.map(i => (i.id === id ? { ...i, ...patch } : i)) });
+  const [restOpen, setRestOpen] = useState(false);          // "Same for the rest" picker
+  const [restSel, setRestSel] = useState(() => members.map(m => m.id));
   const [seen, setSeen] = useState({});                  // fields she has looked at → their "check me" pulse stops
   const open = (f, id = '') => { setSeen(x => ({ ...x, [f + id]: true })); setEd(e => (e && e.f === f && e.id === id ? null : { f, id })); };
   const pu = (key, flag) => !locked && !!flag && !seen[key];
@@ -256,8 +258,11 @@ export function BillCard({ card, onChange, members, categories, meId, isPersonal
   const shot = bill.source === 'bill';                     // read from a screenshot: must match the bill total to save
   const mm = shot ? billMismatch(bill) : null;
   const real = shot ? rows.filter(i => !(i.failed && !(i.amount > 0))) : rows;
+  const needSplit = !isPersonal && members.length > 1;      // every item's split must be ticked before saving
+  const todo = needSplit ? real.filter(i => !i.charges && !i.splitOk) : [];
   const ok = real.length > 0 && real.every(i => i.amount > 0) && t.over === 0 && !(mm && mm.off)
-    && (isPersonal || (bill.paidBy && real.every(i => i.splitAmong?.length)));
+    && (isPersonal || (bill.paidBy && real.every(i => i.splitAmong?.length)))
+    && todo.length === 0;
   /** FIX ›: the first unread line's amount; if none, the money is missing from the list → a new line for it; if items are over, the total. */
   const fix = () => {
     const f = bill.items.find(i => i.failed && !(i.amount > 0));
@@ -338,6 +343,11 @@ export function BillCard({ card, onChange, members, categories, meId, isPersonal
                       <Val locked={locked} dots={allIn || !inSplit.length ? dots : []} id="split" on={is('isplit', it.id)} label={`Change who splits ${it.name}`} onClick={() => open('isplit', it.id)} className="ch-mono ch-tag">
                         {allIn ? `ALL ${sp.length}` : inSplit.length ? inSplit.map(m => <Mg key={m.id} m={m} />) : 'PICK'}
                       </Val>
+                      {needSplit && !locked && (
+                        <button type="button" className={`ch-tick ${it.splitOk ? 'is-on' : 'is-pulse'}`} aria-pressed={!!it.splitOk} disabled={!sp.length}
+                          aria-label={it.splitOk ? `Split confirmed for ${it.name}` : `Confirm split for ${it.name}`}
+                          onClick={() => { haptic('choose'); setItem(it.id, { splitOk: !it.splitOk }); }}><IcCheck /></button>
+                      )}
                     </>
                   )}
                 </span>
@@ -366,7 +376,7 @@ export function BillCard({ card, onChange, members, categories, meId, isPersonal
 
       {(() => {
         const n = [pu('bname', bill.nameUnsure), pu('date', bill.dateUnsure), !isPersonal && pu('payer', !bill.paidBy), pu('total', bill.totalUnsure)].filter(Boolean).length
-          + rows.filter(i => pu('icat' + i.id, i.unsure && !i.charges)).length;
+          + rows.filter(i => pu('icat' + i.id, i.unsure && !i.charges)).length + (locked ? 0 : todo.length);
         return n > 0 ? <div className="ch-mono ch-check" role="status">{n} THING{n === 1 ? '' : 'S'} TO CHECK · THE PULSING ONES</div> : null;
       })()}
       {locked ? (isSaved(card) ? (
@@ -376,9 +386,29 @@ export function BillCard({ card, onChange, members, categories, meId, isPersonal
         </>
       ) : <NotAdded />) : (
         <div className="ch-foot ch-foot--col">
-          <button type="button" className={`ch-btn ${shot && mm.off ? 'ch-btn--off' : 'ch-grad'}`} disabled={!ok || saving} onClick={() => { setEd(null); onConfirm(); }}>
-            {saving ? 'Saving…' : shot && mm.off ? `Save bill · fix ₹${fmtAmt(Math.abs(mm.diff))} first` : 'Save bill'}
-          </button>
+          {restOpen && todo.length > 0 && (
+            <>
+              <PersonGrid multi label="Same split for the rest" members={members} meId={meId} selected={restSel}
+                onToggle={id => setRestSel(s => (s.includes(id) ? (s.length > 1 ? s.filter(x => x !== id) : s) : members.map(m => m.id).filter(x => x === id || s.includes(x))))}
+                onAll={() => setRestSel(members.map(m => m.id))} />
+              <button type="button" className="ch-btn ch-grad" onClick={() => {
+                haptic('choose');
+                const ids = new Set(todo.map(t => t.id));
+                set({ items: bill.items.map(i => (ids.has(i.id) ? { ...i, splitAmong: restSel, splitOk: true } : i)) });
+                setRestOpen(false);
+              }}>Apply to {todo.length} item{todo.length === 1 ? '' : 's'}</button>
+            </>
+          )}
+          <div className="ch-savebar">
+            {todo.length > 0 && (
+              <button type="button" className={`ch-btn ch-btn--rest ${restOpen ? 'is-on' : ''}`} aria-expanded={restOpen}
+                onClick={() => { haptic('tap'); setEd(null); setRestOpen(o => !o); }}>
+                {todo.length === real.filter(i => !i.charges).length ? 'Same for all' : 'Same for the rest'} · {todo.length}
+              </button>
+            )}
+            <button type="button" className={`ch-btn ${shot && mm.off ? 'ch-btn--off' : 'ch-grad'}`} disabled={!ok || saving} onClick={() => { setEd(null); onConfirm(); }}>
+              {saving ? 'Saving…' : todo.length > 0 ? 'Save bill' : shot && mm.off ? `Save bill · fix ₹${fmtAmt(Math.abs(mm.diff))} first` : 'Save bill'}</button>
+          </div>
           {real.length > 1 && !saving && (
             <button type="button" className="ch-btn ch-btn--ghost" disabled={!ok} onClick={() => { setEd(null); onSeparate(); }}>Add as {real.length} separate expenses instead</button>
           )}

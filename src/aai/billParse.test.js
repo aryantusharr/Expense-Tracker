@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { cleanQty, normaliseRead, readSums, billFromRead, billMismatch, chargesDetail, classifyReadError, splitLabel, readingSteps, shortName, TAXES_CATEGORY } from './billParse.js';
+import { cleanQty, normaliseRead, readSums, billFromRead, billMismatch, chargesDetail, classifyReadError, splitLabel, readingSteps, shortName, TAXES_CATEGORY, categoryFor } from './billParse.js';
 
 const now = new Date(2026, 9, 4);
 const users = [{ id: 'a', name: 'Test Asha' }, { id: 'b', name: 'Test Ben' }, { id: 'c', name: 'Test Cy' }];
@@ -115,4 +115,10 @@ test('billFromRead: taxes row uses the Taxes category (existing one, else the on
   assert.equal(a.dateUnsure, true);
   const b = billFromRead(r, { ...ctx, categories: [...categories, { id: 'tx', name: 'Taxes' }] }, { paidBy: 'a' }).bill;
   assert.equal(b.items.find(i => i.charges).categoryId, 'tx');
+});
+
+test('categoryFor: what the room learned wins over the model, then the model, then keywords', () => {
+  const learned = new Map([['test chips', 'g']]);
+  assert.equal(categoryFor({ name: 'Test Chips', category: 'Snacks' }, { categories, learned }).id, 'g');   // learned beats Gemini's "Snacks"
+  assert.equal(categoryFor({ name: 'Test Potato', category: 'Snacks' }, { categories, learned }).id, 's');  // nothing learned → the model's pick
 });

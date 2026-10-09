@@ -10,7 +10,8 @@ import SlideToAdd from './SlideToAdd';
 import SaveMoment from './SaveMoment';
 import DateChips from './DateChips';
 import { TextField } from '../ui/Keyboard';
-import { evaluateMathExpression, matchChips } from './addHelpers';
+import { evaluateMathExpression } from './addHelpers';
+import DescStrips from './DescStrips';
 
 const fmtN = n => n.toLocaleString('en-IN', { maximumFractionDigits: 2 });
 
@@ -162,8 +163,8 @@ export default function ItemsPane({ c }) {
         <div className="add-form se-in">
           <div className="add-field">
             <span className="add-field__label">BILL NAME</span>
-            <TextField className="add-input" value={c.billName} onChange={c.setBillName} placeholder="e.g. Dinner at Social" maxLength={60} caps="words" aria-label="Bill name" next={totalField}
-              suggestions={matchChips(names, c.billName).map(n => ({ label: n, onPick: () => c.setBillName(n) }))} />
+            <TextField className="add-input" value={c.billName} onChange={c.setBillName} placeholder="e.g. Dinner at Social" maxLength={60} caps="words" aria-label="Bill name" next={totalField} />
+            <DescStrips recent={names} typed={c.billName} onPick={c.setBillName} recentLabel="PAST BILLS" />
           </div>
           <div className="add-field">
             <span className="add-field__label">TOTAL</span>
@@ -183,8 +184,8 @@ export default function ItemsPane({ c }) {
         <div className="add-form se-in ib-panel">
           <div className="add-field">
             <span className="add-field__label">ITEM</span>
-            <TextField className="add-input" value={draft.description} onChange={setDesc} placeholder="What was it for?" maxLength={80} aria-label="Item" next={amountField}
-              suggestions={matchChips(c.itemChips, draft.description).map(d => ({ label: d, onPick: () => setDesc(d) }))} />
+            <TextField className="add-input" value={draft.description} onChange={setDesc} placeholder="What was it for?" maxLength={80} aria-label="Item" next={amountField} />
+            <DescStrips used={c.itemSugs.used} recent={c.itemSugs.recent} typed={draft.description} onPick={setDesc} />
           </div>
           <div className="add-field">
             <span className="add-field__label">AMOUNT</span>

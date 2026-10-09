@@ -7,7 +7,7 @@ import { getLastUsedMode, setLastUsedMode, getLastUsedDefaults, setLastUsedDefau
 import { addRecentDescription } from '../../utils/recentDescriptions';
 import { detectRecurringExpenses } from '../../utils/recurringExpenses';
 import { memberStyle, monthWindow, localDateStr } from '../dashboard/dashboardData';
-import { getSortedCategories } from './addHelpers';
+import { getSortedCategories, descriptionLists } from './addHelpers';
 import { guessCategory, learnPatterns } from '../../utils/categoryGuess';
 
 /**
@@ -43,63 +43,10 @@ export function useAddController() {
   const learned = useMemo(() => learnPatterns(expenses, categories), [expenses, categories]);
   const guessCat = useCallback(text => guessCategory(text, learned, categories), [learned, categories]);
 
-  // Quick mode: live-filtered description suggestions based on 45-day usage count
-  const descriptionChips = useMemo(() => {
-    const roomExpenses = isPersonal ? expenses.filter(e => !e.isSynced) : expenses;
-    // eslint-disable-next-line react-hooks/purity
-    const fortyFiveDaysAgo = Date.now() - 45 * 24 * 60 * 60 * 1000;
-
-    const recentExpenses = roomExpenses.filter(e => {
-      const time = e.lastUsedAt ? new Date(e.lastUsedAt).getTime() : (e.createdAt ? new Date(e.createdAt).getTime() : (e.date ? new Date(e.date).getTime() : 0));
-      return time >= fortyFiveDaysAgo;
-    });
-
-    const groups = {};
-    for (const e of recentExpenses) {
-      const desc = (e.description || '').trim();
-      if (!desc) continue;
-      const key = desc.toLowerCase();
-      if (!groups[key]) {
-        // Find room-wide matches to compute usage count and last used date
-        const matches = roomExpenses.filter(x => (x.description || '').trim().toLowerCase() === key);
-        const maxCount = matches.reduce((max, x) => Math.max(max, x.usageCount !== undefined ? x.usageCount : 1), matches.length || 1);
-        const lastUsed = matches.reduce((max, x) => {
-          const t = x.lastUsedAt ? new Date(x.lastUsedAt).getTime() : (x.createdAt ? new Date(x.createdAt).getTime() : 0);
-          return Math.max(max, t);
-        }, 0);
-
-        groups[key] = {
-          description: desc,
-          usageCount: maxCount,
-          lastUsedAt: lastUsed
-        };
-      }
-    }
-
-    return Object.values(groups)
-      .sort((a, b) => b.usageCount - a.usageCount || b.lastUsedAt - a.lastUsedAt)
-      .slice(0, 10)
-      .map(g => g.description);
-  }, [expenses, isPersonal]);
-  const filteredChips = descriptionChips;
-
-  // Items mode: recent item names (lines of itemised bills), most used first.
-  const itemChips = useMemo(() => {
-    // eslint-disable-next-line react-hooks/purity
-    const since = Date.now() - 60 * 24 * 60 * 60 * 1000;
-    const groups = {};
-    for (const e of expenses) {
-      if (!e.isItemised || (isPersonal && e.isSynced)) continue;
-      const desc = (e.description || '').trim();
-      if (!desc) continue;
-      const t = e.createdAt ? new Date(e.createdAt).getTime() : (e.date ? new Date(e.date).getTime() : 0);
-      if (t < since) continue;
-      const g = groups[desc.toLowerCase()] ||= { description: desc, n: 0, last: 0 };
-      g.n += 1;
-      g.last = Math.max(g.last, t);
-    }
-    return Object.values(groups).sort((a, b) => b.n - a.n || b.last - a.last).slice(0, 20).map(g => g.description);
-  }, [expenses, isPersonal]);
+  // Description suggestions under the field: two strips — most used (all time) and recent.
+  const quickSugs = useMemo(() => descriptionLists(expenses, { personal: isPersonal }), [expenses, isPersonal]);
+  // Items mode: the same two strips, from the lines of itemised bills.
+  const itemSugs = useMemo(() => descriptionLists(expenses, { itemised: true, personal: isPersonal }), [expenses, isPersonal]);
 
   // Recurring Expenses suggestions: filtered for recurring entries in last 45 days, sorted by 45-day usage count
   const recurringExpensesList = useMemo(() => {
@@ -347,7 +294,7 @@ export function useAddController() {
     roomCode, room, isPersonal, members, userIdentity,
     mode, setMode,
     form, setField, toggleSplit, setDescription, pickCategory, autoCat, guessCat,
-    sortedCategories, filteredChips, itemChips, recurringExpensesList, itemisedGroupNamesList,
+    sortedCategories, quickSugs, itemSugs, recurringExpensesList, itemisedGroupNamesList,
     applyRecurring, problem, submitQuick, resetQuick, saving,
     quickCheck: () => problem || validateExpense(form, isPersonal) || '',
     billName, setBillName, billTotal, setBillTotal, rows, addRow, removeRow, remaining, billProblem, submitBill, resetBill,
