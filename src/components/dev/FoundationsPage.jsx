@@ -103,7 +103,7 @@ export default function FoundationsPage() {
             <span className="se-mono" style={{ fontSize: 11, letterSpacing: '.14em', color: 'var(--se-text-3)' }}>TOTAL EXPENSES</span>
             <span className="se-display se-grad-text" style={{ fontSize: 40, fontWeight: 800, lineHeight: 1.1 }}>₹3,81,791</span>
             <span style={{ fontSize: 15 }}>Sora — body &amp; UI. What was it for?</span>
-            <span className="se-mono" style={{ fontSize: 14, fontWeight: 700 }}>JetBrains Mono — ₹1,32,725 · D4NYY3</span>
+            <span className="se-mono" style={{ fontSize: 14, fontWeight: 700 }}>JetBrains Mono — ₹1,32,725 · K7M2QX</span>
             <span style={{ display: 'flex', gap: 16 }}>
               <span className="se-display se-grad-text-r" style={{ fontSize: 22, fontWeight: 800 }}>+₹5,116</span>
               <span className="se-display se-grad-text-neg" style={{ fontSize: 22, fontWeight: 800 }}>−₹3,295</span>

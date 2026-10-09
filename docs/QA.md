@@ -1,6 +1,6 @@
 # QA pass 1 — 1 Oct 2026 (browser, iPhone 13 Pro 390×844, dark + light, test project only)
 
-Walked: Landing → Create (taken name, roommates) → Share → sync sheet / Not now → Dashboard · Join (wrong code, personal code, D4NYY3, /join/CODE link) · Personal (typed budget, "I already have a code" with shared + personal code) · gear sheet → Delete for everyone · History (search, filter, edit, tear + Undo) · Add Quick + save · Settings (rename, add/edit/swap/delete category, theme, budget, sync off → set up, export PDF/Excel all time + month, import CSV shared + personal with bad rows).
+Walked: Landing → Create (taken name, roommates) → Share → sync sheet / Not now → Dashboard · Join (wrong code, personal code, ROOM-C53, /join/CODE link) · Personal (typed budget, "I already have a code" with shared + personal code) · gear sheet → Delete for everyone · History (search, filter, edit, tear + Undo) · Add Quick + save · Settings (rename, add/edit/swap/delete category, theme, budget, sync off → set up, export PDF/Excel all time + month, import CSV shared + personal with bad rows).
 
 ## Status (1 Oct): ALL items 1–27 fixed on `redesign` (commits e449000 → 683f188, local only)
 Extra found while fixing: turning sync on deleted copies from EVERY personal room on the phone (now only the member's old room). Also done on request: Add keypad anchored to the bottom; nav lowered to just above the home indicator (`--se-nav-bottom`).
@@ -35,7 +35,7 @@ Join stamps (NO ROOM / PERSONAL / SHARED ROOM / ADMIT), /join link, Personal cre
 Keyboard over chat inputs, safe areas on device, real offline, Add to Home Screen, pull-cord drag feel, frame rate (pane throttles when hidden). Haptics: iOS web ignores them.
 
 ## Test data changed (test project only)
-D4NYY3: 5 "Test chai" deleted, "Test QA coffee" added, "Test item 31" 125→135, 4 "Test import" rows; Test B's sync moved N4EWMU → 9FQQ73 (801 copies). New personal room 9FQQ73 "Test Solo" (+2 imported). "Test QA Flat" created then deleted.
+ROOM-C53: 5 "Test chai" deleted, "Test QA coffee" added, "Test item 31" 125→135, 4 "Test import" rows; Test B's sync moved ROOM-P2 → 9FQQ73 (801 copies). New personal room 9FQQ73 "Test Solo" (+2 imported). "Test QA Flat" created then deleted.
 
 ## Decisions settled by data
 - PDF non-Latin names: live backup has 0 non-Latin characters and 0 emoji in names/descriptions → keep as is.

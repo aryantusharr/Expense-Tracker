@@ -52,7 +52,7 @@ Dashboard header ── AaiPill ──tap──▶ AaiSheet (portal, sits above 
 - **Localhost:** App Check "debug token" (registered in the console, kept in `.env.development.local`, which git ignores).
 - **iPhone:** bill reading and clipboard need HTTPS, so we test those on a test **preview channel** (`hosting:channel:deploy`). The reCAPTCHA key will list `localhost` + `web.app` so preview links work. Wi-Fi testing (`--host`) is still fine for the text features.
 - **Parser tests:** `node --test src/aai` uses Node's built-in test runner, so no new packages. There are about 120 example sentences (§3 below). I add `npm run test:aai`.
-- Test data: only rooms named "Test …" (D4NYY3, MB739V, plus a new "Test AAI" room if needed). Test expenses start with "Test". Nothing in the test project gets deleted without asking you.
+- Test data: only rooms named "Test …" (ROOM-C53, ROOM-P1, plus a new "Test AAI" room if needed). Test expenses start with "Test". Nothing in the test project gets deleted without asking you.
 
 ---
 
