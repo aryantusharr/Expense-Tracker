@@ -8,6 +8,7 @@ import { memberStyle, initialOf, monthWindow, fmt } from '../dashboard/dashboard
 import { LineIcon } from '../ui/CategoryIcon';
 import Sheet from '../ui/Sheet';
 import { TextField } from '../ui/Keyboard';
+import { evalExpr } from '../add/amountExpr';
 import { useToast } from '../ui/Toast';
 import CategoriesSection from './CategoriesSection';
 import ProfileSync from './ProfileSync';
@@ -71,7 +72,10 @@ export default function SettingsScreen() {
     try { await updateRoom(roomCode, { name }); haptic('success'); setSheet(null); toast({ message: <>Room renamed to <b>{name}</b></>, kind: 'success', top: true }); }
     catch (err) { toast({ message: 'Couldn’t rename', sub: String(err?.message || err), kind: 'error', top: true }); }
   };
-  const openBudget = () => { haptic('tap'); setBudDraft(budget); setSheet('budget'); };
+  const [budTxt, setBudTxt] = useState('');        // what is typed in the budget field (may be a sum like 5000+2000)
+  const openBudget = () => { haptic('tap'); setBudDraft(budget); setBudTxt(budget > 0 ? String(budget) : ''); setSheet('budget'); };
+  const typeBudget = txt => { setBudTxt(txt); setBudDraft(Math.max(0, Math.round(evalExpr(txt) || 0))); };
+  const bumpBudget = d => { haptic('tap'); const nv = Math.max(0, Math.round((evalExpr(budTxt) || 0) + d)); setBudTxt(nv ? String(nv) : ''); setBudDraft(nv); };
   const saveBudget = async () => {
     try { await updateRoom(roomCode, { budget: budDraft }); haptic('success'); setSheet(null); toast({ message: <>Budget set to <b>₹{fmt(budDraft)}</b></>, kind: 'success', top: true }); }
     catch (err) { toast({ message: 'Couldn’t save the budget', sub: String(err?.message || err), kind: 'error', top: true }); }
@@ -211,11 +215,13 @@ export default function SettingsScreen() {
 
       <Sheet open={sheet === 'budget'} onClose={() => setSheet(null)} labelledBy="st-bud-t">
         <h2 className="se-sheet__title" id="st-bud-t">Monthly budget</h2>
-        <div className="st-big"><span>₹</span><b>{fmt(budDraft)}</b></div>
+        <div className="st-budfield">
+          <TextField kind="amount" className="st-budinput" value={budTxt} onChange={typeBudget} placeholder="0" maxLength={14}
+            prefix={<span className="st-budinput__r">₹</span>} aria-label="Monthly budget" />
+        </div>
         <div className="st-steps">
           {[-1000, -500, 500, 1000].map(d => (
-            <button key={d} type="button" className="st-step se-press"
-              onClick={() => { haptic('tap'); setBudDraft(v => Math.max(0, v + d)); }}>{d < 0 ? '−' : '+'}₹{fmt(d)}</button>
+            <button key={d} type="button" className="st-step se-press" onClick={() => bumpBudget(d)}>{d < 0 ? '−' : '+'}₹{fmt(Math.abs(d))}</button>
           ))}
         </div>
         <span className="st-note st-note--c">₹{fmt(spent)} spent this month{budDraft > 0 ? ` · ₹${fmt(Math.max(0, budDraft - spent))} left` : ''}</span>

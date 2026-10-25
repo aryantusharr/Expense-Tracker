@@ -331,3 +331,9 @@
 .st-syncrow { display: flex; align-items: center; gap: 8px; }
 .st-syncrow > .ps-pill { align-self: center; }
 .st-me { width: 34px; height: 34px; border-radius: 11px; font-size: 14px; cursor: pointer; }
+
+/* Monthly budget sheet: tap the amount to type it with the numpad */
+.st-budfield { display: flex; justify-content: center; padding: 8px 0; }
+.st-budinput { width: 220px; height: 56px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; gap: 4px; border-radius: 16px; border: 1px solid var(--se-line-2); background: var(--se-fill-1); color: var(--se-text); font: 800 28px var(--se-font-display); letter-spacing: -.02em; }
+.st-budinput.is-focus { border-color: var(--se-violet); }
+.st-budinput__r { font: 600 20px var(--se-font-display); color: var(--se-teal-2); }
