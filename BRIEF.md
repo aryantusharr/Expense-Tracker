@@ -42,7 +42,7 @@ Premium, not calm. Light and dark only. Warm, slightly playful copy (including H
 - What should the next round of fixes or features be? (Nothing is queued.)
 - Two small code tidy-ups: removing two unused AAI logic files, and splitting the largest code files. Worth doing now or later?
 - How to deal with the known risks below.
-- Anything the three users have asked for or complained about.
+- Anything the three users have asked for or complained about. (The live app was checked on 26 Oct and works; no open bugs are known.)
 
 ## How to hand decisions back to the build account
 When the designer says "wrap up", write a short note in this shape and keep it under 15 lines:

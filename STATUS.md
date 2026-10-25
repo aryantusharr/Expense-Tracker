@@ -26,7 +26,7 @@ See "Open" in `PLAN.md`. Right now: rules hardening; optional AI-monitoring swit
 - **Firestore rules hardening (open)**: (1) `roomNames` entries can be deleted by anyone (`allow delete: if true`, `firestore.rules` line 64); (2) expense and opens writes only check the room-code format, not that the room exists (lines 46 and 53). Fix goes through the test project first; live rules deploy needs the designer's yes and a fresh backup.
 
 ## Known quirks
-- The Phase 5 live-verification checkbox was never ticked; the log shows v3.0.0 went live and the phone pass passed, so it is probably fine — confirm once.
+- Live app verified on the designer's iPhone on 26 Oct 2026 (rooms, add/delete a test expense, Aryan AI). Phase 5 is closed.
 - Some AAI logic files are tested but not used by the chat UI any more: `src/aai/chips.js`, `src/aai/commands.js` (kept for now; see `docs/AAI.md`).
 
 ## Where things are
