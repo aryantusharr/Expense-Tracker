@@ -1,6 +1,6 @@
 # Aryan AI (AAI) — tech plan
 
-Status: **final, waiting for her "start"** (written 3 Oct 2026; her decisions added the same day). Nothing is built yet. Spec: `docs/AAI-Handoff.md` (§ numbers below refer to it). Design: canvas rows "Aryan AI (AAI)", "AAI mark · looping loader", "AAI short loader & small mark". Before building each screen, read that board's source and match it, don't guess from the written spec.
+Status: **final, waiting for the designer's "start"** (written 3 Oct 2026; the designer's decisions added the same day). Nothing is built yet. Spec: `docs/AAI-Handoff.md` (§ numbers below refer to it). Design: canvas rows "Aryan AI (AAI)", "AAI mark · looping loader", "AAI short loader & small mark". Before building each screen, read that board's source and match it, don't guess from the written spec.
 
 ---
 
@@ -31,7 +31,7 @@ Dashboard header ── AaiPill ──tap──▶ AaiSheet (portal, sits above 
 - **Just one new optional field: `source: 'text' | 'paste' | 'bill'`** on expenses created by AAI. Older expenses don't have it, and nothing breaks if it's missing.
 - **The live rules don't need to change.** `validExpense` in `firestore.rules` only checks the required fields and allows extra ones, so `source` gets through. I'll check this on the test project.
 - Old app versions just ignore the field. Personal-room copies don't copy `source` (the sync builds its own field list), which is fine.
-- **No settle-up records** (her decision): "Mark settled" is dropped and AAI only offers Remind. Nothing new is saved for settling.
+- **No settle-up records** (the designer's decision): "Mark settled" is dropped and AAI only offers Remind. Nothing new is saved for settling.
 - New localStorage keys (new names, so nothing existing is affected): `splitease_aai_consent`, `splitease_aai_chips` (chips hidden today), `splitease_aai_draft`, `splitease_aai_last` (what AAI added most recently, used by undo).
 
 ### Gemini + App Check setup (no server, zero cost)
@@ -43,7 +43,7 @@ Dashboard header ── AaiPill ──tap──▶ AaiSheet (portal, sits above 
 - **Structured answer.** The model is told to reply only in a fixed JSON format (`responseSchema`): `{ isBill, merchant, date, items:[{name, qty, amount, unclear, box}], charges:[{label, kind: tax|delivery|platform|packaging|service|tip|discount|roundoff, amount}], subtotal, total }`. The phone then works out the "Taxes & charges" line (only Subtotal is skipped), the mismatch amount, and which lines are flagged. AAI never trusts the model's maths.
 
 ### PWA / manifest changes
-- **Not in v2.2.0 (her decision):** Android Share → SplitEase. It moves to optional step 6 after release. When built: `manifest.json` gets a `share_target` (images + text, POST to `/aai-share`), and `sw.js` saves what was shared and opens `/dashboard?aai=share`.
+- **Not in v2.2.0 (the designer's decision):** Android Share → SplitEase. It moves to optional step 6 after release. When built: `manifest.json` gets a `share_target` (images + text, POST to `/aai-share`), and `sw.js` saves what was shared and opens `/dashboard?aai=share`.
 - Android in v2.2.0: auto-detected "Copied payment" chip, one-tap Install (`beforeinstallprompt`), and vibration feedback (reuses the existing `utils/haptics`).
 - The cache name already gets stamped at every build, so there's nothing to bump by hand. The version goes to **v2.2.0**, with release notes in `src/version/version.js`.
 
@@ -61,7 +61,7 @@ Dashboard header ── AaiPill ──tap──▶ AaiSheet (portal, sits above 
 | Screen (board) | Components | Notes |
 |---|---|---|
 | Dashboard header | `AaiPill` (50×14 slot pill, `Buddy size="xs"`, 44×44 hit area, 4 states) | Placed left of the avatar in `DashboardScreen.jsx`. Only the buddy moves (CSS transform loop, 3s). The loop pauses while the sheet is open or the app is in the background. |
-| Sheet | `AaiSheet` (own bottom sheet, ✕ only, radius 30), `BigBuddy` (8×, blink 4s, bob, blush), `SpeechBubble` (greeting + rotating line ≤24 chars; no "Settle karein?" line), `AaiTiles` (Bill screenshot · Paste payment), `AaiField` (the existing `TextField`, Done label = **Ask**), `SuggestChips` | Uses the existing `KeyboardProvider` tray and opens focused. **AAI keyboard adds a digit row (1–0) above QWERTY**, only in this field (her decision). The draft is saved when the sheet closes. |
+| Sheet | `AaiSheet` (own bottom sheet, ✕ only, radius 30), `BigBuddy` (8×, blink 4s, bob, blush), `SpeechBubble` (greeting + rotating line ≤24 chars; no "Settle karein?" line), `AaiTiles` (Bill screenshot · Paste payment), `AaiField` (the existing `TextField`, Done label = **Ask**), `SuggestChips` | Uses the existing `KeyboardProvider` tray and opens focused. **AAI keyboard adds a digit row (1–0) above QWERTY**, only in this field (the designer's decision). The draft is saved when the sheet closes. |
 | Answer area | `QuestionEcho` + `AnswerCard` variants: `ExpenseCard`, `PaymentCard`, `PayBackNote`, `ManyCard`, `RepeatCard`, `BalanceCard`, `SpendCard`, `RemindCard`, `SettleCard`, `EditUndoCard`, `ShareCard`, plus `UnknownCard` and `PickPersonCard` | Card rises and un-blurs (.45s). Buttons: Confirm (gradient) + Edit (glass). **Balances (5) and Settle plan (8) only have Remind**: no Mark settled, no Settle button. |
 | Edit in card | `EditAmount` (−50 −10 +10 +50 + numpad), `EditPeople` (monogram toggles), `EditCategory` (36 icons, reused), `EditDate` (reuses `add/DateChips.jsx`) | Tapping a value gives it a dashed violet outline, and only that control opens. |
 | Bill: consent | `BillConsent` (A\|AI mark + mini demo: screenshot → slot → receipt "READ BY A\|AI") | Shown once (`splitease_aai_consent`). |
@@ -76,7 +76,7 @@ Dashboard header ── AaiPill ──tap──▶ AaiSheet (portal, sits above 
 1. **Split the input into several expenses** on newlines, `,` or ` and ` when each part has its own amount → "3 expenses or 1 bill?". Pattern `name total: item amt who, …, rest who` → itemised bill.
 2. **Commands first:** `undo` · `change last to N` · `remove <name> from <desc>` · `remind <name>` · `settle all` / `settle karo` (shows who owes whom + Remind) · `kitna dena hai` / `how much do i owe` · `<category> this month` / `last month` / `biggest spend`.
 3. **Date:** `today/aaj`, `yesterday/kal`, `parso` (day before yesterday), `2 oct` / `oct 2` / `2/10`, `last friday`, `friday`. `kal` always means yesterday (expenses are in the past). Future dates are pushed back one week/year.
-4. **Split words / ratios** (read before the amount, so `60/40` isn't taken as a number). **AAI only does equal splits** (her decision; the data model has no unequal shares). Rules, checked against the room's members:
+4. **Split words / ratios** (read before the amount, so `60/40` isn't taken as a number). **AAI only does equal splits** (the designer's decision; the data model has no unequal shares). Rules, checked against the room's members:
    - `50-50`, `50/50`, `half-half`, `aadha aadha` = equal between **2** people. `33/33/33` = equal between 3. In general, equal parts = equal split between that many people.
    - People = the payer + the named people (`with ravi`), or the whole room if no one is named. **When names are given, the names win** and the ratio is ignored (no question). Only when no names are given and the parts don't match the room size does the buddy ask.
    - Unequal ratios (`60/40`, `70-30`, `50/30/20`) can't be saved, so the buddy says "AAI splits equally · pick who's in" with monogram toggles, all pre-selected.
@@ -124,7 +124,7 @@ Test examples (examples; the real test file has about 120 and runs against a fak
 
 **Live preview:** parsing runs 150ms after the last key press. A card shows once an amount is found; before that, the chips show. Ask is only needed for questions and commands.
 
-**Payment text (`upi.js`):** a regex per app (GPay / PhonePe / Paytm / BHIM, plus a generic UPI fallback) finds the amount, who was paid, the UPI ref and the date/time. If the person paid is a room member → `PayBackNote`: "Looks like you paid Ravi back. AAI doesn't record pay-backs." + a small "Add as expense anyway" (her decision). Otherwise it's an expense to that shop. **I need real copied samples from you** to write these.
+**Payment text (`upi.js`):** a regex per app (GPay / PhonePe / Paytm / BHIM, plus a generic UPI fallback) finds the amount, who was paid, the UPI ref and the date/time. If the person paid is a room member → `PayBackNote`: "Looks like you paid Ravi back. AAI doesn't record pay-backs." + a small "Add as expense anyway" (the designer's decision). Otherwise it's an expense to that shop. **I need real copied samples from you** to write these.
 
 ### Chip triggers (SG-A, max 8, computed on the phone, ordered by this table)
 | Group | Chip | Shows when | Tap → |
@@ -205,11 +205,11 @@ Tips that save the most: use `/compact` when I suggest it (not more often); send
 3. Pasted payment to a roommate → pay-back note + "Add as expense anyway".
 
 **Unclear in the spec (my default in brackets)**
-4. ✓ "Type items" → an empty receipt inside AAI. The user types **one short line per item** in the same style as the main field (`atta 320 all`, `chips 90 me+ravi`, `delivery 25`). Each line prints onto the receipt as it's typed, then the normal review screen checks the total (her decision).
+4. ✓ "Type items" → an empty receipt inside AAI. The user types **one short line per item** in the same style as the main field (`atta 320 all`, `chips 90 me+ravi`, `delivery 25`). Each line prints onto the receipt as it's typed, then the normal review screen checks the total (the designer's decision).
 5. ✓ §9 "Install how-to card / One-tap Install": where does it show? [a chip in the Habits group, only when the app runs in a browser tab rather than installed]
 6. ✓ Which expense does "change last" mean? [the last one this phone added through AAI in the past 24h, otherwise the room's newest]
 7. ✓ "TAP TO FIX" screenshot snippet: this needs Gemini to say where each line is on the image. That works most of the time but not always. [when the position is missing, show the flagged line without a snippet]
-8. ✓ Ratios → **equal splits only** (her decision); full rules and scenarios in Parser rule 4.
+8. ✓ Ratios → **equal splits only** (the designer's decision); full rules and scenarios in Parser rule 4.
 
 **Simpler / faster for users**
 9. ~~Android text share~~ → part of optional step 6.

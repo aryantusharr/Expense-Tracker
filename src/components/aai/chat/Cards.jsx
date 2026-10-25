@@ -244,7 +244,7 @@ export function BillCard({ card, onChange, members, categories, meId, isPersonal
   const common = { dots, locked };
   const set = patch => onChange({ ...card, bill: syncRest({ ...bill, ...patch }) });
   const setItem = (id, patch) => set({ items: bill.items.map(i => (i.id === id ? { ...i, ...patch } : i)) });
-  const [seen, setSeen] = useState({});                  // fields she has looked at → their "check me" pulse stops
+  const [seen, setSeen] = useState({});                  // fields the user has looked at → their "check me" pulse stops
   const open = (f, id = '') => { setSeen(x => ({ ...x, [f + id]: true })); setEd(e => (e && e.f === f && e.id === id ? null : { f, id })); };
   const pu = (key, flag) => !locked && !!flag && !seen[key];
   const is = (f, id = '') => !!ed && ed.f === f && ed.id === id && !locked;

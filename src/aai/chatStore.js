@@ -1,6 +1,6 @@
 /**
  * Past chats — kept on the phone (localStorage), nothing in Firestore. Pure helpers + a thin storage layer.
- * A chat is editable while it is open and for 1 minute after it is closed (her call 4 Oct); after that it is read-only.
+ * A chat is editable while it is open and for 1 minute after it is closed (designer's call, 4 Oct); after that it is read-only.
  * chat = { id, createdAt, updatedAt, closedAt|null, messages[] }
  */
 import { billTotals } from './chatModel.js';

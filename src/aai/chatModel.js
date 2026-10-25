@@ -92,7 +92,7 @@ function respondInner(text, session) {
 
   const n = users.length;
   const allIds = users.map(u => u.id);
-  const stated = ids => !!ids && ids.length > 0 && ids.length < n;           // she typed who's in → nothing to confirm
+  const stated = ids => !!ids && ids.length > 0 && ids.length < n;           // the user typed who's in → nothing to confirm
   const dateFor = it => (!it.dateGiven && sess.date ? sess.date : it.date || today);
 
   if (intent.type === 'many') {

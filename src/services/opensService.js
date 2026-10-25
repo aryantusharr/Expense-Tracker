@@ -5,7 +5,7 @@ import { toDateStr } from '../aai/common.js';
 /**
  * "Who opened the app" — rooms/{code}/opens/{memberId}_{yyyy-mm-dd} = { memberId, day, count, last }.
  * One document per member per day; `count` goes up once per app open (see useRecordOpen). Everyone in the room
- * can read everyone's (her call 4 Oct). Failures are silent: this only feeds the heatmap.
+ * can read everyone's (designer's call, 4 Oct). Failures are silent: this only feeds the heatmap.
  */
 export function recordOpen(roomCode, memberId, now = new Date()) {
   const day = toDateStr(now);

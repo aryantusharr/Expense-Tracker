@@ -12,7 +12,7 @@ Canvas: Final app → rows "Aryan AI (AAI) · chat · Dark / Light (final 4 Oct)
 ## 2. Screen parts
 - Header: past-chats (☰) · A|AI mark · New chat · ✕. All 44px.
 - Empty state (02A): time/context greeting (≥5 lines per context, see §8) + member heatmap 2A (3 mini 5-week calendars, one per member, "n/31 days opened", today ringed, one sarcastic line). Tap an empty day → "Adding for <date>".
-- Composer focused (03): "Continue: <chat> · N min ago" pill · heatmap hidden while typing (her call 4 Oct — no 14-day strips) · "SAME BILL AGAIN · 1 TAP → REVIEW" row (violet, past bills: name, ₹, items, last date) above "QUICK USUALS" row · ghost example typed in the field · own keypad (digit row).
+- Composer focused (03): "Continue: <chat> · N min ago" pill · heatmap hidden while typing (the designer's call 4 Oct — no 14-day strips) · "SAME BILL AGAIN · 1 TAP → REVIEW" row (violet, past bills: name, ₹, items, last date) above "QUICK USUALS" row · ghost example typed in the field · own keypad (digit row).
 - Personal room: 10A (only your calendar + current/best streak + days opened), 10B (no Paid by/Split rows; bills ask no questions).
 
 ## 3. Thinking
@@ -33,7 +33,7 @@ Canvas: Final app → rows "Aryan AI (AAI) · chat · Dark / Light (final 4 Oct)
 3. While reading: one split question per item ("Potato 1 kg · ₹40 — split with?"), pre-picked = previous answer (first: All), same 3s ring; "Same for the rest" full-width on every item until tapped → one-time warn toast (app's warn toast style): "<split> will apply to all N remaining items" + "Don't ask me again" + Cancel / Apply.
 4. Fetched shop + item names are plain text with a subtle dotted underline; tap → keypad on that word.
 5. Bill card; mismatch bar: "N item(s) failed · #7 on the bill" + "BILL ₹612 · ITEMS ₹572 · ₹40 NOT MATCHED" + FIX #7. Save disabled until matched.
-- Long bills: keep per-item questions (her call).
+- Long bills: keep per-item questions (the designer's call).
 
 ## 6. Save + Undo
 - All paths (typed quick, typed bill, screenshot bill, same-bill-again) save through the Add screen's own functions (`addExpense` / `addItemisedExpenseGroup`), `source: 'text' | 'bill'`, synced copies as usual. Stay in the chat (no SaveMoment overlay).
@@ -42,7 +42,7 @@ Canvas: Final app → rows "Aryan AI (AAI) · chat · Dark / Light (final 4 Oct)
 - Offline: amber "SAVED · ON PHONE" stamp + "WILL SYNC WHEN ONLINE"; turns into teal ADDED when synced (11D).
 
 ## 7. Chats + errors
-- A chat becomes read-only 1 minute after it is closed (her call 4 Oct; replaces the old 2-hour life): reopening within that minute continues it, after that it sits read-only in the past-chats sidebar (08) grouped Active / Earlier today / Yesterday (drop the "time left" on active ones — there is no countdown while it is open). Tapping an added card in an old chat opens that expense in History (History stays the source of truth).
+- A chat becomes read-only 1 minute after it is closed (the designer's call 4 Oct; replaces the old 2-hour life): reopening within that minute continues it, after that it sits read-only in the past-chats sidebar (08) grouped Active / Earlier today / Yesterday (drop the "time left" on active ones — there is no countdown while it is open). Tapping an added card in an old chat opens that expense in History (History stays the source of truth).
 - Errors are AAI replies: tinted box + the app's stamp (UNCLEAR violet, LIMIT amber, OFFLINE grey, DOWN pink, WAIT/SLOW amber, NOT A BILL pink), plain reason, 2 buttons, DETAILS mono line. "Type items" always offered.
 - Edge cases (11): brand-new room (empty heatmap, no usual rows until 3 similar entries), shared room with only you (no split questions + "Invite roommates" chip).
 
@@ -60,11 +60,11 @@ Heatmap lines (app OPENS, sarcastic, rotate):
 Steps: as on the boards ("parsing 'cig 20'… 119th time. Not judging.", "counting roommates… still 3.", "rounding paise… odd paisa goes to Meera. Again.", "reading screenshot… whoever picked this font owes me ₹10.", "checking total… items ₹948, bill ₹1,240. Kisi ne chupke se khaya.", "spotted GST… the government also ate.").
 
 ## 9. Data
-- New: per-member daily app-open record for the heatmap, e.g. `rooms/{code}/opens/{memberId}_{yyyy-mm-dd}` `{memberId, day, count, last}` — written once per app open (app load, or back after 30+ min; debounced 60s) by the phone's chosen member (built + rules deployed on the TEST project, 4 Oct). Everyone in the room sees everyone (no toggle — her call). Needs a Firestore rules addition → her yes before the live rules deploy.
+- New: per-member daily app-open record for the heatmap, e.g. `rooms/{code}/opens/{memberId}_{yyyy-mm-dd}` `{memberId, day, count, last}` — written once per app open (app load, or back after 30+ min; debounced 60s) by the phone's chosen member (built + rules deployed on the TEST project, 4 Oct). Everyone in the room sees everyone (no toggle — the designer's call). Needs a Firestore rules addition → the designer's yes before the live rules deploy.
 - Chats: kept on the phone (IndexedDB/localStorage) — editable until 1 min after close, read-only after; nothing new in Firestore.
 - Free Gemini tier for bills is fine (≈6 entries/day, ~⅓ bills); LIMIT reply covers the cap.
 
-## 10. Accessibility (applies across the whole app, her call 4 Oct)
+## 10. Accessibility (applies across the whole app, the designer's call 4 Oct)
 - Minimum 11px for any text people read (labels, mono meta, chips). Only decorative stamp micro-text and 16px initial badges may go smaller.
 - Contrast ≥ 4.5:1 for text: dark muted text ≥ #8D89A6 on #100F1A; light muted ≥ #5F5C79 on #F4F4F8.
 - 44px hit areas, real buttons, aria-labels on icon buttons, role=status on the loader, aria-expanded on Show thinking, role=alertdialog on the warn toast.

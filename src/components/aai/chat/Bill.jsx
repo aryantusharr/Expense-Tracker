@@ -49,7 +49,7 @@ function Ring({ paused }) {
   );
 }
 
-/** 4s countdown → onFire. Stops while paused (she touched the chat) or when not live. Returns seconds left. */
+/** 4s countdown → onFire. Stops while paused (the user touched the chat) or when not live. Returns seconds left. */
 function useCountdown({ live, paused, onFire }) {
   const [left, setLeft] = useState(RING_MS);
   const fire = useRef(onFire);

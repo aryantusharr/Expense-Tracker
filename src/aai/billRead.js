@@ -13,7 +13,7 @@ import { toDateStr } from './common.js';
 /**
  * The one place the model names live (free on the Gemini Developer API, checked 4 Oct 2026; 2.5 is closed to new projects).
  * main: best reader, but the free tier allows only 20 reads/day per project. spare: used automatically once main's
- * daily reads are gone (her call 4 Oct) — LIMIT only shows when both are used up.
+ * daily reads are gone (designer's call, 4 Oct) — LIMIT only shows when both are used up.
  */
 export const BILL_MODELS = { main: 'gemini-3.8-flash', spare: 'gemini-3.5-flash-lite' };
 const K_SPARE = 'splitease_aai_spare_day';          // this phone already saw main's daily limit today → go straight to spare
@@ -30,7 +30,7 @@ function setUp() {
   if (ai) return ai;
   const siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
   const project = import.meta.env.VITE_FIREBASE_PROJECT_ID;
-  // Live stays untouched until her release yes: the live build has no site key, and the live project needs an explicit flag.
+  // Live stays untouched until the designer's release yes: the live build has no site key, and the live project needs an explicit flag.
   if (!siteKey || (project === LIVE_PROJECT && import.meta.env.VITE_AAI_BILLS_LIVE !== 'yes')) {
     const e = new Error('Bill reading is not set up for this project'); e.code = 'NOT_SET_UP'; throw e;
   }

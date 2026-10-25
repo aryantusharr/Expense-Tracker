@@ -1,7 +1,7 @@
 # Aryan AI (AAI) — build handoff for Claude Code
 
 Written 3 Oct 2026 from the design project. The SplitEase redesign is already live; **AAI is the only feature left to build**.
-Design source of truth: Claude Design canvas "SplitEase Dashboard Redesign" → Final app page, rows "Aryan AI (AAI) · in-app assistant · Dark / Light" + "AAI mark · looping loader" + "AAI short loader & small mark" (https://claude.ai/artifact/GDZtygngsFojuKiobhL9n4 — private; ask Shatakshi for screenshots of any board you need).
+Design source of truth: Claude Design canvas "SplitEase Dashboard Redesign" → Final app page, rows "Aryan AI (AAI) · in-app assistant · Dark / Light" + "AAI mark · looping loader" + "AAI short loader & small mark" (https://claude.ai/artifact/GDZtygngsFojuKiobhL9n4 — private; ask the designer for screenshots of any board you need).
 
 ---
 

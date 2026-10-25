@@ -1,6 +1,6 @@
 // App version + what changed (Version-Final / Version-WhatsNew-Final boards).
 // Every release: bump package.json "version" AND "splitEaseBuild" (= last live build + the number of lines in RELEASE),
-// and rewrite RELEASE. Ask Shatakshi for the numbers first.
+// and rewrite RELEASE. Ask the owner for the numbers first.
 
 export const VERSION = __APP_VERSION__;                  // e.g. 2.1.0
 export const SHORT = VERSION.replace(/\.0$/, '');        // 2.1 (2.1.1 stays 2.1.1)

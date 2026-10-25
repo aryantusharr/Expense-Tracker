@@ -13,7 +13,7 @@ import { useToast } from '../ui/Toast';
 const BIN = 'M4 7h16M10 11v6M14 11v6M5 7l1 13h12l1-13M9 7V4h6v3';
 const TEAR_MS = 600;
 
-/** Categories: folded into one row (her call, 2 Oct); tap unfolds the card (boards S4a + S4c): icon rows with counts, bin + ⋮⋮ lift/swap, add/edit sheet. */
+/** Categories: folded into one row (designer's call, 2 Oct); tap unfolds the card (boards S4a + S4c): icon rows with counts, bin + ⋮⋮ lift/swap, add/edit sheet. */
 export default function CategoriesSection({ roomCode, categories, expenses }) {
   const toast = useToast();
   const { room } = useRoomContext();

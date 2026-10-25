@@ -48,7 +48,7 @@ service cloud.firestore {
       }
 
       match /opens/{openId} {
-        // Everyone in the room sees everyone's opens (her call 4 Oct). Same "the code is the key" access as expenses.
+        // Everyone in the room sees everyone's opens (designer's call, 4 Oct). Same "the code is the key" access as expenses.
         allow get, list: if validCode(code);
         allow create, update: if validCode(code) && validOpen(openId, request.resource.data);
         allow delete: if validCode(code);
