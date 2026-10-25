@@ -1,7 +1,8 @@
 // RoomContext.jsx
-import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { subscribeToRoom, updateRoomData } from '../services/roomService';
 import { subscribeToExpenses } from '../services/expenseService';
+import { dedupeCategories } from '../utils/expenses/dedupeCategories';
 
 
 const RoomContext = createContext(null);
@@ -64,7 +65,7 @@ export function RoomProvider({ children }) {
   // Keep a ref of room categories to avoid stale closures in the live snapshot listener
   const categoriesRef = useRef([]);
   useEffect(() => {
-    categoriesRef.current = room?.categories || [];
+    categoriesRef.current = dedupeCategories(room?.categories);
   }, [room?.categories]);
 
   // Hydrate from cache on cold load when offline
@@ -240,6 +241,8 @@ export function RoomProvider({ children }) {
 
 
 
+  const categories = useMemo(() => dedupeCategories(room?.categories), [room?.categories]);   // heals rooms that got the same category twice
+
   const value = {
     room,
     expenses,
@@ -252,7 +255,7 @@ export function RoomProvider({ children }) {
     updateRoom: updateRoomData,
     savedRooms,
     users: room?.users || [],
-    categories: room?.categories || [],
+    categories,
     userIdentity,
     setUserIdentity: setUserIdentityInRoom,
   };

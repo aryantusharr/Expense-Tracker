@@ -14,7 +14,7 @@ import { cleanName, MONTH_NAMES, fromDateStr } from '../../../aai/common.js';
 import { respond, handCard, billFromPast, uid, billTotals, liveItems } from '../../../aai/chatModel.js';
 import { saveDown, errorReply } from '../../../aai/errors.js';
 import { learnPatterns } from '../../../utils/expenses/categoryGuess.js';
-import { normaliseRead, billFromRead, billMismatch, readingSteps, classifyReadError, shortDate, TAXES_CATEGORY } from '../../../aai/billParse.js';
+import { normaliseRead, billFromRead, billMismatch, readingSteps, classifyReadError, shortDate, TAXES_CATEGORY, findTaxesCategory } from '../../../aai/billParse.js';
 import { queueBill, unqueueBill, queuedBills, readyToRead } from '../../../aai/billQueue.js';
 import { loadChats, saveChat, closeStored, patchStoredCard, settleStored, pickResume, isEditable, serialiseMessages } from '../../../aai/chatStore.js';
 import { greetingContext, pickGreeting } from '../../../aai/greetings.js';
@@ -218,7 +218,7 @@ export default function AaiChat({ onClose }) {
           .map(i => ({ ...i, name: [i.name || (i.failed ? 'Unread item' : 'Item'), shot ? '' : i.qty].filter(Boolean).join(' ') }));
         const source = shot ? 'bill' : 'text';
         let sctx = ctx;
-        if (rows.some(i => i.categoryId === TAXES_CATEGORY.id)) {   // first bill with taxes in this room → the category is created now
+        if (rows.some(i => i.categoryId === TAXES_CATEGORY.id) && !findTaxesCategory(categories)) {   // first bill with taxes in this room → the category is created now (never twice)
           const next = [...categories, TAXES_CATEGORY];
           await Promise.race([updateCategories(roomCode, next), new Promise(r => setTimeout(r, 4000))]).catch(() => {});
           sctx = { ...ctx, categories: next, room: { ...room, categories: next } };
