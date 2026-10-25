@@ -29,14 +29,19 @@ Premium, not calm. Light and dark only. Warm, slightly playful copy (including H
 - The repo is public: no names, emails, real room codes or keys in files.
 
 ## Decided and closed (don't reopen unless asked)
-- Android Share: dropped. SMS/payment reading: not possible on the web, never built.
-- Accessibility pass: skipped by choice (4 Oct).
+- SMS/payment reading: not possible on the web, never built.
+- Android Share: dropped. Accessibility pass: skipped by choice (4 Oct); only revisit if the designer asks.
 - Test Firebase project and preview: kept on purpose.
 - Aryan AI adds expenses only (no questions, balances, remind or settle).
 
+## Known risks
+- **Bill reading is on Gemini's free tier**: about 20 reads a day per model, with a spare model behind it. When both run out, users see a "limit" reply and can type items instead.
+- **Two gaps in the Firestore security rules**: room-name entries can be deleted by anyone who can reach the database, and an expense write does not check that its room exists. Details in `STATUS.md`. Fixing them needs a rules change on the live project (the designer's explicit yes, after a backup).
+
 ## Open for brainstorming
 - What should the next round of fixes or features be? (Nothing is queued.)
-- Which of the following are worth doing: an accessibility pass, Android sharing, removing two unused AAI logic files, splitting the largest code files?
+- Two small code tidy-ups: removing two unused AAI logic files, and splitting the largest code files. Worth doing now or later?
+- How to deal with the known risks below.
 - Anything the three users have asked for or complained about.
 
 ## How to hand decisions back to the build account

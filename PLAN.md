@@ -18,6 +18,8 @@
 
 ## Open
 - [ ] Phase 5 leftover: confirm on the designer's phone that the live app works, and that the other two users closed and reopened the app
+- [ ] Rules hardening: block deleting `roomNames` entries and require the room to exist for expense/opens writes (test project first; live needs the designer's yes + backup)
+- [ ] Gemini free-tier limit (about 20 bill reads/day per model): decide how to handle it
 - [ ] Optional: switch off AI monitoring in the live console (cost-free either way)
 - [ ] Split the oversized files listed in `ARCHITECTURE.md` (one file per commit, tests + build after each)
 - [ ] Decide what the next round of fixes or features is (brainstorm → decisions note → here)

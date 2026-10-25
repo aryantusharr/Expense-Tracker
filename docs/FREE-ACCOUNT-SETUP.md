@@ -1,28 +1,39 @@
-# One-time setup for the free brainstorming account
+# Setup for the free brainstorming account
 
-Goal: every chat in the free account starts by reading the latest `BRIEF.md` from this public repo, so nothing has to be copied by hand.
+Goal: every chat in the free account starts by reading the latest `BRIEF.md` and `STATUS.md` from this public repo, so nothing has to be copied by hand.
 
-## Steps (about 3 minutes, once)
-1. In the free Claude account, create a Project called "SplitEase brainstorm".
-2. Open the Project's instructions and paste the block below.
-3. Start a new chat in that Project. Type `refresh`, then ask: "What's the build status?". If it answers from the brief (v3.0.0 live, etc.), you're done.
-4. If it says it cannot open links, use the fallback below.
+## Important: use full links
+That account's web tool opens only links that are written out in full. A base address plus file names is refused. So the Project instructions must contain each complete link.
 
-## Instruction block to paste
+## Steps (about 3 minutes; reuse the existing project if there is one)
+1. Open the Project's instructions. If it is a new project, create one first ("SplitEase brainstorm").
+2. Replace the instructions with your role text plus the "SOURCES OF TRUTH" block below. Keep the rules about safety, style and wrap-up.
+3. Remove old uploaded copies of PLAN.md, CLAUDE.md, AAI-Plan.md, QA.md and any PROJECTKNOWLEDGE.md from the Project's files, so nothing contradicts the repo.
+4. Start a new chat, type `refresh`, then ask "What's the build status?". It should answer from the files.
+
+## SOURCES OF TRUTH block
 ```
-You are my brainstorming partner for SplitEase, a mobile expense-splitting web app.
-At the start of every chat, open this link and read it fully before you reply:
-https://raw.githubusercontent.com/aryantusharr/Expense-Tracker/redesign/BRIEF.md
-Treat it as the latest state of the app and the rules for working with me.
-If I type "refresh", open the link again and use the new version.
-If you cannot open links, say so straight away and ask me to paste the brief.
-Keep replies short, give 2-4 options with a recommendation, and when I say "wrap up" write a Decisions note in the format given in the brief.
+Repo (public): github.com/aryantusharr/Expense-Tracker
+Open these exact links, in this order, and only what the question needs:
+1. https://raw.githubusercontent.com/aryantusharr/Expense-Tracker/redesign/BRIEF.md (shared snapshot. Always.)
+2. https://raw.githubusercontent.com/aryantusharr/Expense-Tracker/redesign/STATUS.md (current state. Always at the start of a session.)
+3. https://splitease-7bb6c.web.app/version.json (live version)
+When relevant:
+- https://raw.githubusercontent.com/aryantusharr/Expense-Tracker/redesign/PLAN.md
+- https://raw.githubusercontent.com/aryantusharr/Expense-Tracker/redesign/CLAUDE.md
+- https://raw.githubusercontent.com/aryantusharr/Expense-Tracker/redesign/ARCHITECTURE.md
+- https://raw.githubusercontent.com/aryantusharr/Expense-Tracker/redesign/docs/SplitEase-Design-System.md
+- https://raw.githubusercontent.com/aryantusharr/Expense-Tracker/redesign/docs/AAI.md
+- https://raw.githubusercontent.com/aryantusharr/Expense-Tracker/redesign/package.json
+- https://raw.githubusercontent.com/aryantusharr/Expense-Tracker/redesign/firestore.rules
+Long history (last entries only, only when digging): https://raw.githubusercontent.com/aryantusharr/Expense-Tracker/redesign/LOG.md
+If a doc and the code disagree, say so and trust the code. If a link does not open, tell me straight away. Don't search for the files.
 ```
 
-## Fallback if links don't open
-- Download `BRIEF.md` from the repo and add it to the Project's knowledge. If the Project offers "Add from GitHub", choose `BRIEF.md` only (never the whole repo) and press Sync whenever the build account says "brief changed".
-- Otherwise paste the brief's text at the start of a chat.
+## If a link is refused anyway
+Paste the two links (BRIEF.md and STATUS.md) as the first message of the chat. Links typed into the chat are always allowed.
 
 ## Notes
-- The link points at the `redesign` branch. If that branch is merged and deleted, change `redesign` to `main` in the instruction block.
+- The links point at the `redesign` branch. If `main` is brought up to date and `redesign` is retired, replace `redesign` with `main` in every link.
 - The brief is public on purpose, so it holds no names, emails, keys or room codes.
+- Decisions from a brainstorm come back as a short "Decisions note" (format in `BRIEF.md`), pasted into a build chat.
