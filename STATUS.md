@@ -26,4 +26,4 @@ See "Open" in `PLAN.md`. Right now: confirm the live app on the phone and with t
 - Some AAI logic files are tested but not used by the chat UI any more: `src/aai/chips.js`, `src/aai/commands.js` (kept for now; see `docs/AAI.md`).
 
 ## Where things are
-- Folder map: `ARCHITECTURE.md` · design: `docs/SplitEase-Design-System.md` · AAI: `docs/AAI.md` · checklist: `PLAN.md` · history: `LOG.md` · for the brainstorming account: `BRIEF.md`.
+- Folder map: `ARCHITECTURE.md` · design: `docs/SplitEase-Design-System.md` · AAI: `docs/AAI.md` · checklist: `PLAN.md` · history: `LOG.md` · for the brainstorming account: `BRIEF.md` (one-time setup: `docs/FREE-ACCOUNT-SETUP.md`).
