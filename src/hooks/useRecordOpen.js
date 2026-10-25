@@ -1,3 +1,4 @@
+// Records one app-open per load, and again after 30+ minutes away, for the heatmap.
 import { useEffect } from 'react';
 import { useRoomContext } from '../context/RoomContext';
 import { recordOpen } from '../services/opensService';

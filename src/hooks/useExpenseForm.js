@@ -1,3 +1,4 @@
+// Form state for an expense (description, amount, payer, split, category, date).
 import { useState } from 'react';
 import { getTodayISO } from '../utils/helpers';
 

@@ -1,3 +1,4 @@
+// Deck of per-person balance cards (shared rooms).
 import { useState } from 'react';
 import { haptic } from '../../../utils/device/haptics';
 import { fmt, shortDay } from '../dashboardData';

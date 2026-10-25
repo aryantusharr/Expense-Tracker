@@ -1,3 +1,4 @@
+// Join-room screen with the room-code keypad.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { joinRoom } from '../../services/roomService';

@@ -1,3 +1,4 @@
+// Animated numbers: count-up, rolling and drop digits.
 import { useEffect, useState } from 'react';
 import { prefersReducedMotion } from '../../utils/device/haptics';
 

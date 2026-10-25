@@ -1,3 +1,4 @@
+// History screen: month stack, search and filters, tear-to-delete with undo.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useRoomContext } from '../../context/RoomContext';

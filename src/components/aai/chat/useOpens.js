@@ -1,3 +1,4 @@
+// Hook that reads the last 10 weeks of app opens for the heatmap.
 import { useEffect, useMemo, useState } from 'react';
 import { useRoomContext } from '../../../context/RoomContext';
 import { subscribeOpens } from '../../../services/opensService';

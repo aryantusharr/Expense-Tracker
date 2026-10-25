@@ -1,3 +1,4 @@
+// The animated A|AI mark used as the chat's opening loader.
 import './LoopMark.css';
 
 /**

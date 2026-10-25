@@ -1,3 +1,4 @@
+// The editable cards in the chat: quick expense card and itemised bill card.
 import { useEffect, useMemo, useState } from 'react';
 import { haptic } from '../../../utils/device/haptics';
 import { TextField } from '../../ui/Keyboard';

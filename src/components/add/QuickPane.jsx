@@ -1,3 +1,4 @@
+// Quick mode of Add Expense: amount, payer, split, description, category and date.
 import { useEffect, useRef, useState } from 'react';
 import { haptic } from '../../utils/device/haptics';
 import { useToast } from '../ui/Toast';

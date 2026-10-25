@@ -1,3 +1,4 @@
+// Entry point: mounts the app inside the Room, Theme, Toast and Keyboard providers and loads the global styles.
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { RoomProvider } from './context/RoomContext';

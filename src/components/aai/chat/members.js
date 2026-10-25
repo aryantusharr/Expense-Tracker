@@ -1,3 +1,4 @@
+// Adds each member's colour (dark and light) for the chat.
 import { memberStyle } from '../../dashboard/dashboardData';
 
 // Light-mode member tones from the light boards (dark palette colour → darker light-theme colour).

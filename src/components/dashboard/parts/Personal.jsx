@@ -1,3 +1,4 @@
+// Personal-room cards: ticker, budget card and last-paid card.
 import { DropNumber } from '../../ui/Numbers';
 import { LineIcon } from '../../ui/CategoryIcon';
 import { resolveCategoryIcon } from '../../../design/categoryIcons';

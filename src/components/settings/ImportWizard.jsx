@@ -1,3 +1,4 @@
+// Step-by-step CSV import wizard (people, split groups, categories, preview).
 import { useMemo, useRef, useState } from 'react';
 import { parseCSVForMapping, applyMappings, importToFirestore } from '../../services/csvImportService';
 import { useRoomContext } from '../../context/RoomContext';

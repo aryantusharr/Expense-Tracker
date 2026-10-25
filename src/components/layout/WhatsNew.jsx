@@ -1,3 +1,4 @@
+// The What's-new sheet and the Settings row that opens it.
 import { useState } from 'react';
 import { haptic } from '../../utils/device/haptics';
 import Sheet from '../ui/Sheet';

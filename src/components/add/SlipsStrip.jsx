@@ -1,3 +1,4 @@
+// Payer and split-seats strip made of paper slips.
 import { useEffect, useRef, useState } from 'react';
 import { haptic } from '../../utils/device/haptics';
 import Monogram from './Monogram';

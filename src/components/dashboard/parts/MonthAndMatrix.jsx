@@ -1,3 +1,4 @@
+// Lifetime spend, this-month card and the category-by-month spending matrix.
 import { useEffect, useRef } from 'react';
 import { RollingNumber, useCountUp } from '../../ui/Numbers';
 import { LineIcon } from '../../ui/CategoryIcon';

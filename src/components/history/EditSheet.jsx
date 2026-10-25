@@ -1,3 +1,4 @@
+// Bottom sheet for editing or deleting one expense or bill line.
 import { useState } from 'react';
 import Sheet from '../ui/Sheet';
 import { TextField } from '../ui/Keyboard';

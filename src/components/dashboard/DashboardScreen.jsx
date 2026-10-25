@@ -1,3 +1,4 @@
+// Dashboard screen: assembles the shared-room or personal-room cards.
 import { useEffect, useMemo, useState } from 'react';
 import { useRoomContext } from '../../context/RoomContext';
 import { useTheme } from '../../context/ThemeContext';

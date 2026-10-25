@@ -1,3 +1,4 @@
+// Suggestion strips under the description field (most used and recent).
 import { haptic } from '../../utils/device/haptics';
 import { matchChips } from './addHelpers';
 

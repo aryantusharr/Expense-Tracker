@@ -1,3 +1,4 @@
+// CSV import: read the file, map people and categories, write to Firestore.
 import Papa from 'papaparse';
 import { db } from './firebase';
 import { collection, writeBatch, doc, getDoc } from 'firebase/firestore';

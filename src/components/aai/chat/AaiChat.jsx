@@ -1,3 +1,4 @@
+// The full-screen Aryan AI chat: state, message flow, saving and undo. Largest UI file, a split candidate (see ARCHITECTURE.md).
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';

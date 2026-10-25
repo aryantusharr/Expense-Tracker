@@ -1,3 +1,4 @@
+// Tiny scripted-chat engine (typing dots, then the message) for the Create flow.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { haptic } from '../../utils/device/haptics';
 

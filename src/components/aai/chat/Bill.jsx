@@ -1,3 +1,4 @@
+// Bill-screenshot steps inside the chat: thumbnails, first-time consent, the 'Who paid?' ring and the fetched-name field.
 import { useEffect, useRef, useState } from 'react';
 import { haptic } from '../../../utils/device/haptics';
 import { cleanName } from '../../../aai/common.js';

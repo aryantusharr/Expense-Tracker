@@ -1,3 +1,4 @@
+// Small shared pieces of the chat: icons, header, reply bubble, 'Show thinking' and the loader.
 import { initialOf } from '../../dashboard/dashboardData';
 import LoopMark from './LoopMark';
 

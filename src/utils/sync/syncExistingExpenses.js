@@ -1,3 +1,4 @@
+// Back-fills a shared room's existing expenses into a personal room.
 import { db } from '../../services/firebase';
 import { collection, doc, getDoc, getDocs, writeBatch, updateDoc, arrayUnion } from 'firebase/firestore';
 import { getMemberShare } from '../../services/expenseService';

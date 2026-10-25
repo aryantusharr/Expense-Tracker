@@ -1,3 +1,4 @@
+// Items mode of Add Expense: an itemised bill built up on a receipt.
 import { useRef, useState } from 'react';
 import { haptic } from '../../utils/device/haptics';
 import { useToast } from '../ui/Toast';

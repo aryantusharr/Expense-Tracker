@@ -1,3 +1,4 @@
+// In-app keyboard: provider, QWERTY and numeric keypads and the text fields that use them.
 import { createContext, useCallback, useContext, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { haptic } from '../../utils/device/haptics';

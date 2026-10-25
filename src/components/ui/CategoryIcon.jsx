@@ -1,3 +1,4 @@
+// Renders a category's line icon from its key.
 import { resolveCategoryIcon, getCategoryIcon } from '../../design/categoryIcons';
 
 /** A line icon on its tinted tile. Pass a Firestore `category` ({ name, icon }) or an icon `iconKey`. */

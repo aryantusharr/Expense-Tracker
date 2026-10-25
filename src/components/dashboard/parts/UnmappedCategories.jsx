@@ -1,3 +1,4 @@
+// Card for expenses whose category is no longer in the room; lets the user name them.
 import { useEffect, useMemo, useState } from 'react';
 import { collection, doc, getDoc, getDocs, query, where, writeBatch, arrayUnion, updateDoc } from 'firebase/firestore';
 import { db } from '../../../services/firebase';

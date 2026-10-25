@@ -18,4 +18,10 @@ export default defineConfig([
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
   },
+  {
+    // Guardrail: keep files small enough to read in one go (see ARCHITECTURE.md). Warns, never blocks.
+    files: ['src/**/*.{js,jsx}'],
+    ignores: ['**/*.test.js'],
+    rules: { 'max-lines': ['warn', { max: 400, skipBlankLines: true, skipComments: true }] },
+  },
 ])

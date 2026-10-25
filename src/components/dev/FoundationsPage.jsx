@@ -1,3 +1,4 @@
+// Dev-only design-tokens preview page (/foundations); left out of production builds.
 import { useState } from 'react';
 import { useTheme } from '../../context/ThemeContext';
 import { CATEGORY_ICONS, resolveCategoryIcon } from '../../design/categoryIcons';

@@ -1,3 +1,4 @@
+// Settings data rows: export report (PDF or Excel) and CSV import.
 import { useMemo, useState } from 'react';
 import { generateExpenseReport } from '../../utils/export/pdfExport';
 import { exportToExcel, exportToExcelMonthly } from '../../utils/export/excelExport';

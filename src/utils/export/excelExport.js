@@ -1,3 +1,4 @@
+// Styled Excel export (xlsx-js-style).
 import * as XLSX from 'xlsx-js-style';
 
 // Same columns and data as before; styled per the Report-Excel board (E2):

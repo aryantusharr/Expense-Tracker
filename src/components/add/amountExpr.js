@@ -1,3 +1,4 @@
+// Evaluates amount expressions like 50+20 and handles keypad presses.
 import { evaluateMathExpression } from './addHelpers';
 
 export const OPS = ['÷', '×', '−', '+'];

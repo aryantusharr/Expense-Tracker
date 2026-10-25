@@ -1,3 +1,4 @@
+// Shared pieces for the onboarding screens: icons, page shell and header.
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../context/ThemeContext';
 import { haptic } from '../../utils/device/haptics';

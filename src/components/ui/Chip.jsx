@@ -1,3 +1,4 @@
+// Chip and ChipDot.
 import { haptic } from '../../utils/device/haptics';
 
 /** Selectable pill (filters, payer, members). `selected` drives the gradient state + aria-pressed. */

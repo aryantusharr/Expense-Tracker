@@ -1,3 +1,4 @@
+// Landing screen: saved rooms list plus the create, join and personal actions.
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRoomContext } from '../../context/RoomContext';

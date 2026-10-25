@@ -1,3 +1,4 @@
+// Shared-room pieces: hero total, nudges, settlements and the 'who are you' picker.
 import { useEffect, useState } from 'react';
 import { DropNumber } from '../../ui/Numbers';
 import Sheet from '../../ui/Sheet';

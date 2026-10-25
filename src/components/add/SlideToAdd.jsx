@@ -1,3 +1,4 @@
+// The slide-to-add control that saves the expense.
 import { useRef, useState } from 'react';
 import { haptic } from '../../utils/device/haptics';
 

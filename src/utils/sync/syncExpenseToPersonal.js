@@ -1,3 +1,4 @@
+// Copies a shared expense into the linked personal rooms.
 import { db } from '../../services/firebase';
 import {
   collection, addDoc, updateDoc, deleteDoc, doc,

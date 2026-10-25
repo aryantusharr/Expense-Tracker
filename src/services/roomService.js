@@ -1,3 +1,4 @@
+// Firestore room functions: create, join, rename, categories and subscribe.
 
 import { db } from './firebase';
 import {

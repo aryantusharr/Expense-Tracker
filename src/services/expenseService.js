@@ -1,3 +1,4 @@
+// Firestore expense functions: add, update, delete, subscribe, and keep synced copies in personal rooms.
 import { db } from './firebase';
 import {
   collection, addDoc, updateDoc, deleteDoc, doc,

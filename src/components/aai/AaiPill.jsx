@@ -1,3 +1,4 @@
+// The Aryan AI pill in the Dashboard header; tapping it opens the AAI chat.
 import { useEffect, useState } from 'react';
 import { haptic } from '../../utils/device/haptics';
 import { PillBuddy } from './Buddy';

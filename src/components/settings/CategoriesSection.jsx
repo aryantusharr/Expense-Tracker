@@ -1,3 +1,4 @@
+// Settings categories: list, reorder, edit, add and delete.
 import { useMemo, useState } from 'react';
 import { updateCategories } from '../../services/roomService';
 import { useRoomContext } from '../../context/RoomContext';

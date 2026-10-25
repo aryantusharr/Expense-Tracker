@@ -1,3 +1,4 @@
+// Empty state shown when a room has no expenses yet.
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { haptic } from '../../utils/device/haptics';

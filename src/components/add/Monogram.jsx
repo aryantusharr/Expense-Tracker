@@ -1,3 +1,4 @@
+// Round initial badge for a person.
 import { initialOf } from '../dashboard/dashboardData';
 
 /** Tinted rounded square: member colour 20% over the surface, 1px border, initial in the colour. */

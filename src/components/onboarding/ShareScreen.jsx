@@ -1,3 +1,4 @@
+// Screen after creating a room: the code to share, then profile-sync setup.
 import { useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate, useParams } from 'react-router-dom';

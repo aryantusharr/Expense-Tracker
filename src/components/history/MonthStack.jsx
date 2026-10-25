@@ -1,3 +1,4 @@
+// Month picker stack that fans out when tapped.
 import { haptic } from '../../utils/device/haptics';
 import { fmt } from '../dashboard/dashboardData';
 import { monthSide } from './historyData';

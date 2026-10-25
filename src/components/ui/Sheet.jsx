@@ -1,3 +1,4 @@
+// Bottom sheet container (drag to dismiss).
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 

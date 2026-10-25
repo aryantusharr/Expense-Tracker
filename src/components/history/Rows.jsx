@@ -1,3 +1,4 @@
+// Row types in History: TearRow (tear to delete), ExpenseCard and BillCard (itemised receipt).
 import { useEffect, useRef, useState } from 'react';
 import { haptic } from '../../utils/device/haptics';
 import CategoryIcon, { LineIcon } from '../ui/CategoryIcon';

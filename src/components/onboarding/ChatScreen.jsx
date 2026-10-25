@@ -1,3 +1,4 @@
+// Chat-style layout used by the Create Room flow (bot bubbles, options, input).
 import { useEffect, useRef, useState } from 'react';
 import { ObPage, ObHeader } from './OnboardingBits';
 import { TextField } from '../ui/Keyboard';

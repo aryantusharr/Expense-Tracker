@@ -1,3 +1,4 @@
+// The print-the-receipt animation shown after an expense is saved.
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { haptic } from '../../utils/device/haptics';

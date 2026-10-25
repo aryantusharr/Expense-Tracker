@@ -1,3 +1,4 @@
+// Button and IconButton.
 import { haptic } from '../../utils/device/haptics';
 
 /**

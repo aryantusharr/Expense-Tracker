@@ -1,3 +1,4 @@
+// Dark or light theme, saved in localStorage as 'splitease_theme'.
 import { createContext, useContext, useState, useEffect } from 'react';
 
 const ThemeContext = createContext(null);

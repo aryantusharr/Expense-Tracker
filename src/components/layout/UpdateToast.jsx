@@ -1,3 +1,4 @@
+// Toast shown when a new version is ready; reloads the app after a short countdown.
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { haptic } from '../../utils/device/haptics';

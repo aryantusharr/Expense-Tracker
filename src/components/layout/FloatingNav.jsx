@@ -1,3 +1,4 @@
+// Floating bottom navigation (Dashboard, Add, History, Settings).
 import { useLocation, useNavigate } from 'react-router-dom';
 import { haptic } from '../../utils/device/haptics';
 import './FloatingNav.css';

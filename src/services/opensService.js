@@ -1,3 +1,4 @@
+// Reads and writes the daily app-open records (rooms/{code}/opens).
 import { doc, setDoc, increment, collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from './firebase';
 import { toDateStr } from '../aai/common.js';

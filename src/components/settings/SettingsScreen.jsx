@@ -1,3 +1,4 @@
+// Settings screen: room card, categories, appearance, data and version.
 import { useMemo, useState } from 'react';
 import { useRoomContext } from '../../context/RoomContext';
 import { useTheme } from '../../context/ThemeContext';

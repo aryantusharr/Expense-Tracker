@@ -1,3 +1,4 @@
+// Create-room flow told as a chat: roommate count, room name, names.
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createRoom, checkRoomNameExists } from '../../services/roomService';

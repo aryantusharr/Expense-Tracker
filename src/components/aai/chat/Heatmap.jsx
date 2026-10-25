@@ -1,3 +1,4 @@
+// Heatmap of who opened the app and the chat's empty state.
 import { weekGrid, tier } from '../../../aai/heatmap.js';
 import { MONTH_NAMES, fromDateStr, toDateStr, cleanName } from '../../../aai/common.js';
 import { Mg, Av } from './parts';

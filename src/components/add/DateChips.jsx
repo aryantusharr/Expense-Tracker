@@ -1,3 +1,4 @@
+// Row of date chips for choosing the expense date.
 import { useMemo } from 'react';
 import { haptic } from '../../utils/device/haptics';
 import { localDateStr, shortDay } from '../dashboard/dashboardData';

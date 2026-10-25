@@ -1,3 +1,4 @@
+// The Quick-mode amount keypad (supports sums).
 import { useEffect, useRef, useState } from 'react';
 import { haptic } from '../../utils/device/haptics';
 

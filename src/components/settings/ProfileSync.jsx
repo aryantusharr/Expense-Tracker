@@ -1,3 +1,4 @@
+// Profile-sync pill and its setup sheets (link a shared room to a personal room).
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRoomContext } from '../../context/RoomContext';

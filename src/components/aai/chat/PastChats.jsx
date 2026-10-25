@@ -1,3 +1,4 @@
+// The past-chats drawer (active, earlier today, read-only).
 import { useEffect, useRef, useState } from 'react';
 import { groupChats, chatTitle, chatMeta, isEditable } from '../../../aai/chatStore.js';
 import { IcClose, IcNew } from './parts';

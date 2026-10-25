@@ -1,3 +1,4 @@
+// Personal-tracker setup: name and optional monthly budget.
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createPersonalTracker } from '../../services/roomService';

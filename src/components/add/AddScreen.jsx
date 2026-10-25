@@ -1,3 +1,4 @@
+// Add Expense screen: switches between the Quick and Items panes.
 import { useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IconButton } from '../ui/Button';

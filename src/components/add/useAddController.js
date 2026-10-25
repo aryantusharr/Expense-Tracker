@@ -1,3 +1,4 @@
+// All state and save logic for the Add Expense screen (Quick and Items).
 import { useCallback, useMemo, useState } from 'react';
 import { useRoomContext } from '../../context/RoomContext';
 import { useExpenseForm } from '../../hooks/useExpenseForm';

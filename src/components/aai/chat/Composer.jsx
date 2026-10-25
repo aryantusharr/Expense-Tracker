@@ -1,3 +1,4 @@
+// The chat's input area, plus the focus rows (same bill again, quick usuals) shown above the keypad.
 import { TextField } from '../../ui/Keyboard';
 import { haptic } from '../../../utils/device/haptics';
 import { fmtINR } from '../../../aai/common.js';
