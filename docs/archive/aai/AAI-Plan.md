@@ -1,3 +1,5 @@
+> ARCHIVE — historical record, may be out of date. For the current picture read `docs/AAI.md` and `STATUS.md`.
+
 # Aryan AI (AAI) — tech plan
 
 Status: **final, waiting for the designer's "start"** (written 3 Oct 2026; the designer's decisions added the same day). Nothing is built yet. Spec: `docs/AAI-Handoff.md` (§ numbers below refer to it). Design: canvas rows "Aryan AI (AAI)", "AAI mark · looping loader", "AAI short loader & small mark". Before building each screen, read that board's source and match it, don't guess from the written spec.

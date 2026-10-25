@@ -1,3 +1,5 @@
+> ARCHIVE — historical record, may be out of date. For the current picture read `docs/AAI.md` and `STATUS.md`.
+
 # QA pass 1 — 1 Oct 2026 (browser, iPhone 13 Pro 390×844, dark + light, test project only)
 
 Walked: Landing → Create (taken name, roommates) → Share → sync sheet / Not now → Dashboard · Join (wrong code, personal code, ROOM-C53, /join/CODE link) · Personal (typed budget, "I already have a code" with shared + personal code) · gear sheet → Delete for everyone · History (search, filter, edit, tear + Undo) · Add Quick + save · Settings (rename, add/edit/swap/delete category, theme, budget, sync off → set up, export PDF/Excel all time + month, import CSV shared + personal with bad rows).

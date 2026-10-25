@@ -1,3 +1,5 @@
+> ARCHIVE — historical record, may be out of date. For the current picture read `docs/AAI.md` and `STATUS.md`.
+
 # Aryan AI (AAI) — build handoff for Claude Code
 
 Written 3 Oct 2026 from the design project. The SplitEase redesign is already live; **AAI is the only feature left to build**.

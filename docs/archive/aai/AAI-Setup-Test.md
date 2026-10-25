@@ -1,3 +1,5 @@
+> ARCHIVE — historical record, may be out of date. For the current picture read `docs/AAI.md` and `STATUS.md`.
+
 # Bill reading — console setup (TEST project only)
 
 Project: **splitease-test-2026**. Do not touch splitease-7bb6c (live) — that happens at release, with your yes.

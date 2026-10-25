@@ -1,3 +1,5 @@
+> ARCHIVE — historical record, may be out of date. For the current picture read `docs/AAI.md` and `STATUS.md`.
+
 # Chat 3 · Changes brainstorm (9 Oct) — PLAN ONLY, nothing built
 
 The designer's list after the iPhone pass. Each item: what it touches, options, my pick. Nothing here is in v2.2.0 unless the designer says so.

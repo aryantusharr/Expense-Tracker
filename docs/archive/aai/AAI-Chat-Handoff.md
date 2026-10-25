@@ -1,3 +1,5 @@
+> ARCHIVE — historical record, may be out of date. For the current picture read `docs/AAI.md` and `STATUS.md`.
+
 # AAI Chat — build handoff (design final 4 Oct 2026)
 
 Supersedes the *UI* parts of `docs/AAI-Handoff.md` (sheet, pill sheet, live card, answer cards, questions/balances/remind/settle).
