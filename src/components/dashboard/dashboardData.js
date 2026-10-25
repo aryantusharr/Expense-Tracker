@@ -1,8 +1,8 @@
 // Pure view-model helpers for the redesigned Dashboard. Reads the same data as before
 // (expenses, users, categories) — nothing here writes anything.
-import { calculateBalances } from '../../utils/money/splitCalculator';
-import { calculateSettlements } from '../../utils/money/settlementEngine';
-import { resolveCategoryIcon } from '../../design/categoryIcons';
+import { calculateBalances } from '../../utils/money/splitCalculator.js';
+import { calculateSettlements } from '../../utils/money/settlementEngine.js';
+import { resolveCategoryIcon } from '../../design/categoryIcons.js';
 
 export const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 export const MONTHS_FULL = ['JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE', 'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER'];
@@ -48,10 +48,10 @@ export function shortDay(dateStr, { upper = true } = {}) {
 }
 
 /**
- * Month window for the month card + bars: from the first month with data (at most 6 back)
- * up to the current month. Each: { key, short, full, total, days }.
+ * Month window for the month card + bars: from the first month with data (at most 6 back, or ALL months
+ * with `{ all: true }`) up to the current month. Each: { key, year, month, short, full, total }.
  */
-export function monthWindow(expenses, now = new Date()) {
+export function monthWindow(expenses, now = new Date(), { all = false } = {}) {
   const totals = {};
   let first = null;
   for (const e of expenses) {
@@ -61,7 +61,12 @@ export function monthWindow(expenses, now = new Date()) {
     if (!first || k < first) first = k;
   }
   const out = [];
-  for (let back = 5; back >= 0; back--) {
+  let span = 6;
+  if (all && first) {
+    const [fy, fm] = first.split('-').map(Number);
+    span = Math.max(6, (now.getFullYear() - fy) * 12 + (now.getMonth() - (fm - 1)) + 1);
+  }
+  for (let back = span - 1; back >= 0; back--) {
     const d = new Date(now.getFullYear(), now.getMonth() - back, 1);
     const k = keyOf(d.getFullYear(), d.getMonth());
     if (first && k < first && back > 0) continue;
@@ -203,4 +208,11 @@ export function skyFor(slotFromEnd, { over = false, light = false } = {}) {
   const set = over ? SKY_OVER : SKY[Math.max(0, 5 - slotFromEnd)];
   const a = light ? [0.34, 0.26, 0.2] : [0.55, 0.35, 0.25];
   return set.map((rgb, i) => `rgba(${rgb},${a[i]})`);
+}
+
+/** Yearly totals from a month list: [{ key:'2026', short:'2026', full:'2026', total }], oldest first. */
+export function yearWindow(months) {
+  const by = new Map();
+  for (const m of months) by.set(m.year, (by.get(m.year) || 0) + m.total);
+  return [...by.entries()].sort((a, b) => a[0] - b[0]).map(([y, total]) => ({ key: String(y), short: String(y), full: String(y), total }));
 }

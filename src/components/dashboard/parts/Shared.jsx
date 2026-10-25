@@ -112,7 +112,8 @@ export function HeroCard({ model, me, onPickIdentity }) {
   const names = cps.map(c => c.name);
   const nameStr = names.length > 1 ? `${names.slice(0, -1).join(', ')} & ${names[names.length - 1]}` : names[0];
   const label = state === 'neg' ? 'YOU OWE' : state === 'pos' ? "YOU'RE OWED" : 'ALL SQUARE';
-  const sub = state === 'neg' ? `Pay ${nameStr} to settle up`
+  const lastLine = me.last ? `Last · Paid ₹${fmt(me.last.amount)} for ${me.last.name} · ${shortDay(me.last.date, { upper: false })}` : 'Last · No payments yet';
+  const sub = state === 'neg' ? lastLine
     : state === 'pos' ? `${nameStr} ${names.length > 1 ? 'owe' : 'owes'} you`
       : 'Nothing to settle right now';
   // Nothing logged yet → empty ring and "—", not "100% you paid".

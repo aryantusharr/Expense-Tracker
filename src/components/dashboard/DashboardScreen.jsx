@@ -32,7 +32,7 @@ export default function DashboardScreen() {
   const isPersonal = room?.isPersonal === true;
   const budget = Number(room?.budget) || 0;
 
-  const { months } = useMemo(() => monthWindow(expenses), [expenses]);
+  const { months } = useMemo(() => monthWindow(expenses, new Date(), { all: true }), [expenses]);
   const life = useMemo(() => lifetime(expenses), [expenses]);
   const matrix = useMemo(() => spendingMatrix(expenses, categories), [expenses, categories]);
   const model = useMemo(() => (isPersonal ? null : sharedModel(expenses, users)), [isPersonal, expenses, users]);
@@ -62,7 +62,7 @@ export default function DashboardScreen() {
 
   const meta = isPersonal
     ? `PERSONAL${syncedFrom ? ` · SYNCED WITH ${syncedFrom}` : ''}`
-    : `SHARED · ${users.length} ${users.length === 1 ? 'ROOMMATE' : 'ROOMMATES'} · ${online ? 'LIVE' : 'OFFLINE'}`;
+    : (online ? 'LIVE' : 'OFFLINE');
 
   return (
     <div className="se-page">

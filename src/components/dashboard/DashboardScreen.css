@@ -251,7 +251,6 @@
 .dsh-kv { display: flex; flex-direction: column; gap: 1px; }
 .dsh-kv span { font-family: var(--se-font-mono); font-size: 10px; letter-spacing: .1em; color: var(--se-text-3); }
 .dsh-kv b { font-size: 13px; font-weight: 600; }
-.dsh-face__last { grid-column: span 2; font-size: 11px; color: var(--se-text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .dsh-face--back {
   transform: rotateY(180deg); background: var(--dsh-back); color: var(--dsh-back-ink);
   padding: 18px 20px; display: flex; flex-direction: column; justify-content: space-between;
@@ -405,3 +404,10 @@
 .dsh-unm__head span { margin-left: auto; font-size: 12px; color: var(--se-text-3); }
 .dsh-unm__or { font-family: var(--se-font-mono); font-size: 9px; letter-spacing: .12em; color: var(--se-text-3); }
 .dsh-unm__chips { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* Month bars: all months, scroll sideways when they don't fit; Months | Years switch */
+.dsh-bars__scroll { overflow-x: auto; overflow-y: hidden; margin-top: -30px; padding-top: 30px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.dsh-bars__scroll::-webkit-scrollbar { display: none; }
+.dsh-seg { display: inline-flex; align-self: flex-start; gap: 2px; padding: 3px; border-radius: 999px; background: var(--se-fill-2); }
+.dsh-seg button { border: 0; background: none; cursor: pointer; font: 700 10px var(--se-font-mono); letter-spacing: .08em; color: var(--se-text-3); padding: 5px 11px; border-radius: 999px; -webkit-tap-highlight-color: transparent; }
+.dsh-seg button.on { background: rgba(139,124,255,0.24); color: var(--se-text); }

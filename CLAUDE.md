@@ -5,7 +5,10 @@
 1. `STATUS.md` — where the app and the work stand right now (short).
 2. `ARCHITECTURE.md` — which screen lives in which folder.
 3. Only then the one doc you need: `PLAN.md` (checklist), `docs/AAI.md` (Aryan AI), `docs/SplitEase-Design-System.md` (tokens + screen specs), `LOG.md` (history, read only when digging).
-End of every session: update `STATUS.md`, add a dated line to `LOG.md`, tick `PLAN.md`, refresh `BRIEF.md` (see "Shared knowledge" below), commit, and push with the designer's OK. Unpushed work is invisible to the other Claude accounts. If the designer says "update the status files", do this routine.
+End of every session — the cheap routine (the designer does not switch to the brainstorming account every time, so don't rewrite its files every time):
+- ALWAYS (about 3 lines of output): append ONE dated line to `LOG.md`, append ONE line to "Recent changes" in `STATUS.md`, tick `PLAN.md` if something finished, commit, push with the designer's OK. Use small appends/edits, never rewrite or re-read whole files.
+- ONLY on a release, a decision, a new risk or open item, or when the designer says "update the status files" / "sync for brainstorming": do the FULL refresh — rewrite the changed parts of `STATUS.md`, empty its "Recent changes" list, and update `BRIEF.md`.
+- Unpushed work is invisible to the other Claude accounts.
 
 ## Who you're working with
 The owner is a designer, not a developer. They designed the whole redesign with Claude on a Claude Design canvas and want you to build, test and ship it. Explain things in plain words, show rather than tell (screenshots, links to open on their iPhone), and never assume they know a terminal command.
@@ -37,7 +40,7 @@ The owner is a designer, not a developer. They designed the whole redesign with 
 React 19 + Vite 8, Framer Motion, Firestore (no Firebase Auth), react-router 7, jsPDF + autotable (PDF), xlsx-js-style (Excel). Aryan AI (AAI) reads bills with Gemini through Firebase AI Logic + App Check. PWA: `public/sw.js` (cache name is stamped at build) + `public/manifest.json`. Hosting: Firebase Hosting, `dist/`, SPA rewrite. Tests: `npm test` (Node's built-in runner). The designer's phone: iPhone 13 Pro, Safari / Home-Screen PWA.
 
 ## Shared knowledge (two Claude accounts)
-The designer also brainstorms in a separate free Claude account. It reads `BRIEF.md` from this repo (public, no personal data) at the start of each chat. Keep `BRIEF.md` short (about 2 pages) and current. Decisions made in brainstorms come back as a pasted "decisions note" — fold them into `STATUS.md` and `BRIEF.md`.
+The designer also brainstorms in a separate free Claude account. It reads `BRIEF.md` from this repo (public, no personal data) at the start of each chat. Keep `BRIEF.md` short (about 2 pages) and put only slow-changing facts in it; fast-changing facts (bugs, open items, recent changes) live in `STATUS.md`. Decisions made in brainstorms come back as a pasted "decisions note" — fold them into `STATUS.md` (and `BRIEF.md` if they change the big picture).
 
 ## Saving usage (the designer is on a usage-limited plan — be economical without cutting quality)
 - Read only what you need: search (grep/glob) first, then open the specific file section. Don't re-read files you just edited or already have in context.

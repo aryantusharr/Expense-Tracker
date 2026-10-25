@@ -1,9 +1,9 @@
 // Lifetime spend, this-month card and the category-by-month spending matrix.
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { RollingNumber, useCountUp } from '../../ui/Numbers';
 import { LineIcon } from '../../ui/CategoryIcon';
 import { haptic } from '../../../utils/device/haptics';
-import { fmt } from '../dashboardData';
+import { fmt, yearWindow } from '../dashboardData';
 import { SectionChip } from './Shared';
 
 /** Delta pill vs previous month. Spending less is good (teal), more is pink. */
@@ -31,16 +31,31 @@ export function LifetimeSpend({ total, months, className = '', style }) {
 
 /**
  * Month card: selected month total on reels, delta, lifetime (shared only), tappable bars.
- * budget (personal): dashed line + over-budget bars in pink.
+ * All months are shown: bars fill the width while they fit, then scroll sideways (newest in view).
+ * With more than 12 months a Months | Years switch appears. budget (personal): dashed line + over-budget bars in pink (months view only).
  */
 export function MonthCard({ months, sel, onSelect, life, budget = 0, delay = 360 }) {
-  const m = months[sel];
-  const prev = sel > 0 ? months[sel - 1] : null;
-  const chartH = budget ? 170 : 160;
-  const maxVal = Math.max(1, ...months.map(x => x.total), budget ? budget * 1.2 : 0);
+  const [view, setView] = useState('months');
+  const [ysel, setYsel] = useState(null);
+  const years = useMemo(() => yearWindow(months), [months]);
+  const canYears = months.length > 12;
+  const inYears = view === 'years' && canYears;
+  const list = inYears ? years : months;
+  const idx = inYears ? (ysel == null || ysel >= years.length ? years.length - 1 : ysel) : sel;
+  const pick = inYears ? setYsel : onSelect;
+  const bud = inYears ? 0 : budget;
+  const m = list[idx];
+  const prev = idx > 0 ? list[idx - 1] : null;
+  const chartH = bud ? 170 : 160;
+  const maxVal = Math.max(1, ...list.map(x => x.total), bud ? bud * 1.2 : 0);
   const scale = 120 / maxVal;
-  const over = budget > 0 && m.total > budget;
-  const budgetY = Math.round(budget * scale) + 21;
+  const over = bud > 0 && m.total > bud;
+  const budgetY = Math.round(bud * scale) + 21;
+  const scroller = useRef(null);
+  useEffect(() => {
+    const el = scroller.current;                      // start with the newest months in view
+    if (el) el.scrollLeft = el.scrollWidth;
+  }, [list.length, inYears]);
 
   return (
     <section className="dsh-card se-glass se-in" style={{ animationDelay: `${delay}ms` }}>
@@ -50,42 +65,52 @@ export function MonthCard({ months, sel, onSelect, life, budget = 0, delay = 360
       </div>
       <div className="dsh-big" aria-label={`${m.full} total ₹${fmt(m.total)}`}>
         <span className="cur" aria-hidden="true">₹</span>
-        <RollingNumber key={m.key} value={fmt(m.total)} startDelay={m === months[months.length - 1] ? 500 : 0} />
+        <RollingNumber key={m.key} value={fmt(m.total)} startDelay={m === list[list.length - 1] ? 500 : 0} />
       </div>
-      {budget > 0 && (
+      {bud > 0 && (
         <span className="dsh-budget-pill" style={{ background: over ? 'rgba(255,143,181,0.14)' : 'rgba(95,212,196,0.12)' }}>
-          <span className={over ? 'neg-ink' : 'pos-ink'}>₹{fmt(Math.abs(budget - m.total))} {over ? 'OVER' : 'UNDER'} BUDGET</span>
+          <span className={over ? 'neg-ink' : 'pos-ink'}>₹{fmt(Math.abs(bud - m.total))} {over ? 'OVER' : 'UNDER'} BUDGET</span>
         </span>
       )}
       {life && <LifetimeSpend total={life.total} months={life.months} />}
+      {canYears && (
+        <div className="dsh-seg" role="group" aria-label="Chart range">
+          {['months', 'years'].map(v => (
+            <button key={v} type="button" className={view === v ? 'on' : ''} aria-pressed={view === v}
+              onClick={() => { if (view !== v) { haptic('tap'); setView(v); } }}>{v.toUpperCase()}</button>
+          ))}
+        </div>
+      )}
       <div className="dsh-bars" style={{ height: chartH }}>
-        {budget > 0 && (
+        {bud > 0 && (
           <>
             <div className="dsh-budget-line" style={{ bottom: budgetY }} />
-            <span className="dsh-budget-tag" style={{ bottom: budgetY + 4 }}>BUDGET ₹{budget >= 1000 ? `${+(budget / 1000).toFixed(1)}K` : fmt(budget)}</span>
+            <span className="dsh-budget-tag" style={{ bottom: budgetY + 4 }}>BUDGET ₹{bud >= 1000 ? `${+(bud / 1000).toFixed(1)}K` : fmt(bud)}</span>
           </>
         )}
-        <div className="dsh-bars__grid" style={{ height: chartH, gridTemplateColumns: `repeat(${months.length}, minmax(0, 1fr))` }}>
-          {months.map((x, i) => {
-            const h = Math.max(4, Math.round(x.total * scale));
-            const on = i === sel;
-            const ov = budget > 0 && x.total > budget;
-            return (
-              <button
-                key={x.key}
-                type="button"
-                className={`dsh-bar ${on ? 'on' : ''} ${ov ? 'over' : ''}`}
-                style={{ height: chartH }}
-                aria-label={`${x.full} total ₹${fmt(x.total)}${ov ? ', over budget' : ''}`}
-                aria-pressed={on}
-                onClick={() => { if (on) return; haptic(ov ? 'error' : 'tap'); onSelect(i); }}
-              >
-                {on && <span className="dsh-bar__tip se-tip" style={{ bottom: h + 28 }}>₹{(x.total / 1000).toFixed(1)}K</span>}
-                <div className="dsh-bar__fill se-grow-y" style={{ height: h, animationDelay: `${500 + i * 80}ms` }} />
-                <span className="dsh-bar__m">{x.short.toUpperCase()}</span>
-              </button>
-            );
-          })}
+        <div className="dsh-bars__scroll" ref={scroller}>
+          <div className="dsh-bars__grid" style={{ height: chartH, gridTemplateColumns: `repeat(${list.length}, minmax(38px, 1fr))` }}>
+            {list.map((x, i) => {
+              const h = Math.max(4, Math.round(x.total * scale));
+              const on = i === idx;
+              const ov = bud > 0 && x.total > bud;
+              return (
+                <button
+                  key={x.key}
+                  type="button"
+                  className={`dsh-bar ${on ? 'on' : ''} ${ov ? 'over' : ''}`}
+                  style={{ height: chartH }}
+                  aria-label={`${x.full} total ₹${fmt(x.total)}${ov ? ', over budget' : ''}`}
+                  aria-pressed={on}
+                  onClick={() => { if (on) return; haptic(ov ? 'error' : 'tap'); pick(i); }}
+                >
+                  {on && <span className="dsh-bar__tip se-tip" style={{ bottom: h + 28 }}>₹{(x.total / 1000).toFixed(1)}K</span>}
+                  <div className="dsh-bar__fill se-grow-y" style={{ height: h, animationDelay: `${500 + Math.min(i, 12) * 80}ms` }} />
+                  <span className="dsh-bar__m">{x.short.toUpperCase()}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
     </section>

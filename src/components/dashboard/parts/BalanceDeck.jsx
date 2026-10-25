@@ -1,7 +1,7 @@
 // Deck of per-person balance cards (shared rooms).
 import { useState } from 'react';
 import { haptic } from '../../../utils/device/haptics';
-import { fmt, shortDay } from '../dashboardData';
+import { fmt } from '../dashboardData';
 import { SectionChip } from './Shared';
 
 const CARD_H = 200;
@@ -36,7 +36,6 @@ export default function BalanceDeck({ members, meId, monthLabel, since }) {
           const y = fanned ? i * FAN_GAP : slot.y - (3 - visible) * 16;
           const isFlipped = flipped === m.id;
           const pct = m.month.share > 0 ? Math.round((m.month.paid / m.month.share) * 100) : null;
-          const last = m.last ? `Paid ₹${fmt(m.last.amount)} for ${m.last.name} · ${shortDay(m.last.date, { upper: false })}` : 'No payments yet';
           const isMe = m.id === meId;
           return (
             <div
@@ -77,7 +76,6 @@ export default function BalanceDeck({ members, meId, monthLabel, since }) {
                       <div className="dsh-face__sheet">
                         <div className="dsh-kv"><span>PAID</span><b>₹{fmt(m.month.paid)}</b></div>
                         <div className="dsh-kv"><span>SHARE</span><b>₹{fmt(m.month.share)}</b></div>
-                        <span className="dsh-face__last">Last · {last}</span>
                       </div>
                     </div>
                     <div className="dsh-face dsh-face--back">
