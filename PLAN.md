@@ -17,7 +17,7 @@
 - [x] Docs + code tidy (26 Oct): privacy scrub, STATUS/PLAN/LOG split, dead code removed, architecture map
 
 ## Open
-- [ ] Phase 5 leftover: confirm on the designer's phone that the live app works, and that the other two users closed and reopened the app
+- [x] Phase 5 leftover: live app checked on the designer's iPhone (26 Oct: rooms load, add/delete a test expense, Aryan AI opens). The other two users need no manual step; the in-app update toast reloads open apps.
 - [ ] Rules hardening: block deleting `roomNames` entries and require the room to exist for expense/opens writes (test project first; live needs the designer's yes + backup)
 - [ ] Gemini free-tier limit (about 20 bill reads/day per model): decide how to handle it
 - [ ] Optional: switch off AI monitoring in the live console (cost-free either way)

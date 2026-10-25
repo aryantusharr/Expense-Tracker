@@ -19,7 +19,7 @@ _Last updated: 26 Oct 2026. Keep this under about 45 lines; move history to `LOG
 - Test: `splitease-test-2026` + `phone-test` preview — kept on purpose. All dev and testing here.
 
 ## Open items
-See "Open" in `PLAN.md`. Right now: confirm the live app on the phone and with the other two users; rules hardening; optional AI-monitoring switch-off; split the oversized files; choose the next round of work.
+See "Open" in `PLAN.md`. Right now: rules hardening; optional AI-monitoring switch-off; split the oversized files; choose the next round of work.
 
 ## Known risks
 - **Gemini free tier**: about 20 bill reads/day per model (main + spare). When both are used up the chat shows the LIMIT reply and the user types items instead. Options to weigh: watch usage, add another fallback, or move to a paid tier.
