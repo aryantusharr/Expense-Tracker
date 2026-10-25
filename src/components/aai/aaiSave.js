@@ -3,9 +3,9 @@
  * (plus source: 'text', or 'bill' for screenshot bills). Each helper resolves { ids, moment, toast, share } or throws.
  */
 import { addExpense, addItemisedExpenseGroup, updateExpense, deleteExpense } from '../../services/expenseService';
-import { deleteSyncedExpensesFromPersonalRooms } from '../../utils/deleteSyncedExpenses';
-import { setLastUsedDefaults } from '../../utils/lastUsedDefaults';
-import { addRecentDescription } from '../../utils/recentDescriptions';
+import { deleteSyncedExpensesFromPersonalRooms } from '../../utils/sync/deleteSyncedExpenses';
+import { setLastUsedDefaults } from '../../utils/expenses/lastUsedDefaults';
+import { addRecentDescription } from '../../utils/expenses/recentDescriptions';
 import { resolveCategoryIcon } from '../../design/categoryIcons';
 import { fmtINR, cleanName } from '../../aai/common.js';
 

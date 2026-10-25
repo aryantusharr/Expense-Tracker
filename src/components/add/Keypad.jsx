@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { haptic } from '../../utils/haptics';
+import { haptic } from '../../utils/device/haptics';
 
 // Operators sit in the LEFT column, ⌫ bottom-right (spec §9).
 const KEYS = [

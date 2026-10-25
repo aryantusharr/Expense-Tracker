@@ -1,7 +1,7 @@
 // Pure view-model helpers for the redesigned Dashboard. Reads the same data as before
 // (expenses, users, categories) — nothing here writes anything.
-import { calculateBalances } from '../../utils/splitCalculator';
-import { calculateSettlements } from '../../utils/settlementEngine';
+import { calculateBalances } from '../../utils/money/splitCalculator';
+import { calculateSettlements } from '../../utils/money/settlementEngine';
 import { resolveCategoryIcon } from '../../design/categoryIcons';
 
 export const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];

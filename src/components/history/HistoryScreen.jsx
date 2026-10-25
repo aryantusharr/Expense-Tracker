@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useRoomContext } from '../../context/RoomContext';
 import { useToast, useToastDismiss } from '../ui/Toast';
-import { haptic } from '../../utils/haptics';
+import { haptic } from '../../utils/device/haptics';
 import { TextField } from '../ui/Keyboard';
 import { resolveCategoryIcon } from '../../design/categoryIcons';
 import { memberStyle, fmt } from '../dashboard/dashboardData';

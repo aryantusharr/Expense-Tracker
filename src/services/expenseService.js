@@ -3,12 +3,12 @@ import {
   collection, addDoc, updateDoc, deleteDoc, doc,
   onSnapshot, query, orderBy, getDoc, getDocs, where, writeBatch
 } from 'firebase/firestore';
-import { syncExpenseToPersonalRooms } from '../utils/syncExpenseToPersonal';
-import { deleteSyncedExpensesFromPersonalRooms } from '../utils/deleteSyncedExpenses';
-import { getUsageFieldsForNewExpense, getUsageFieldsForUpdatedExpense } from '../utils/expenseFormHelpers';
+import { syncExpenseToPersonalRooms } from '../utils/sync/syncExpenseToPersonal';
+import { deleteSyncedExpensesFromPersonalRooms } from '../utils/sync/deleteSyncedExpenses';
+import { getUsageFieldsForNewExpense, getUsageFieldsForUpdatedExpense } from '../utils/expenses/expenseFormHelpers';
 
 // Re-export for backward compatibility
-export { syncExistingSharedExpenses } from '../utils/syncExistingExpenses';
+export { syncExistingSharedExpenses } from '../utils/sync/syncExistingExpenses';
 
 // No stored 'learned patterns': category auto-pick is computed on the device from the room's
 // expenses + a keyword list (see utils/categoryGuess.js).

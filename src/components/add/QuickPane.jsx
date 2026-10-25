@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { haptic } from '../../utils/haptics';
+import { haptic } from '../../utils/device/haptics';
 import { useToast } from '../ui/Toast';
 import Button from '../ui/Button';
 import CategoryIcon from '../ui/CategoryIcon';

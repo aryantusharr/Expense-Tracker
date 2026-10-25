@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { prefersReducedMotion } from '../../utils/haptics';
+import { prefersReducedMotion } from '../../utils/device/haptics';
 
 const DIGITS = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
 

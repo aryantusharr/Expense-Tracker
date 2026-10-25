@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTheme } from '../../context/ThemeContext';
 import { CATEGORY_ICONS, resolveCategoryIcon } from '../../design/categoryIcons';
-import { haptic, prefersReducedMotion } from '../../utils/haptics';
+import { haptic, prefersReducedMotion } from '../../utils/device/haptics';
 import Button, { IconButton } from '../ui/Button';
 import Chip, { ChipDot } from '../ui/Chip';
 import CategoryIcon, { LineIcon } from '../ui/CategoryIcon';

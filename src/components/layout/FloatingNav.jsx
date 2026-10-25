@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { haptic } from '../../utils/haptics';
+import { haptic } from '../../utils/device/haptics';
 import './FloatingNav.css';
 
 // Floating glass nav from the Dashboard board: 3 tabs + the breathing add button.

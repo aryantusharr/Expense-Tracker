@@ -1,7 +1,7 @@
 import { useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IconButton } from '../ui/Button';
-import { haptic } from '../../utils/haptics';
+import { haptic } from '../../utils/device/haptics';
 import { useAddController } from './useAddController';
 import QuickPane from './QuickPane';
 import ItemsPane from './ItemsPane';

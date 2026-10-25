@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createRoom, checkRoomNameExists } from '../../services/roomService';
 import { useRoomContext } from '../../context/RoomContext';
-import { haptic } from '../../utils/haptics';
+import { haptic } from '../../utils/device/haptics';
 import ChatScreen from './ChatScreen';
 import { useChat } from './useChat';
 

@@ -3,7 +3,7 @@ import Sheet from '../ui/Sheet';
 import { TextField } from '../ui/Keyboard';
 import { evaluateMathExpression } from '../add/addHelpers';
 import CategoryIcon from '../ui/CategoryIcon';
-import { haptic } from '../../utils/haptics';
+import { haptic } from '../../utils/device/haptics';
 import { localDateStr, MONTHS_SHORT } from '../dashboard/dashboardData';
 
 const WD = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];

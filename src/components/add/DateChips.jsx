@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { haptic } from '../../utils/haptics';
+import { haptic } from '../../utils/device/haptics';
 import { localDateStr, shortDay } from '../dashboard/dashboardData';
 
 /** Date strip: Today / Yday / 2 days ago + a picker chip. */

@@ -8,8 +8,8 @@
  *
  * state = { now, expenses, users, me, categories, isPersonal, queueCount, lastAai, hidden (ids), installable }
  */
-import { normalize } from '../utils/categoryGuess.js';
-import { detectRecurringExpenses } from '../utils/recurringExpenses.js';
+import { normalize } from '../utils/expenses/categoryGuess.js';
+import { detectRecurringExpenses } from '../utils/expenses/recurringExpenses.js';
 import { balanceAnswer, settlements, duplicatePairs } from './answers.js';
 import { fmtINR, fromDateStr, toDateStr, addDays, expenseTime } from './common.js';
 

@@ -15,7 +15,7 @@
  * Order of work (each step removes the words it used). Ratio is read before the date so that
  * "2/10" (a date) and "60/40" (a ratio) are told apart, and before the amount so "60/40" isn't a number.
  */
-import { guessCategory, learnPatterns, normalize, findMatchingCategory } from '../utils/categoryGuess.js';
+import { guessCategory, learnPatterns, normalize, findMatchingCategory } from '../utils/expenses/categoryGuess.js';
 import { extractDate } from './dates.js';
 import { extractAmount, evalAmount } from './amount.js';
 import { extractPeople } from './people.js';

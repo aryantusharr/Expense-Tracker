@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createPersonalTracker } from '../../services/roomService';
 import { useRoomContext } from '../../context/RoomContext';
-import { haptic } from '../../utils/haptics';
+import { haptic } from '../../utils/device/haptics';
 import { useToast } from '../ui/Toast';
 import { fmt } from '../dashboard/dashboardData';
 import ChatScreen from './ChatScreen';

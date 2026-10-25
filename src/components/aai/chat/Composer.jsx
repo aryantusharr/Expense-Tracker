@@ -1,5 +1,5 @@
 import { TextField } from '../../ui/Keyboard';
-import { haptic } from '../../../utils/haptics';
+import { haptic } from '../../../utils/device/haptics';
 import { fmtINR } from '../../../aai/common.js';
 import { IcPlus, IcSend } from './parts';
 

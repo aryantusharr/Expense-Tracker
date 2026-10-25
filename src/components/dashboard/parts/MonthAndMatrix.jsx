@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { RollingNumber, useCountUp } from '../../ui/Numbers';
 import { LineIcon } from '../../ui/CategoryIcon';
-import { haptic } from '../../../utils/haptics';
+import { haptic } from '../../../utils/device/haptics';
 import { fmt } from '../dashboardData';
 import { SectionChip } from './Shared';
 

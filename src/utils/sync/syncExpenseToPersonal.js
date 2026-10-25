@@ -1,10 +1,10 @@
-import { db } from '../services/firebase';
+import { db } from '../../services/firebase';
 import {
   collection, addDoc, updateDoc, deleteDoc, doc,
   query, getDoc, getDocs, where, arrayUnion
 } from 'firebase/firestore';
-import { getMemberShare } from '../services/expenseService';
-import { roomStatus, unlinkPersonalRoom } from '../services/roomService';
+import { getMemberShare } from '../../services/expenseService';
+import { roomStatus, unlinkPersonalRoom } from '../../services/roomService';
 
 /**
  * Resolves the first user ID in a personal room.

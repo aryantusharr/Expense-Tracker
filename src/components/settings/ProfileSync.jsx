@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useRoomContext } from '../../context/RoomContext';
 import { syncExistingSharedExpenses, removeSyncedExpensesFromPersonalRooms } from '../../services/expenseService';
 import { roomStatus } from '../../services/roomService';
-import { haptic } from '../../utils/haptics';
+import { haptic } from '../../utils/device/haptics';
 import { memberStyle, initialOf, fmt } from '../dashboard/dashboardData';
 import Sheet from '../ui/Sheet';
 import { IdentitySheet } from '../dashboard/parts/Shared';

@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { haptic } from '../../utils/haptics';
+import { haptic } from '../../utils/device/haptics';
 
 const ToastContext = createContext(null);
 const OUT_MS = 200;

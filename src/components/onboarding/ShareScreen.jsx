@@ -5,7 +5,7 @@ import { useRoomContext } from '../../context/RoomContext';
 import { copyToClipboard, shareRoom } from '../../utils/helpers';
 import { syncExistingSharedExpenses, removeSyncedExpensesFromPersonalRooms } from '../../services/expenseService';
 import { createPersonalTracker } from '../../services/roomService';
-import { haptic } from '../../utils/haptics';
+import { haptic } from '../../utils/device/haptics';
 import Sheet from '../ui/Sheet';
 import { useToast } from '../ui/Toast';
 import { memberStyle, initialOf } from '../dashboard/dashboardData';

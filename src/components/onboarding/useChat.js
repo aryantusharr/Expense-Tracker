@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { haptic } from '../../utils/haptics';
+import { haptic } from '../../utils/device/haptics';
 
 const wait = ms => new Promise(r => setTimeout(r, ms));
 

@@ -1,4 +1,4 @@
-import { db } from '../services/firebase';
+import { db } from '../../services/firebase';
 import { collection, deleteDoc, query, getDocs, where } from 'firebase/firestore';
 
 /**

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { collection, doc, getDoc, getDocs, query, where, writeBatch, arrayUnion, updateDoc } from 'firebase/firestore';
 import { db } from '../../../services/firebase';
-import { haptic } from '../../../utils/haptics';
+import { haptic } from '../../../utils/device/haptics';
 import Sheet from '../../ui/Sheet';
 import CategoryIcon from '../../ui/CategoryIcon';
 import { useToast } from '../../ui/Toast';

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { haptic } from '../../../utils/haptics';
+import { haptic } from '../../../utils/device/haptics';
 import { TextField } from '../../ui/Keyboard';
 import CategoryIcon from '../../ui/CategoryIcon';
 import { evalExpr } from '../../add/amountExpr';

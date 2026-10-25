@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { haptic } from '../../../utils/haptics';
+import { haptic } from '../../../utils/device/haptics';
 import { cleanName } from '../../../aai/common.js';
 import { Mg } from './parts';
 import { TextEdit } from './Cards';

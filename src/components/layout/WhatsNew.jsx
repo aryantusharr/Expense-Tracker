@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { haptic } from '../../utils/haptics';
+import { haptic } from '../../utils/device/haptics';
 import Sheet from '../ui/Sheet';
 import { RELEASE, SHORT, CHANGE_COUNT, whatsNewUnseen, markWhatsNewSeen } from '../../version/version';
 import './WhatsNew.css';

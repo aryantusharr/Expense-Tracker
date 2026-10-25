@@ -2,7 +2,7 @@ import { useMemo, useRef, useState } from 'react';
 import { parseCSVForMapping, applyMappings, importToFirestore } from '../../services/csvImportService';
 import { useRoomContext } from '../../context/RoomContext';
 import { updateRoomData } from '../../services/roomService';
-import { haptic } from '../../utils/haptics';
+import { haptic } from '../../utils/device/haptics';
 import { memberStyle, initialOf } from '../dashboard/dashboardData';
 import CategoryIcon from '../ui/CategoryIcon';
 import Sheet from '../ui/Sheet';

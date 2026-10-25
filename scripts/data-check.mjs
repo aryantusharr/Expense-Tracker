@@ -1,8 +1,8 @@
 // Phase 4 data check (read-only): re-derives balances/totals from the anonymised backup with exact math and
 // compares with the app's own calculators; also flags data shapes the UI might trip on.
 import fs from 'node:fs';
-import { calculateBalances, getTotalExpenses, getMonthlyTotals } from '../src/utils/splitCalculator.js';
-import { calculateSettlements } from '../src/utils/settlementEngine.js';
+import { calculateBalances, getTotalExpenses, getMonthlyTotals } from '../src/utils/money/splitCalculator.js';
+import { calculateSettlements } from '../src/utils/money/settlementEngine.js';
 const dec = v => v == null ? v : 'stringValue' in v ? v.stringValue : 'integerValue' in v ? Number(v.integerValue) : 'doubleValue' in v ? v.doubleValue
   : 'booleanValue' in v ? v.booleanValue : 'nullValue' in v ? null : 'arrayValue' in v ? (v.arrayValue.values || []).map(dec)
   : 'mapValue' in v ? Object.fromEntries(Object.entries(v.mapValue.fields || {}).map(([k, x]) => [k, dec(x)])) : v;

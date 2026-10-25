@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { haptic } from '../../utils/haptics';
+import { haptic } from '../../utils/device/haptics';
 import CategoryIcon, { LineIcon } from '../ui/CategoryIcon';
 import { resolveCategoryIcon } from '../../design/categoryIcons';
 import { initialOf, fmt } from '../dashboard/dashboardData';

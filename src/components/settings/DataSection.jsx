@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
-import { generateExpenseReport } from '../../utils/pdfExport';
-import { exportToExcel, exportToExcelMonthly } from '../../utils/excelExport';
-import { haptic } from '../../utils/haptics';
+import { generateExpenseReport } from '../../utils/export/pdfExport';
+import { exportToExcel, exportToExcelMonthly } from '../../utils/export/excelExport';
+import { haptic } from '../../utils/device/haptics';
 import { LineIcon } from '../ui/CategoryIcon';
 import Sheet from '../ui/Sheet';
 import { useToast } from '../ui/Toast';

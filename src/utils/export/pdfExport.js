@@ -1,9 +1,9 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { calculateBalances } from './splitCalculator';
-import { calculateSettlements } from './settlementEngine';
-import { memberStyle, monthWindow } from '../components/dashboard/dashboardData';
-import { VERSION } from '../version/version';
+import { calculateBalances } from '../money/splitCalculator';
+import { calculateSettlements } from '../money/settlementEngine';
+import { memberStyle, monthWindow } from '../../components/dashboard/dashboardData';
+import { VERSION } from '../../version/version';
 
 // "Magazine" report (board E1e): A4 landscape on white paper — a cover with one huge number,
 // then expenses per month, then a category × month matrix. Sora / JetBrains Mono / Unbounded /

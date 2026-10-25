@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { haptic } from '../../utils/haptics';
+import { haptic } from '../../utils/device/haptics';
 
 /** Board 9a + 9b: printer bar with a blank swaying receipt, add button, arrow to the pulsing History tab. */
 export default function EmptyHistory({ roomName }) {

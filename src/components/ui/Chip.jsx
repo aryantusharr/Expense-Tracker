@@ -1,4 +1,4 @@
-import { haptic } from '../../utils/haptics';
+import { haptic } from '../../utils/device/haptics';
 
 /** Selectable pill (filters, payer, members). `selected` drives the gradient state + aria-pressed. */
 export default function Chip({ selected = false, onClick, leading, className = '', children, ...rest }) {

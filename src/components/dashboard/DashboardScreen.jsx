@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRoomContext } from '../../context/RoomContext';
 import { useTheme } from '../../context/ThemeContext';
-import { haptic } from '../../utils/haptics';
+import { haptic } from '../../utils/device/haptics';
 import {
   sharedModel, monthWindow, lifetime, spendingMatrix, lastTransaction, skyFor, memberStyle, initialOf,
 } from './dashboardData';

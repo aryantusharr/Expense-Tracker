@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useRoomContext } from '../../context/RoomContext';
 import { deleteRoom, unlinkPersonalRoom } from '../../services/roomService';
 import { copyToClipboard } from '../../utils/helpers';
-import { haptic } from '../../utils/haptics';
+import { haptic } from '../../utils/device/haptics';
 import Sheet from '../ui/Sheet';
 import { useToast } from '../ui/Toast';
 import { summariseRoom, refreshRoomCaches, ROOM_DOTS, ICONS } from './onboardingData';

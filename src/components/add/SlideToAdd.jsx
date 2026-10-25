@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { haptic } from '../../utils/haptics';
+import { haptic } from '../../utils/device/haptics';
 
 /**
  * Slide to add. Dimmed with the missing-field hint until the form is complete; an early slide / tap

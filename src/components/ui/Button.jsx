@@ -1,4 +1,4 @@
-import { haptic } from '../../utils/haptics';
+import { haptic } from '../../utils/device/haptics';
 
 /**
  * Pill button. variant: primary (violet→teal) · secondary (outline) · ghost · soft (teal, e.g. Undo) · danger

@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useRoomContext } from '../../context/RoomContext';
 import { useTheme } from '../../context/ThemeContext';
 import { copyToClipboard } from '../../utils/helpers';
-import { haptic } from '../../utils/haptics';
+import { haptic } from '../../utils/device/haptics';
 import { memberStyle, initialOf, monthWindow, fmt } from '../dashboard/dashboardData';
 import { LineIcon } from '../ui/CategoryIcon';
 import Sheet from '../ui/Sheet';

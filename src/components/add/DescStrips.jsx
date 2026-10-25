@@ -1,4 +1,4 @@
-import { haptic } from '../../utils/haptics';
+import { haptic } from '../../utils/device/haptics';
 import { matchChips } from './addHelpers';
 
 /**

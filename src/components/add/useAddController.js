@@ -2,13 +2,13 @@ import { useCallback, useMemo, useState } from 'react';
 import { useRoomContext } from '../../context/RoomContext';
 import { useExpenseForm } from '../../hooks/useExpenseForm';
 import { addExpense, addItemisedExpenseGroup } from '../../services/expenseService';
-import { validateExpense } from '../../utils/expenseFormHelpers';
-import { getLastUsedMode, setLastUsedMode, getLastUsedDefaults, setLastUsedDefaults } from '../../utils/lastUsedDefaults';
-import { addRecentDescription } from '../../utils/recentDescriptions';
-import { detectRecurringExpenses } from '../../utils/recurringExpenses';
+import { validateExpense } from '../../utils/expenses/expenseFormHelpers';
+import { getLastUsedMode, setLastUsedMode, getLastUsedDefaults, setLastUsedDefaults } from '../../utils/expenses/lastUsedDefaults';
+import { addRecentDescription } from '../../utils/expenses/recentDescriptions';
+import { detectRecurringExpenses } from '../../utils/expenses/recurringExpenses';
 import { memberStyle, monthWindow, localDateStr } from '../dashboard/dashboardData';
 import { getSortedCategories, descriptionLists } from './addHelpers';
-import { guessCategory, learnPatterns } from '../../utils/categoryGuess';
+import { guessCategory, learnPatterns } from '../../utils/expenses/categoryGuess';
 
 /**
  * Logic for the redesigned Add screen. Save payload, validation and defaults are the same

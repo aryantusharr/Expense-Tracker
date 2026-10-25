@@ -6,7 +6,7 @@
  * Plain data: { isBill, shop, date, items:[{ name, qty, amount|null, category, conf }], charges:[{ label, kind, amount }],
  *               total|null, conf:{ shop, date, total }, unclear:[index…] }
  */
-import { learnedCategory, keywordCategory, findMatchingCategory } from '../utils/categoryGuess.js';
+import { learnedCategory, keywordCategory, findMatchingCategory } from '../utils/expenses/categoryGuess.js';
 import { toDateStr, fromDateStr, addDays, fmtINR, MONTH_NAMES, cleanName } from './common.js';
 
 export const SURE = 0.7;                 // below this a field gets the dotted "not sure" underline

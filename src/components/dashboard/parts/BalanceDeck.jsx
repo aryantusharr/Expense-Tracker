@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { haptic } from '../../../utils/haptics';
+import { haptic } from '../../../utils/device/haptics';
 import { fmt, shortDay } from '../dashboardData';
 import { SectionChip } from './Shared';
 

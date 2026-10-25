@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { DropNumber } from '../../ui/Numbers';
 import Sheet from '../../ui/Sheet';
 import Button from '../../ui/Button';
-import { haptic } from '../../../utils/haptics';
+import { haptic } from '../../../utils/device/haptics';
 import { fmt, shortDay, MONTHS_SHORT } from '../dashboardData';
 
 export function Mono({ m, size, radius, fontSize, className = '' }) {

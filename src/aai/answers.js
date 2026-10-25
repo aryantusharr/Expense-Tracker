@@ -2,9 +2,9 @@
  * AAI answers: the numbers behind balance / spend / settle cards.
  * Reuses calculateBalances + calculateSettlements, so AAI always agrees with the Balances screen.
  */
-import { calculateBalances } from '../utils/splitCalculator.js';
-import { calculateSettlements } from '../utils/settlementEngine.js';
-import { normalize } from '../utils/categoryGuess.js';
+import { calculateBalances } from '../utils/money/splitCalculator.js';
+import { calculateSettlements } from '../utils/money/settlementEngine.js';
+import { normalize } from '../utils/expenses/categoryGuess.js';
 import { cleanName, memberShare, fromDateStr, toDateStr, addDays, MONTH_NAMES } from './common.js';
 
 const num = e => parseFloat(e?.amount) || 0;

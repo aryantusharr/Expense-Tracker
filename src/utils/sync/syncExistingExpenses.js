@@ -1,8 +1,8 @@
-import { db } from '../services/firebase';
+import { db } from '../../services/firebase';
 import { collection, doc, getDoc, getDocs, writeBatch, updateDoc, arrayUnion } from 'firebase/firestore';
-import { getMemberShare } from '../services/expenseService';
+import { getMemberShare } from '../../services/expenseService';
 import { resolvePersonalCategory } from './syncExpenseToPersonal';
-import { roomStatus } from '../services/roomService';
+import { roomStatus } from '../../services/roomService';
 
 export const PERSONAL_ROOM_GONE = 'PERSONAL_ROOM_GONE';
 

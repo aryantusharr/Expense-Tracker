@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { joinRoom } from '../../services/roomService';
 import { useRoomContext } from '../../context/RoomContext';
-import { haptic } from '../../utils/haptics';
+import { haptic } from '../../utils/device/haptics';
 import { useToast } from '../ui/Toast';
 import { ObPage, ObHeader } from './OnboardingBits';
 

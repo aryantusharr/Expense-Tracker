@@ -6,7 +6,7 @@
  * lastAai = what AAI added most recently, from localStorage `splitease_aai_last`:
  *   { ids: string[], at: number (ms), room?: string }
  */
-import { normalize } from '../utils/categoryGuess.js';
+import { normalize } from '../utils/expenses/categoryGuess.js';
 import { cleanName, expenseTime, fmtINR } from './common.js';
 import { balanceAnswer, settleAnswer } from './answers.js';
 

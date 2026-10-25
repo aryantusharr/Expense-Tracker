@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../context/ThemeContext';
-import { haptic } from '../../utils/haptics';
+import { haptic } from '../../utils/device/haptics';
 import { ICONS } from './onboardingData';
 import './Onboarding.css';
 

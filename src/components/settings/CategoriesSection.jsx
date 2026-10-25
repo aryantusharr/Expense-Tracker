@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
 import { updateCategories } from '../../services/roomService';
 import { useRoomContext } from '../../context/RoomContext';
-import { addCategoryToSyncedRooms } from '../../utils/syncExpenseToPersonal';
+import { addCategoryToSyncedRooms } from '../../utils/sync/syncExpenseToPersonal';
 import { generateId } from '../../utils/helpers';
-import { haptic } from '../../utils/haptics';
+import { haptic } from '../../utils/device/haptics';
 import { CATEGORY_ICONS, resolveCategoryIcon } from '../../design/categoryIcons';
 import CategoryIcon, { LineIcon } from '../ui/CategoryIcon';
 import Sheet from '../ui/Sheet';
