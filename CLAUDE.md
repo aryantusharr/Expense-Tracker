@@ -1,10 +1,11 @@
 # SplitEase — working with Claude Code
 
 ## Start of every session (read in this order, stop when you have enough)
+0. Run `git pull origin redesign` first (another Claude Code session may have pushed). Only one Claude Code session should work on the repo at a time.
 1. `STATUS.md` — where the app and the work stand right now (short).
 2. `ARCHITECTURE.md` — which screen lives in which folder.
 3. Only then the one doc you need: `PLAN.md` (checklist), `docs/AAI.md` (Aryan AI), `docs/SplitEase-Design-System.md` (tokens + screen specs), `LOG.md` (history, read only when digging).
-End of every session: update `STATUS.md`, add a dated line to `LOG.md`, tick `PLAN.md`, and refresh `BRIEF.md` (see "Shared knowledge" below).
+End of every session: update `STATUS.md`, add a dated line to `LOG.md`, tick `PLAN.md`, refresh `BRIEF.md` (see "Shared knowledge" below), commit, and push with the designer's OK. Unpushed work is invisible to the other Claude accounts. If the designer says "update the status files", do this routine.
 
 ## Who you're working with
 The owner is a designer, not a developer. They designed the whole redesign with Claude on a Claude Design canvas and want you to build, test and ship it. Explain things in plain words, show rather than tell (screenshots, links to open on their iPhone), and never assume they know a terminal command.

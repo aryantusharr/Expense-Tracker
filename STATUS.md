@@ -21,6 +21,9 @@ _Last updated: 26 Oct 2026. Keep this under about 45 lines; move history to `LOG
 ## Open items
 See "Open" in `PLAN.md`. Right now: rules hardening; optional AI-monitoring switch-off; split the oversized files; choose the next round of work.
 
+## Bugs (open)
+_None logged yet. Add each bug as: what happens · where (screen) · how to reproduce · status. Move fixed ones to `LOG.md`._
+
 ## Known risks
 - **Gemini free tier**: about 20 bill reads/day per model (main + spare). When both are used up the chat shows the LIMIT reply and the user types items instead. Options to weigh: watch usage, add another fallback, or move to a paid tier.
 - **Firestore rules hardening (open)**: (1) `roomNames` entries can be deleted by anyone (`allow delete: if true`, `firestore.rules` line 64); (2) expense and opens writes only check the room-code format, not that the room exists (lines 46 and 53). Fix goes through the test project first; live rules deploy needs the designer's yes and a fresh backup.
