@@ -5,9 +5,9 @@ _Last updated: 26 Oct 2026. Keep this under about 45 lines; move history to `LOG
 ## The app
 - **SplitEase v3.0.0 (build 132) is LIVE** at https://splitease-7bb6c.web.app (Firebase Hosting, project `splitease-7bb6c`, 3 real users, 4 rooms).
 - PWA expense tracker: shared rooms (roommate splits, balances, settlements) and personal rooms (budget). Installed on the designer's iPhone 13 Pro as a Home-Screen app.
-- Stack: React 19 + Vite 8 + Firestore (no sign-in; the room code is the key) + Framer Motion. Details in `CLAUDE.md`.
+- Stack: React 19 + Vite 8 + Firestore (no sign-in; the room code is the key) + Framer Motion. Working rules in `AGENTS.md`.
 - Code: GitHub `aryantusharr/Expense-Tracker` (public). Working branch `redesign`; `main` was fast-forwarded to the v3.0.0 release and is protected; tag `v3.0.0`.
-- Tests: `npm test` → 261 pass. Lint is clean. A build needs the designer's Mac (the `node_modules` there are macOS builds).
+- Tests: `npm test` → 269 pass. Lint is clean. Build and deploy run on the designer's Mac (the `node_modules` there are macOS builds).
 
 ## What shipped in v3
 - Full visual redesign (dark + light), all screens: onboarding, dashboard, add expense (Quick + Items), history, settings, import/export.
@@ -23,6 +23,8 @@ See "Open" in `PLAN.md`. Right now: rules hardening; optional AI-monitoring swit
 
 ## Recent changes (since the last full refresh, 26 Oct 2026)
 _One line per session; emptied at each full refresh. If this list is long, the rest of this file may be slightly behind._
+- 26 Oct · **v3.0.1 is built and pushed but NOT live yet** (version bumped, release notes written, `dist/` built). Next step: on the designer's Mac, with the designer's yes, run the hosting deploy in `AGENTS.md` → Releasing. Then tag `v3.0.1` and do the full refresh.
+- 26 Oct · Process change: Claude Code is no longer used. Rules moved from `CLAUDE.md` to the tool-neutral `AGENTS.md`; any AI coding assistant on the designer's Mac can build and deploy. The free Claude account keeps brainstorming from `BRIEF.md` + `STATUS.md`.
 - 26 Oct · Fixed: Taxes & charges no longer added twice and old duplicates heal themselves; the Settings budget sheet has a numpad; the Dashboard bars show all months (scroll, plus a Months/Years switch above 12 months). The "Pay … to settle up" line on the You-owe card is now "Last · Paid ₹… for … · day", and the Balances cards no longer show it; the header no longer says Shared / x roommates. Checked by tests (269 pass), lint and a build only — not yet looked at on a phone, not live.
 
 ## Bugs (open) — logged 26 Oct 2026

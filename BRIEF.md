@@ -11,7 +11,7 @@ A mobile web app (PWA, installed on an iPhone Home Screen) for tracking and spli
 ## Where it stands
 - **v3.0.0 is live** (9 Oct 2026): a full visual redesign (dark + light) plus the Aryan AI assistant.
 - The redesign is finished. Right now the work is tidying code and docs; there is no active feature in progress.
-- The designer is not a developer. They design on a Claude Design canvas; a separate build account turns designs into code.
+- The designer is not a developer. They design on a Claude Design canvas; an AI coding assistant on their Mac turns designs into code.
 
 ## Screens
 Landing · Create room (a chat-style flow) · Join room · Personal setup · Share room · Dashboard · Add Expense (Quick and Items/bill modes) · History · Settings (categories, data export/import, profile sync) · Aryan AI chat.
@@ -44,7 +44,7 @@ Premium, not calm. Light and dark only. Warm, slightly playful copy (including H
 - How to deal with the known risks below.
 - Anything the three users have asked for or complained about. (The live app was checked on 26 Oct and works; no open bugs are known.)
 
-## How to hand decisions back to the build account
+## How to hand decisions back to the builder
 When the designer says "wrap up", write a short note in this shape and keep it under 15 lines:
 
 ```
@@ -55,7 +55,7 @@ DECISIONS NOTE — <date>
    Status: decided | leaning | open
 Open questions: <short list, or none>
 ```
-The designer pastes it into the build chat once; the build account folds it into its status files and this brief.
+The designer pastes it into the builder's chat once; the builder folds it into its status files and this brief.
 
 ## Style for this partner
 Short replies. Offer 2–4 options with a recommendation. Ask before assuming. Don't invent code details; if unsure how something is built, say so and ask.

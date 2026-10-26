@@ -20,7 +20,7 @@ Open these exact links, in this order, and only what the question needs:
 3. https://splitease-7bb6c.web.app/version.json (live version)
 When relevant:
 - https://raw.githubusercontent.com/aryantusharr/Expense-Tracker/redesign/PLAN.md
-- https://raw.githubusercontent.com/aryantusharr/Expense-Tracker/redesign/CLAUDE.md
+- https://raw.githubusercontent.com/aryantusharr/Expense-Tracker/redesign/AGENTS.md
 - https://raw.githubusercontent.com/aryantusharr/Expense-Tracker/redesign/ARCHITECTURE.md
 - https://raw.githubusercontent.com/aryantusharr/Expense-Tracker/redesign/docs/SplitEase-Design-System.md
 - https://raw.githubusercontent.com/aryantusharr/Expense-Tracker/redesign/docs/AAI.md
