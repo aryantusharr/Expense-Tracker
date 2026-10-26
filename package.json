@@ -1,7 +1,7 @@
 {
   "name": "expense-tracker",
   "private": true,
-  "version": "3.0.1",
+  "version": "3.0.2",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -38,5 +38,5 @@
     "google-auth-library": "^11.1.0",
     "vite": "^8.0.10"
   },
-  "splitEaseBuild": 137
+  "splitEaseBuild": 141
 }
