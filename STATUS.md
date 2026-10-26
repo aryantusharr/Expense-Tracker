@@ -1,18 +1,24 @@
 # SplitEase — status (read this first)
 
-_Last updated: 26 Oct 2026. Keep this under about 45 lines; move history to `LOG.md`._
+_Last updated: 26 Oct 2026 (v3.0.3 release). Keep this under about 45 lines; move history to `LOG.md`._
 
 ## The app
-- **SplitEase v3.0.0 (build 132) is LIVE** at https://splitease-7bb6c.web.app (Firebase Hosting, project `splitease-7bb6c`, 3 real users, 4 rooms).
+- **SplitEase v3.0.3 (build 141) is LIVE** (26 Oct 2026; v3.0.0 build 132 before it) at https://splitease-7bb6c.web.app (Firebase Hosting, project `splitease-7bb6c`, 3 real users, 4 rooms).
 - PWA expense tracker: shared rooms (roommate splits, balances, settlements) and personal rooms (budget). Installed on the designer's iPhone 13 Pro as a Home-Screen app.
 - Stack: React 19 + Vite 8 + Firestore (no sign-in; the room code is the key) + Framer Motion. Working rules in `AGENTS.md`.
-- Code: GitHub `aryantusharr/Expense-Tracker` (public). Working branch `redesign`; `main` was fast-forwarded to the v3.0.0 release and is protected; tag `v3.0.0`.
-- Tests: `npm test` → 269 pass. Lint is clean. Build and deploy run on the designer's Mac (the `node_modules` there are macOS builds).
+- Code: GitHub `aryantusharr/Expense-Tracker` (public). Working branch `redesign`; `main` was fast-forwarded to the v3.0.0 release and is protected; tags `v3.0.0`, `v3.0.3` (3.0.1 and 3.0.2 were never live).
+- Tests: `npm test` → 278 pass. Lint is clean. Build and deploy run on the designer's Mac (the `node_modules` there are macOS builds).
 
 ## What shipped in v3
 - Full visual redesign (dark + light), all screens: onboarding, dashboard, add expense (Quick + Items), history, settings, import/export.
 - **Aryan AI (AAI)**: chat assistant that ADDS expenses from typed text or bill screenshots (Gemini through Firebase AI Logic + App Check, free tier with a spare model). Past chats, errors as replies, per-member app-opens heatmap. Guide: `docs/AAI.md`.
 - Amounts use the in-app keypad; text fields use the phone's keyboard. Version/What's-new system. Learned categories.
+
+## What shipped in v3.0.3 (26 Oct 2026, everything since 3.0.0)
+- Dashboard: graph shows every month (scroll, Months/Years switch); You-owe card shows the last payment (no name icon in front); header has no Shared / roommate count; Smart settlements are a deck (tap to fan, no Settle).
+- History: month card PAID/SHARE (personal: BUDGET/LEFT); search lists only matches from every month, month chips + date dropdown, dates searchable.
+- Fixed: Taxes & charges added twice (old duplicates heal); Settings budget sheet has a numpad.
+- What's new lists all of the above (3.0.1 and 3.0.2 were skipped on live).
 
 ## Environments (never mix them)
 - Live: `splitease-7bb6c` — touch only with the designer's explicit "yes" per step, after a fresh backup.
@@ -23,24 +29,10 @@ See "Open" in `PLAN.md`. Right now: rules hardening; optional AI-monitoring swit
 
 ## Recent changes (since the last full refresh, 26 Oct 2026)
 _One line per session; emptied at each full refresh. If this list is long, the rest of this file may be slightly behind._
-- 26 Oct · **v3.0.1 is built and pushed but NOT live yet** (version bumped, release notes written, `dist/` built). Next step: on the designer's Mac, with the designer's yes, run the hosting deploy in `AGENTS.md` → Releasing. Then tag `v3.0.1` and do the full refresh.
-- 26 Oct · Process change: Claude Code is no longer used. Rules moved from `CLAUDE.md` to the tool-neutral `AGENTS.md`; any AI coding assistant on the designer's Mac can build and deploy. The free Claude account keeps brainstorming from `BRIEF.md` + `STATUS.md`.
-- 26 Oct · Fixed: Taxes & charges no longer added twice and old duplicates heal themselves; the Settings budget sheet has a numpad; the Dashboard bars show all months (scroll, plus a Months/Years switch above 12 months). The "Pay … to settle up" line on the You-owe card is now "Last · Paid ₹… for … · day", and the Balances cards no longer show it; the header no longer says Shared / x roommates. Checked by tests (269 pass), lint and a build only — not yet looked at on a phone, not live.
-- 26 Oct · Built Bugs 4, 5 and Change 1 on `redesign` (not live, no phone check yet): month card shows PAID/SHARE (personal: BUDGET/LEFT); search lists matches from every month with month chips + a date dropdown, counts only, dates searchable ("9 oct", "yesterday"); settlements are a deck (tap to fan). 278 tests pass, lint clean, build OK. Change 2 dropped.
+- 26 Oct · A "Test App" page on the canvas opens the current build with test data (no live database); rebuilt from the code on request.
 
-## Bugs (open) — logged 26 Oct 2026
-Format: what happens · where · cause if known · next step. "FIX" = clear, can be built now on the test project. "BRAINSTORM" = needs a design decision first.
-1. ✅ FIXED on `redesign` (not live) **Taxes & charges category appears many times** · Settings categories / pickers · cause found: `AaiChat.jsx` adds the category on every bill save that uses it, without checking the room already has it · FIX (code), plus decide about cleaning rooms that already have duplicates (live data needs the designer's yes + backup).
-2. ✅ FIXED on `redesign` (not live) **Balances graph shows only the last 6 months** · Dashboard · cause found: `monthWindow()` in `dashboardData.js` is hard-limited to 6 months (the PDF report relies on the same limit) · FIX once the display is chosen (scroll sideways, compress, or by year).
-3. ✅ FIXED on `redesign` (not live) **"Pay ___ to settle up" line** · Dashboard You owe / You're owed card · replace with "Last · Paid ₹2xx for ____ · Yesterday" and remove that line from the Balances cards (text lives in `parts/Shared.jsx`) · FIX once the exact wording and the Balances-card result are confirmed.
-4. ✅ BUILT on `redesign` (not live) **Month card should show the person's Paid and Share for that month** · History · BRAINSTORM (what to show, where, for shared vs personal rooms).
-5. ✅ BUILT on `redesign` (not live) **Search mutes other items instead of showing only matches** · History · BRAINSTORM (filter vs highlight, how totals behave).
-6. ✅ FIXED on `redesign` (not live) **Personal room: budget can't be set** · Settings > Monthly budget sheet · cause found: the sheet only has +/− ₹500/₹1000 buttons and no numpad (the setup screen does have one) · FIX (tap the amount to open the numpad, keep the steps).
-
-## Changes requested — 26 Oct 2026
-1. ✅ BUILT on `redesign` (not live) Smart settlements cards stacked · Dashboard · deck, yours in front, tap to fan, no Settle.
-2. ❌ DROPPED 26 Oct (the designer's call) "Not logged" section · Dashboard · keep the current ticker; no redesign.
-3. ✅ FIXED on `redesign` (not live) Remove the "Shared" and "x roommates" texts under the room name · Dashboard header (the LIVE/OFFLINE dot stays).
+## Bugs and change requests of 26 Oct 2026
+All six bugs and change requests 1 and 3 are fixed and LIVE in v3.0.3. Change 2 ("Not logged" redesign) was dropped. No open bugs known.
 
 ## Known risks
 - **Gemini free tier**: about 20 bill reads/day per model (main + spare). When both are used up the chat shows the LIMIT reply and the user types items instead. Options to weigh: watch usage, add another fallback, or move to a paid tier.
