@@ -65,7 +65,7 @@ export function HeroCard({ model, me, categories, onPickIdentity }) {
   const [ringOn, setRingOn] = useState(false);
   useEffect(() => { const t = setTimeout(() => setRingOn(true), 500); return () => clearTimeout(t); }, []);
 
-  const { members, settlements } = model;
+  const { members } = model;
   const maxAbs = Math.max(1, ...members.map(m => Math.abs(m.all.net)));
   const nets = (
     <div className="dsh-nets">
@@ -107,15 +107,8 @@ export function HeroCard({ model, me, categories, onPickIdentity }) {
 
   const net = me.all.net;
   const state = Math.abs(net) < 1 ? 'even' : net < 0 ? 'neg' : 'pos';
-  const cps = state === 'neg'
-    ? settlements.filter(s => s.from.id === me.id).map(s => s.to)
-    : settlements.filter(s => s.to.id === me.id).map(s => s.from);
-  const names = cps.map(c => c.name);
-  const nameStr = names.length > 1 ? `${names.slice(0, -1).join(', ')} & ${names[names.length - 1]}` : names[0];
   const label = state === 'neg' ? 'YOU OWE' : state === 'pos' ? "YOU'RE OWED" : 'ALL SQUARE';
-  // Everyone sees their last payment as the Last-paid pill; owed / all-square also keep their sentence above it.
-  const sub = state === 'pos' ? `${nameStr} ${names.length > 1 ? 'owe' : 'owes'} you`
-      : 'Nothing to settle right now';
+  // Under the amount: only the Last-paid pill (no 'X owes you' / 'Nothing to settle' sentence), in every state.
   // Nothing logged yet → empty ring and "—", not "100% you paid".
   const nothing = me.all.share <= 0 && me.all.paid <= 0;
   const ratio = nothing ? 0 : me.all.share > 0 ? me.all.paid / me.all.share : 1;
@@ -150,12 +143,6 @@ export function HeroCard({ model, me, categories, onPickIdentity }) {
           <span className="cur" aria-hidden="true">₹</span>
           <DropNumber value={fmt(net)} />
         </p>
-        {state !== 'neg' && (
-          <div className="dsh-hero__who">
-            {cps.length > 0 && <span style={{ display: 'flex' }}>{cps.map(c => <Mono key={c.id} m={c} />)}</span>}
-            <span>{sub}</span>
-          </div>
-        )}
         <LastPaidPill tx={me.last} categories={categories} />
       </div>
       {nets}

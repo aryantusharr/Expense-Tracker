@@ -149,9 +149,6 @@
 .dsh-hero__num .cur { font-size: 34px; margin: 6px 4px 0 0; color: var(--se-text-2); font-weight: 400; }
 .dsh-hero__num { padding-right: 84px; }
 .dsh-hero__num .se-drop { font-size: var(--num-size, 56px); color: var(--num); }
-.dsh-hero__who { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--dsh-ink-2); }
-.dsh-hero__who .dsh-mono { width: 28px; height: 28px; border-radius: 9px; font-size: 11px; box-shadow: 0 0 0 2.5px var(--dsh-mono-ring); }
-.dsh-hero__who .dsh-mono + .dsh-mono { margin-left: -10px; }
 .dsh-ring { position: absolute; right: 0; top: 0; width: 76px; height: 76px; z-index: 1; }
 .dsh-ring svg { display: block; transform: rotate(-90deg); }
 .dsh-ring__arc { transition: stroke-dashoffset 1.4s cubic-bezier(.65,0,.35,1); }
@@ -464,6 +461,5 @@
   .dsh-lp__it { animation: none; opacity: 0; }
   .dsh-lp__it--0 { opacity: 1; transform: scale(var(--pk, 1.2)); }
 }
-.dsh-hero__who + .dsh-lp { margin-top: 4px; }
 .dsh-lastpill { display: flex; flex-direction: column; gap: 8px; }
 .dsh-lastpill .dsh-last__foot { margin: 0 6px; padding-top: 0; border-top: 0; font-size: 11px; color: var(--se-text-2); }

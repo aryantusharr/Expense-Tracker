@@ -15,6 +15,7 @@ export const RELEASE = {
   improved: [
     'Your last payment is now a pill with a rolling date on the top card — today, the date and the day glide past',
     'Everyone sees it now — whether you owe, are owed or are all square, and in personal rooms too',
+    'The top card is cleaner — just the amount and your last payment, no extra line under it',
     'Category icons come alive with a small motion of their own',
   ],
   fixed: [],
