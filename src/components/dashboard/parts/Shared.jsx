@@ -151,7 +151,7 @@ export function HeroCard({ model, me, onPickIdentity }) {
           <DropNumber value={fmt(net)} />
         </p>
         <div className="dsh-hero__who">
-          {cps.length > 0 && <span style={{ display: 'flex' }}>{cps.map(c => <Mono key={c.id} m={c} />)}</span>}
+          {cps.length > 0 && state !== 'neg' && <span style={{ display: 'flex' }}>{cps.map(c => <Mono key={c.id} m={c} />)}</span>}
           <span>{sub}</span>
         </div>
       </div>
