@@ -1,7 +1,7 @@
 // Month picker stack that fans out when tapped.
 import { haptic } from '../../utils/device/haptics';
 import { fmt } from '../dashboard/dashboardData';
-import { monthSide } from './historyData';
+import { monthPair } from './historyFigures';
 
 /**
  * Board 1k: current month on top, earlier months peeking 20px below (scaled 5% per step).
@@ -15,7 +15,7 @@ export default function MonthStack({ months, selIdx, fan, onPress, isPersonal, b
     <div className="hm" style={{ height, transform: `scale(${shrink.s})`, opacity: shrink.o }}>
       {months.map((mo, i) => {
         const d = order.indexOf(i);
-        const side = monthSide(mo, { isPersonal, budget });
+        const pair = monthPair(mo, { isPersonal, budget });
         const y = fan ? d * 70 : d * 20;
         const s = fan ? 1 : 1 - d * 0.05;
         const o = fan ? 1 : d > 3 ? 0 : 1 - d * 0.18;
@@ -32,10 +32,14 @@ export default function MonthStack({ months, selIdx, fan, onPress, isPersonal, b
             </span>
             <span className="hm__big">
               <span className="se-display hm__total"><i>₹</i>{fmt(mo.total)}</span>
-              {side && (
-                <span className="hm__net">
-                  <span className="se-mono">{side.label}</span>
-                  <span className="se-display" style={{ color: side.color }}>{side.value}</span>
+              {pair && (
+                <span className="hm__pair">
+                  {pair.map(p => (
+                    <span key={p.label} className="hm__stat">
+                      <span className="se-mono">{p.label}</span>
+                      <span className="se-display" style={p.color ? { color: p.color } : undefined}>{p.value}</span>
+                    </span>
+                  ))}
                 </span>
               )}
             </span>

@@ -6,10 +6,12 @@ import { useToast, useToastDismiss } from '../ui/Toast';
 import { haptic } from '../../utils/device/haptics';
 import { TextField } from '../ui/Keyboard';
 import { resolveCategoryIcon } from '../../design/categoryIcons';
-import { memberStyle, fmt } from '../dashboard/dashboardData';
+import { memberStyle, fmt, localDateStr } from '../dashboard/dashboardData';
 import { updateExpense, updateGroupName, deleteExpense } from '../../services/expenseService';
 import { buildHistory, monthSide, isSyncedExp, syncedFrom } from './historyData';
+import { makeMatcher, collectMatches, displayBill, resolvePick, visibleDays } from './searchData';
 import MonthStack from './MonthStack';
+import SearchResults from './SearchResults';
 import { TearRow, ExpenseCard, BillCard } from './Rows';
 import EditSheet from './EditSheet';
 import EmptyHistory from './EmptyHistory';
@@ -27,7 +29,7 @@ export default function HistoryScreen() {
 
   const { months, entryCount } = useMemo(() => {
     const h = buildHistory(expenses, { meId, isPersonal, budget });
-    if (!meId) h.months.forEach(m => { m.net = null; });
+    if (!meId) h.months.forEach(m => { m.net = null; m.paid = null; m.share = null; });
     return h;
   }, [expenses, meId, isPersonal, budget]);
 
@@ -81,15 +83,14 @@ export default function HistoryScreen() {
   const closeSearch = e => { e?.stopPropagation(); setOpen(false); setQ(''); };
   const applyFilter = f => { haptic('tap'); setFilter(f); setOpen(false); setQ(''); };
 
-  const itemMatches = e => {
-    if (filter && (filter.kind === 'payer' ? e.paidBy !== filter.id : e.categoryId !== filter.id)) return false;
-    if (!ql) return true;
-    const hay = `${e.description || ''} ${e.groupName || ''} ${catOf(e)?.name || ''} ${users.find(u => u.id === e.paidBy)?.name || ''} ${e.amount}`.toLowerCase();
-    return hay.includes(ql.replace(/[₹,]/g, ''));
-  };
   const searching = Boolean(filter || ql);
-  const matchEn = en => (en.kind === 'bill' ? en.items.some(itemMatches) : itemMatches(en.e));
-  const entryDim = en => (searching ? (matchEn(en) ? 1 : 0.25) : 1);
+  const matches = useMemo(() => makeMatcher({ filter, ql, categories, users, today: localDateStr() }), [filter, ql, categories, users]);
+  const found = useMemo(() => (searching ? collectMatches(months, matches) : { groups: [], total: 0 }), [searching, months, matches]);
+  // Which month chip / date is chosen; a new search starts again from the newest month with matches.
+  const sig = `${ql}|${filter ? `${filter.kind}${filter.id}` : ''}`;
+  const [chosen, setChosen] = useState({ sig: '', month: null, date: null });
+  const pick = resolvePick(found.groups, chosen.sig === sig ? chosen : null);
+  const shownDays = searching ? visibleDays(found.groups, pick) : [];
 
   // ---- tear delete with Undo (the real delete waits until the toast is gone) ----
   const [hidden, setHidden] = useState(() => new Set());
@@ -149,31 +150,19 @@ export default function HistoryScreen() {
 
   const side = month ? monthSide(month, { isPersonal, budget }) : null;
 
-  // While searching/filtering: the month on screen dims non-matches (board 4f); matches from every
-  // other month are listed underneath so older expenses can still be found.
-  const OTHER_CAP = 60;
-  const hereHits = searching && month ? month.days.reduce((s, d) => s + d.entries.filter(matchEn).length, 0) : 0;
-  const otherDays = searching ? months.flatMap((m, i) => (i === selIdx ? [] : m.days
-    .map(d => ({ key: `${m.key}-${d.key}`, label: d.label, year: (m.short || "").split(" ")[1] || "", entries: d.entries.filter(matchEn) }))
-    .filter(d => d.entries.length))) : [];
-  const otherHits = otherDays.reduce((s, d) => s + d.entries.length, 0);
-  const otherShown = otherDays.reduce((acc, d) => {
-    const left = OTHER_CAP - acc.n;
-    if (left > 0) { const entries = d.entries.slice(0, left); acc.days.push({ ...d, entries }); acc.n += entries.length; }
-    return acc;
-  }, { days: [], n: 0 }).days;
   const listExtra = (open && suggestions.length) || filter ? 38 : 0;
   const tint = filter ? `color-mix(in srgb, ${filter.color} 50%, transparent)` : undefined;
 
-  const renderEntry = (en, dim) => (en.kind === 'bill' ? (
+  // `en` drives edit and delete; `shown` is what is drawn (during a search a bill may show only its matching items).
+  const renderEntry = (en, shown = en) => (en.kind === 'bill' ? (
     <BillCard
-      key={en.id} bill={en} catOf={catOf} users={users} meId={meId} isPersonal={isPersonal}
-      dim={dim} removed={hidden.has(en.id)}
+      key={en.id} bill={shown} catOf={catOf} users={users} meId={meId} isPersonal={isPersonal}
+      removed={hidden.has(en.id)}
       onEditItem={it => setEditing(it)} onTear={() => tear(en)} onLocked={() => locked(en)}
     />
   ) : (
     <TearRow
-      key={en.id} locked={isSyncedExp(en.e)} removed={hidden.has(en.id)} dim={dim}
+      key={en.id} locked={isSyncedExp(en.e)} removed={hidden.has(en.id)}
       onTap={() => (isSyncedExp(en.e) ? locked(en) : setEditing(en.e))} onTear={() => tear(en)} onLocked={() => locked(en)}
     >
       <ExpenseCard e={en.e} cat={catOf(en.e)} users={users} meId={meId} isPersonal={isPersonal} />
@@ -197,8 +186,8 @@ export default function HistoryScreen() {
           <div className={`hist__search se-glass ${open ? 'is-open' : ''}`} onClick={openSearch} role="search">
             <svg width="17" height="17" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16zM21 21l-4.3-4.3" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" /></svg>
             {open
-              ? <TextField value={q} onChange={setQ} placeholder="Search “chai”, “Ravi”, “₹500”" aria-label="Search expenses" caps="none" maxLength={40} autoFocus />
-              : <span className="hist__ph">Search “chai”, “Ravi”, “₹500”</span>}
+              ? <TextField value={q} onChange={setQ} placeholder="Search “chai”, “Ravi”, “9 oct”" aria-label="Search expenses" caps="none" maxLength={40} autoFocus />
+              : <span className="hist__ph">Search “chai”, “Ravi”, “9 oct”</span>}
             {open && <button type="button" className="hist__x" onClick={closeSearch} aria-label="Close search">×</button>}
           </div>
         </div>
@@ -217,7 +206,7 @@ export default function HistoryScreen() {
         )}
       </header>
 
-      {month && (
+      {month && !searching && (
         <div className="hist__stick" style={{ opacity: stuck ? 1 : 0, transform: `translateY(${stuck ? 0 : -8}px)` }} aria-hidden={!stuck}>
           <span className="se-mono">{month.short}</span>
           <span className="hist__stick-r">
@@ -228,39 +217,42 @@ export default function HistoryScreen() {
       )}
 
       <div className="hist__list" onScroll={onScroll}>
-        <MonthStack months={months} selIdx={selIdx} fan={fan} onPress={pressMonth} isPersonal={isPersonal} budget={budget} shrink={shrink} />
-
-        {month && month.days.length === 0 && (
-          <p className="hist__none se-mono">NOTHING IN {month.name} YET</p>
-        )}
-        {searching && !fan && (
-          <p className="hist__hits se-mono" aria-live="polite">
-            {hereHits + otherHits === 0 ? 'NO MATCHES'
-              : `${hereHits} IN ${month?.short || 'THIS MONTH'}${otherHits ? ` · ${otherHits} IN OTHER MONTHS ↓` : ''}`}
-          </p>
-        )}
-        {month && !fan && month.days.map(day => (
-          <section key={`${month.key}-${day.key}`} className="hist__day se-pop" style={{ animationDuration: '.45s' }}>
-            <div className="hist__dayhead">
-              <span className="se-mono">{day.label}</span>
-              <span className="se-mono hist__daytot">₹{fmt(day.total)}</span>
-            </div>
-            {day.entries.map(en => renderEntry(en, entryDim(en)))}
-          </section>
-        ))}
-        {searching && !fan && otherShown.length > 0 && (
+        {searching ? (
           <>
-            <p className="hist__other se-mono">OTHER MONTHS</p>
-            {otherShown.map(day => (
-              <section key={day.key} className="hist__day">
-                <div className="hist__dayhead"><span className="se-mono">{day.label} {day.year}</span></div>
-                {day.entries.map(en => renderEntry(en, 1))}
+            <SearchResults
+              groups={found.groups} total={found.total} pick={pick}
+              onMonth={month => setChosen({ sig, month, date: null })}
+              onDate={date => setChosen({ sig, month: pick.month, date })}
+            />
+            {shownDays.map(day => (
+              <section key={day.key} className="hist__day se-pop" style={{ animationDuration: '.45s' }}>
+                <div className="hist__dayhead">
+                  <span className="se-mono">{day.title}</span>
+                  <span className="se-mono hist__daytot">{day.count} {day.count === 1 ? 'MATCH' : 'MATCHES'}</span>
+                </div>
+                {day.entries.filter(en => (en.kind === 'bill' ? en.items.some(matches) : matches(en.e))).map(en => renderEntry(en, displayBill(en, matches)))}
               </section>
             ))}
-            {otherHits > OTHER_CAP && <p className="hist__none se-mono">+{otherHits - OTHER_CAP} MORE · NARROW THE SEARCH</p>}
+          </>
+        ) : (
+          <>
+            <MonthStack months={months} selIdx={selIdx} fan={fan} onPress={pressMonth} isPersonal={isPersonal} budget={budget} shrink={shrink} />
+
+            {month && month.days.length === 0 && (
+              <p className="hist__none se-mono">NOTHING IN {month.name} YET</p>
+            )}
+            {month && !fan && month.days.map(day => (
+              <section key={`${month.key}-${day.key}`} className="hist__day se-pop" style={{ animationDuration: '.45s' }}>
+                <div className="hist__dayhead">
+                  <span className="se-mono">{day.label}</span>
+                  <span className="se-mono hist__daytot">₹{fmt(day.total)}</span>
+                </div>
+                {day.entries.map(en => renderEntry(en))}
+              </section>
+            ))}
+            {fan && <p className="hist__none se-mono">PICK A MONTH</p>}
           </>
         )}
-        {fan && <p className="hist__none se-mono">PICK A MONTH</p>}
       </div>
 
       {editing && (

@@ -60,10 +60,11 @@ export function buildHistory(expenses, { meId, isPersonal, budget }) {
     const daysInMonth = new Date(y, m, 0).getDate();
     const byDay = {};
     const dayTotals = {};
-    let total = 0, net = 0;
+    let total = 0, net = 0, paid = 0, share = 0;
     for (const e of list) {
       total += amt(e);
-      net += myPart(e, meId).delta;
+      const mp = myPart(e, meId);
+      net += mp.delta; paid += mp.paid; share += mp.share;
       (byDay[e.date] ||= []).push(e);
       const dn = Number(e.date.slice(8, 10));
       dayTotals[dn] = (dayTotals[dn] || 0) + amt(e);
@@ -91,7 +92,7 @@ export function buildHistory(expenses, { meId, isPersonal, budget }) {
     return {
       key, idx, tint: TINTS[idx % TINTS.length],
       name: `${MONTHS_FULL[m - 1]} ${y}`, short: `${MONTHS_SHORT[m - 1].toUpperCase()} ${y}`,
-      count, total, net, left: isPersonal && budget > 0 ? budget - total : null,
+      count, total, net, paid, share, left: isPersonal && budget > 0 ? budget - total : null,
       spark: spark(dayTotals, daysInMonth, isNow ? now.getDate() : daysInMonth), days,
     };
   });
@@ -111,4 +112,3 @@ export function monthSide(mo, { isPersonal, budget }) {
   const pos = mo.net >= 0;
   return { label: 'YOUR NET', value: `${pos ? '+' : '−'}₹${fmt(mo.net)}`, color: pos ? 'var(--se-teal-2)' : 'var(--se-pink-2)' };
 }
-

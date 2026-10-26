@@ -4,7 +4,7 @@ import { DropNumber } from '../../ui/Numbers';
 import Sheet from '../../ui/Sheet';
 import Button from '../../ui/Button';
 import { haptic } from '../../../utils/device/haptics';
-import { fmt, shortDay, MONTHS_SHORT } from '../dashboardData';
+import { fmt, shortDay, MONTHS_SHORT, orderSettlements } from '../dashboardData';
 
 export function Mono({ m, size, radius, fontSize, className = '' }) {
   return (
@@ -169,36 +169,65 @@ const ARROW_PAY = 'M7 17L17 7M9 7h8v8';
 const ARROW_GET = 'M17 7L7 17M15 17H7V9';
 const ARROW_NEUTRAL = 'M5 12h14M13 6l6 6-6 6';
 
+const CARD_H = 74;      // one settlement card
+const FAN_GAP = 10;     // space between cards when fanned out
+const PEEK = 13;        // how much of each card behind shows when folded
+
+/**
+ * Smart settlements as a deck (board "Change 1 · deck A"): the ones that involve you are in front,
+ * everyone else's sit behind. Tap to fan all of them out, tap again to fold.
+ */
 export function Settlements({ settlements, meId }) {
+  const [fan, setFan] = useState(false);
+  const list = orderSettlements(settlements, meId);
+  const n = list.length;
+  const deck = n > 1;
+  const height = !deck || n === 0 ? CARD_H : fan ? n * CARD_H + (n - 1) * FAN_GAP : CARD_H + (Math.min(n, 3) - 1) * PEEK;
+  const toggle = () => { haptic('success'); setFan(f => !f); };
+  const folded = deck && !fan;
+  const fades = [1, 0.8, 0.55];
+
   return (
     <section className="dsh-sec se-in" style={{ animationDelay: '200ms' }}>
-      <SectionChip icon="M7 7h13l-3-3M17 17H4l3 3" title="Smart settlements" count={settlements.length} />
-      {settlements.length === 0 && (
+      <SectionChip icon="M7 7h13l-3-3M17 17H4l3 3" title="Smart settlements" count={n} />
+      {n === 0 && (
         <div className="dsh-square se-glass">
           <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
           Everyone's square — nothing to settle.
         </div>
       )}
-      {settlements.map((t, i) => {
-        const payer = t.from.id === meId, payee = t.to.id === meId;
-        const cp = payee ? t.from : payer ? t.to : t.from;
-        const line = payer ? `You pay ${t.to.name}` : payee ? `${t.from.name} pays you` : `${t.from.name} → ${t.to.name}`;
-        const tone = payer ? 'pay' : payee ? 'get' : '';
-        const amtClass = payer ? 'neg-ink' : payee ? 'pos-ink' : '';
-        const badgeBg = payer ? 'var(--se-pink-2)' : payee ? 'var(--se-teal-2)' : 'var(--se-text)';
-        return (
-          <div key={`${t.from.id}-${t.to.id}`} className={`dsh-settle se-glass se-row ${tone ? `dsh-settle--${tone}` : ''}`} style={{ animationDelay: `${300 + i * 90}ms` }}>
-            <div className="dsh-settle__who">
-              <Mono m={cp} />
-              <span className="dsh-settle__badge" style={{ background: badgeBg }} aria-hidden="true">
-                <svg width="10" height="10" viewBox="0 0 24 24"><path d={payer ? ARROW_PAY : payee ? ARROW_GET : ARROW_NEUTRAL} fill="none" stroke="currentColor" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
-              </span>
-            </div>
-            <span className="dsh-settle__line">{line}</span>
-            <span className={`dsh-settle__amt ${amtClass}`}>{payer ? '−' : payee ? '+' : ''}₹{fmt(t.amount)}</span>
-          </div>
-        );
-      })}
+      {n > 0 && (
+        <div
+          className={`dsh-sdeck ${deck ? 'is-deck' : ''}`} style={{ height }}
+          {...(deck ? { role: 'button', tabIndex: 0, 'aria-expanded': fan, 'aria-label': `${n} settlements, ${fan ? 'fold' : 'fan out'}`, onClick: toggle, onKeyDown: e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } } } : {})}
+        >
+          {list.map((t, i) => {
+            const payer = t.from.id === meId, payee = t.to.id === meId;
+            const cp = payee ? t.from : payer ? t.to : t.from;
+            const line = payer ? `You pay ${t.to.name}` : payee ? `${t.from.name} pays you` : `${t.from.name} → ${t.to.name}`;
+            const tone = payer ? 'pay' : payee ? 'get' : '';
+            const amtClass = payer ? 'neg-ink' : payee ? 'pos-ink' : '';
+            const badgeBg = payer ? 'var(--se-pink-2)' : payee ? 'var(--se-teal-2)' : 'var(--se-text)';
+            const depth = Math.min(i, 2);
+            const style = folded
+              ? { transform: `translateY(${depth * PEEK}px) scale(${1 - depth * 0.06})`, opacity: i < 3 ? fades[i] : 0, zIndex: n - i }
+              : { transform: `translateY(${fan ? i * (CARD_H + FAN_GAP) : 0}px)`, zIndex: n - i };
+            return (
+              <div key={`${t.from.id}-${t.to.id}`} className={`dsh-settle dsh-sdeck__card se-glass ${tone ? `dsh-settle--${tone}` : ''}`} style={{ height: CARD_H, ...style }} aria-hidden={folded && i > 0 ? true : undefined}>
+                <div className="dsh-settle__who">
+                  <Mono m={cp} />
+                  <span className="dsh-settle__badge" style={{ background: badgeBg }} aria-hidden="true">
+                    <svg width="10" height="10" viewBox="0 0 24 24"><path d={payer ? ARROW_PAY : payee ? ARROW_GET : ARROW_NEUTRAL} fill="none" stroke="currentColor" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                  </span>
+                </div>
+                <span className="dsh-settle__line">{line}</span>
+                <span className={`dsh-settle__amt ${amtClass}`}>{payer ? '−' : payee ? '+' : ''}₹{fmt(t.amount)}</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+      {deck && <span className="dsh-sdeck__hint" aria-hidden="true">{fan ? 'TAP TO FOLD' : `TAP TO FAN · ${n}`}</span>}
     </section>
   );
 }

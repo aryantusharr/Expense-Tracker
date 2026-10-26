@@ -208,6 +208,19 @@
 .dsh-square { border-radius: 24px; padding: 16px; display: flex; align-items: center; gap: 12px; font-size: 14px; font-weight: 600; }
 .dsh-square svg { color: var(--se-teal); flex-shrink: 0; }
 
+/* ---- Settlements deck: cards sit on top of each other, so each needs a solid base under its tint ---- */
+.dsh-sdeck { position: relative; transition: height .55s var(--se-ease-soft); }
+.dsh-sdeck.is-deck { cursor: pointer; -webkit-tap-highlight-color: transparent; border-radius: 24px; }
+.dsh-sdeck.is-deck:focus-visible { outline: 2px solid var(--se-violet); outline-offset: 4px; }
+.dsh-sdeck__card { position: absolute; left: 0; right: 0; top: 0; box-sizing: border-box; transform-origin: 50% 0; transition: transform .55s var(--se-ease-soft), opacity .4s; }
+.dsh-sdeck .dsh-settle { background: linear-gradient(rgba(255,255,255,0.06), rgba(255,255,255,0.06)), var(--se-surface-2); }
+.dsh-sdeck .dsh-settle--pay { background: linear-gradient(rgba(255,143,181,0.10), rgba(255,143,181,0.10)), var(--se-surface-2); }
+.dsh-sdeck .dsh-settle--get { background: linear-gradient(rgba(95,212,196,0.10), rgba(95,212,196,0.10)), var(--se-surface-2); }
+:root[data-theme='light'] .dsh-sdeck .dsh-settle { background: linear-gradient(rgba(21,20,43,0.03), rgba(21,20,43,0.03)), var(--se-surface-2); }
+:root[data-theme='light'] .dsh-sdeck .dsh-settle--pay { background: linear-gradient(rgba(210,59,114,0.07), rgba(210,59,114,0.07)), var(--se-surface-2); }
+:root[data-theme='light'] .dsh-sdeck .dsh-settle--get { background: linear-gradient(rgba(10,133,119,0.07), rgba(10,133,119,0.07)), var(--se-surface-2); }
+.dsh-sdeck__hint { text-align: center; font-family: var(--se-font-mono); font-size: 8.5px; letter-spacing: .16em; color: var(--se-text-4); }
+
 /* ---- Balance deck ---- */
 .dsh-deck { position: relative; transition: height .75s cubic-bezier(.34,1.4,.64,1); }
 .dsh-deck__card {
@@ -394,7 +407,7 @@
   .dsh-deal, .dsh-gauge__arc, .dsh-gauge__knob, .dsh-budget-line { animation: none !important; }
   .dsh-sheen::after { animation: none; display: none; }
   .dsh-flip { transition: opacity .2s; }
-  .dsh-deck, .dsh-deck__card, .dsh-ring__arc { transition: none !important; }
+  .dsh-deck, .dsh-deck__card, .dsh-ring__arc, .dsh-sdeck, .dsh-sdeck__card { transition: none !important; }
 }
 
 /* unmapped-category fallback sheet */

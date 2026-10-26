@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { monthWindow, yearWindow } from './dashboardData.js';
+import { monthWindow, yearWindow, orderSettlements } from './dashboardData.js';
 
 const e = (date, amount) => ({ date, amount });
 const NOW = new Date(2026, 9, 26); // 26 Oct 2026
@@ -30,4 +30,17 @@ test('yearWindow: sums months into years, oldest first', () => {
   const { months } = monthWindow([e('2024-12-31', 5), e('2025-03-01', 100), e('2025-04-01', 20), e('2026-10-02', 50)], NOW, { all: true });
   const years = yearWindow(months);
   assert.deepEqual(years.map(y => [y.key, y.total]), [['2024', 5], ['2025', 120], ['2026', 50]]);
+});
+
+test('orderSettlements: yours first (biggest first), then everyone else’s', () => {
+  const p = id => ({ id });
+  const list = [
+    { from: p('r'), to: p('k'), amount: 300 },
+    { from: p('a'), to: p('k'), amount: 860 },
+    { from: p('a'), to: p('r'), amount: 1240 },
+    { from: p('m'), to: p('k'), amount: 500 },
+  ];
+  const out = orderSettlements(list, 'a');
+  assert.deepEqual(out.map(t => t.amount), [1240, 860, 500, 300]);
+  assert.equal(list[0].amount, 300); // the input is not reordered
 });

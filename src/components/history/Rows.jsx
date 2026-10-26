@@ -176,7 +176,8 @@ export function BillCard({ bill, catOf, users, meId, isPersonal, dim, removed, o
   const delta = mine.paid - mine.share;
   const line = isPersonal ? (synced ? { t: 'your share', c: 'pink' } : { t: 'personal', c: 'mute' })
     : !mine.involved ? null : delta > 0.5 ? { t: `you get ₹${fmt(delta)}`, c: 'teal' } : delta < -0.5 ? { t: `your share ₹${fmt(mine.share)}`, c: 'pink' } : null;
-  const sub = isPersonal ? (synced ? `Synced from ${syncedFrom(bill.e)} · ${bill.items.length} items` : `${bill.items.length} items`) : `${payer} paid · ${bill.items.length} items`;
+  const itemsLabel = bill.partial || `${bill.items.length} items`;
+  const sub = isPersonal ? (synced ? `Synced from ${syncedFrom(bill.e)} · ${itemsLabel}` : itemsLabel) : `${payer} paid · ${itemsLabel}`;
 
   return (
     <TearRow locked={synced} removed={removed} dim={dim} landed={landed} onTear={onTear} onLocked={onLocked} onTap={toggle}>

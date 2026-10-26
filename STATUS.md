@@ -26,19 +26,20 @@ _One line per session; emptied at each full refresh. If this list is long, the r
 - 26 Oct · **v3.0.1 is built and pushed but NOT live yet** (version bumped, release notes written, `dist/` built). Next step: on the designer's Mac, with the designer's yes, run the hosting deploy in `AGENTS.md` → Releasing. Then tag `v3.0.1` and do the full refresh.
 - 26 Oct · Process change: Claude Code is no longer used. Rules moved from `CLAUDE.md` to the tool-neutral `AGENTS.md`; any AI coding assistant on the designer's Mac can build and deploy. The free Claude account keeps brainstorming from `BRIEF.md` + `STATUS.md`.
 - 26 Oct · Fixed: Taxes & charges no longer added twice and old duplicates heal themselves; the Settings budget sheet has a numpad; the Dashboard bars show all months (scroll, plus a Months/Years switch above 12 months). The "Pay … to settle up" line on the You-owe card is now "Last · Paid ₹… for … · day", and the Balances cards no longer show it; the header no longer says Shared / x roommates. Checked by tests (269 pass), lint and a build only — not yet looked at on a phone, not live.
+- 26 Oct · Built Bugs 4, 5 and Change 1 on `redesign` (not live, no phone check yet): month card shows PAID/SHARE (personal: BUDGET/LEFT); search lists matches from every month with month chips + a date dropdown, counts only, dates searchable ("9 oct", "yesterday"); settlements are a deck (tap to fan). 278 tests pass, lint clean, build OK. Change 2 dropped.
 
 ## Bugs (open) — logged 26 Oct 2026
 Format: what happens · where · cause if known · next step. "FIX" = clear, can be built now on the test project. "BRAINSTORM" = needs a design decision first.
 1. ✅ FIXED on `redesign` (not live) **Taxes & charges category appears many times** · Settings categories / pickers · cause found: `AaiChat.jsx` adds the category on every bill save that uses it, without checking the room already has it · FIX (code), plus decide about cleaning rooms that already have duplicates (live data needs the designer's yes + backup).
 2. ✅ FIXED on `redesign` (not live) **Balances graph shows only the last 6 months** · Dashboard · cause found: `monthWindow()` in `dashboardData.js` is hard-limited to 6 months (the PDF report relies on the same limit) · FIX once the display is chosen (scroll sideways, compress, or by year).
 3. ✅ FIXED on `redesign` (not live) **"Pay ___ to settle up" line** · Dashboard You owe / You're owed card · replace with "Last · Paid ₹2xx for ____ · Yesterday" and remove that line from the Balances cards (text lives in `parts/Shared.jsx`) · FIX once the exact wording and the Balances-card result are confirmed.
-4. **Month card should show the person's Paid and Share for that month** · History · BRAINSTORM (what to show, where, for shared vs personal rooms).
-5. **Search mutes other items instead of showing only matches** · History · BRAINSTORM (filter vs highlight, how totals behave).
+4. ✅ BUILT on `redesign` (not live) **Month card should show the person's Paid and Share for that month** · History · BRAINSTORM (what to show, where, for shared vs personal rooms).
+5. ✅ BUILT on `redesign` (not live) **Search mutes other items instead of showing only matches** · History · BRAINSTORM (filter vs highlight, how totals behave).
 6. ✅ FIXED on `redesign` (not live) **Personal room: budget can't be set** · Settings > Monthly budget sheet · cause found: the sheet only has +/− ₹500/₹1000 buttons and no numpad (the setup screen does have one) · FIX (tap the amount to open the numpad, keep the steps).
 
 ## Changes requested — 26 Oct 2026
-1. Smart settlements cards stacked · Dashboard · BRAINSTORM + redesign.
-2. "Not logged" section · Dashboard · BRAINSTORM + redesign.
+1. ✅ BUILT on `redesign` (not live) Smart settlements cards stacked · Dashboard · deck, yours in front, tap to fan, no Settle.
+2. ❌ DROPPED 26 Oct (the designer's call) "Not logged" section · Dashboard · keep the current ticker; no redesign.
 3. ✅ FIXED on `redesign` (not live) Remove the "Shared" and "x roommates" texts under the room name · Dashboard header (the LIVE/OFFLINE dot stays).
 
 ## Known risks

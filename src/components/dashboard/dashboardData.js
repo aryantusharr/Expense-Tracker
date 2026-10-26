@@ -216,3 +216,9 @@ export function yearWindow(months) {
   for (const m of months) by.set(m.year, (by.get(m.year) || 0) + m.total);
   return [...by.entries()].sort((a, b) => a[0] - b[0]).map(([y, total]) => ({ key: String(y), short: String(y), full: String(y), total }));
 }
+
+/** Settlement cards in deck order: the ones that involve you first (biggest first), then everyone else's. */
+export function orderSettlements(settlements, meId) {
+  const mine = t => t.from.id === meId || t.to.id === meId;
+  return [...settlements].sort((a, b) => (Number(mine(b)) - Number(mine(a))) || (b.amount - a.amount));
+}
