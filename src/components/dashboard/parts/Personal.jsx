@@ -1,8 +1,7 @@
 // Personal-room cards: ticker, budget card and last-paid card.
 import { DropNumber } from '../../ui/Numbers';
-import { LineIcon } from '../../ui/CategoryIcon';
-import { resolveCategoryIcon } from '../../../design/categoryIcons';
-import { fmt, shortDay } from '../dashboardData';
+import { fmt } from '../dashboardData';
+import LastPaidPill from './LastPaidPill';
 
 /** Scrolling summary strip: this month (of budget) ✦ last month ✦ lifetime ✦ days left. */
 export function Ticker({ cur, prev, budget, life, daysLeft }) {
@@ -73,37 +72,16 @@ export function BudgetCard({ monthFull, spent, budget, daysLeft }) {
   );
 }
 
-/** Most recent expense in the personal room; synced copies are read-only here. */
+/** Most recent expense in the personal room, as the Last-paid pill; synced copies are read-only here. */
 export function LastPaid({ tx, categories }) {
   if (!tx) return null;
-  const cat = (categories || []).find(c => c.id === tx.categoryId);
-  const icon = resolveCategoryIcon(cat);
   return (
-    <section className="dsh-last se-glass se-in" style={{ animationDelay: '280ms' }}>
-      <div className="dsh-card__head">
-        <span className="dsh-eyebrow">LAST PAID EXPENSE</span>
-        <span className="dsh-count">{shortDay(tx.date)}</span>
-      </div>
-      <div className="dsh-last__row">
-        <span className="dsh-last__icon" aria-hidden="true"><LineIcon path={icon.path} size={22} strokeWidth={1.7} /></span>
-        <div className="dsh-last__mid">
-          <span className="dsh-last__name">{tx.name}</span>
-          {tx.syncedFrom && (
-            <span className="dsh-badge">
-              <svg className="se-spin" width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 0 1-14.3 4.9M4 12a8 8 0 0 1 14.3-4.9M18.5 3v4.3h-4.3M5.5 21v-4.3h4.3" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-              Synced from {tx.syncedFrom}
-            </span>
-          )}
-        </div>
-        <div className="dsh-last__amt">
-          <b>₹{fmt(tx.amount)}</b>
-          {tx.syncedFrom && <span>YOUR SHARE</span>}
-        </div>
-      </div>
+    <section className="dsh-lastpill se-in" style={{ animationDelay: '280ms' }}>
+      <LastPaidPill tx={tx} categories={categories} />
       {tx.syncedFrom && (
         <div className="dsh-last__foot">
           <svg width="13" height="13" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 11V8a6 6 0 0 1 12 0v3M5 11h14v10H5z" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
-          Read-only here · edit it in {tx.syncedFrom}
+          Your share · synced from {tx.syncedFrom} · edit it there
         </div>
       )}
     </section>

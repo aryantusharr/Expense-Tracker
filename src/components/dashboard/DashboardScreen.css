@@ -380,19 +380,6 @@
 .dsh-fact span { display: block; font-size: 11px; color: var(--se-text-2); }
 .dsh-fact b { font-size: 16px; font-weight: 600; }
 .dsh-budget__pace { font-family: var(--se-font-mono); font-size: 11px; }
-.dsh-last { border-radius: 28px; padding: 18px 18px 16px; display: flex; flex-direction: column; gap: 12px; }
-.dsh-last__row { display: flex; align-items: center; gap: 14px; }
-.dsh-last__icon { width: 46px; height: 46px; border-radius: 16px; background: var(--se-fill-2); display: grid; place-items: center; flex-shrink: 0; color: var(--dsh-icon); }
-.dsh-last__mid { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
-.dsh-last__name { font-size: 15px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.dsh-badge {
-  display: inline-flex; align-self: flex-start; align-items: center; gap: 6px; height: 24px; padding: 0 9px; border-radius: 999px;
-  background: rgba(95,212,196,0.14); border: 1px solid rgba(95,212,196,0.35); font-size: 11px; color: var(--se-teal-2);
-  max-width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
-}
-.dsh-last__amt { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
-.dsh-last__amt b { font-family: var(--se-font-display); font-size: 18px; font-weight: 700; }
-.dsh-last__amt span { font-family: var(--se-font-mono); font-size: 9px; letter-spacing: .08em; color: var(--se-text-3); }
 .dsh-last__foot { display: flex; align-items: center; gap: 8px; padding-top: 10px; border-top: 1px solid var(--se-fill-2); font-size: 11px; color: var(--se-text-2); }
 
 /* Identity sheet rows */
@@ -478,3 +465,5 @@
   .dsh-lp__it--0 { opacity: 1; transform: scale(var(--pk, 1.2)); }
 }
 .dsh-hero__who + .dsh-lp { margin-top: 4px; }
+.dsh-lastpill { display: flex; flex-direction: column; gap: 8px; }
+.dsh-lastpill .dsh-last__foot { margin: 0 6px; padding-top: 0; border-top: 0; font-size: 11px; color: var(--se-text-2); }
