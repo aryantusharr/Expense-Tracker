@@ -13,7 +13,8 @@ export const RELEASE = {
   date: '26 OCT 2026',
   new: [],
   improved: [
-    'Your last payment on the You owe card is now a pill with a rolling date — today, the date and the day glide past',
+    'Your last payment is now a pill with a rolling date on the top card — today, the date and the day glide past',
+    'Everyone sees it now, whether you owe, are owed or are all square',
     'Category icons come alive with a small motion of their own',
   ],
   fixed: [],

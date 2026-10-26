@@ -477,3 +477,4 @@
   .dsh-lp__it { animation: none; opacity: 0; }
   .dsh-lp__it--0 { opacity: 1; transform: scale(var(--pk, 1.2)); }
 }
+.dsh-hero__who + .dsh-lp { margin-top: 4px; }

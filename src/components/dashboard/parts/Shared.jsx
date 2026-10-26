@@ -113,7 +113,7 @@ export function HeroCard({ model, me, categories, onPickIdentity }) {
   const names = cps.map(c => c.name);
   const nameStr = names.length > 1 ? `${names.slice(0, -1).join(', ')} & ${names[names.length - 1]}` : names[0];
   const label = state === 'neg' ? 'YOU OWE' : state === 'pos' ? "YOU'RE OWED" : 'ALL SQUARE';
-  // You owe → your last payment as the Last-paid pill (rendered below); otherwise a sentence.
+  // Everyone sees their last payment as the Last-paid pill; owed / all-square also keep their sentence above it.
   const sub = state === 'pos' ? `${nameStr} ${names.length > 1 ? 'owe' : 'owes'} you`
       : 'Nothing to settle right now';
   // Nothing logged yet → empty ring and "—", not "100% you paid".
@@ -150,12 +150,13 @@ export function HeroCard({ model, me, categories, onPickIdentity }) {
           <span className="cur" aria-hidden="true">₹</span>
           <DropNumber value={fmt(net)} />
         </p>
-        {state === 'neg' ? <LastPaidPill tx={me.last} categories={categories} /> : (
+        {state !== 'neg' && (
           <div className="dsh-hero__who">
             {cps.length > 0 && <span style={{ display: 'flex' }}>{cps.map(c => <Mono key={c.id} m={c} />)}</span>}
             <span>{sub}</span>
           </div>
         )}
+        <LastPaidPill tx={me.last} categories={categories} />
       </div>
       {nets}
     </section>
