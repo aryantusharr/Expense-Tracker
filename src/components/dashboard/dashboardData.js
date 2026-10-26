@@ -222,3 +222,23 @@ export function orderSettlements(settlements, meId) {
   const mine = t => t.from.id === meId || t.to.id === meId;
   return [...settlements].sort((a, b) => (Number(mine(b)) - Number(mine(a))) || (b.amount - a.amount));
 }
+
+const WEEKDAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+
+/**
+ * The three labels the Last-paid pill's magnifier reel scrolls through, for a 'YYYY-MM-DD' date:
+ * today → TODAY · 26 OCT · MON, yesterday → YESTERDAY · 25 OCT · SUN, older → 21 OCT · 5 DAYS AGO · WED.
+ */
+export function reelFaces(dateStr, now = new Date()) {
+  if (!dateStr) return [];
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const day = new Date(y, m - 1, d);
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const ago = Math.round((today - day) / 86400000);
+  const date = `${d} ${MONTHS_SHORT[m - 1].toUpperCase()}`;
+  const wd = WEEKDAYS[day.getDay()];
+  if (ago === 0) return ['TODAY', date, wd];
+  if (ago === 1) return ['YESTERDAY', date, wd];
+  if (ago > 1) return [date, `${ago} DAYS AGO`, wd];
+  return [date, wd, ''].filter(Boolean); // future-dated entry
+}

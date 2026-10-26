@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { monthWindow, yearWindow, orderSettlements } from './dashboardData.js';
+import { monthWindow, yearWindow, orderSettlements, reelFaces } from './dashboardData.js';
 
 const e = (date, amount) => ({ date, amount });
 const NOW = new Date(2026, 9, 26); // 26 Oct 2026
@@ -43,4 +43,12 @@ test('orderSettlements: yours first (biggest first), then everyone else’s', ()
   const out = orderSettlements(list, 'a');
   assert.deepEqual(out.map(t => t.amount), [1240, 860, 500, 300]);
   assert.equal(list[0].amount, 300); // the input is not reordered
+});
+
+test('reelFaces: today, yesterday and older dates', () => {
+  assert.deepEqual(reelFaces('2026-10-26', NOW), ['TODAY', '26 OCT', 'MON']);
+  assert.deepEqual(reelFaces('2026-10-25', NOW), ['YESTERDAY', '25 OCT', 'SUN']);
+  assert.deepEqual(reelFaces('2026-10-21', NOW), ['21 OCT', '5 DAYS AGO', 'WED']);
+  assert.deepEqual(reelFaces('2026-09-30', NOW), ['30 SEP', '26 DAYS AGO', 'WED']);
+  assert.deepEqual(reelFaces('', NOW), []);
 });

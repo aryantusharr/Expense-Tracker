@@ -112,7 +112,7 @@ export default function DashboardScreen() {
         ) : (
           <>
             <NudgeStrip members={model.members} meId={me?.id} />
-            <HeroCard model={model} me={me} onPickIdentity={() => setPickerOpen(true)} />
+            <HeroCard model={model} me={me} categories={categories} onPickIdentity={() => setPickerOpen(true)} />
             <Settlements settlements={model.settlements} meId={me?.id} />
             {model.members.length > 0 && (
               <BalanceDeck members={model.members} meId={me?.id} monthLabel={curMonth.short.toUpperCase()} since={life.since?.label} />

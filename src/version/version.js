@@ -13,18 +13,10 @@ export const RELEASE = {
   date: '26 OCT 2026',
   new: [],
   improved: [
-    'The Dashboard graph shows every month, scrolls sideways and can switch to years',
-    'The You owe card now shows your last payment instead of “Pay … to settle up”',
-    'The Dashboard header is cleaner — no “Shared” or roommate count under the room name',
-    'The History month card shows your Paid and Share',
-    'Search lists matches from every month, with month chips and a date picker',
-    'Smart settlements are a stacked deck — tap to fan it out, yours in front',
+    'Your last payment on the You owe card is now a pill with a rolling date — today, the date and the day glide past',
+    'Category icons come alive with a small motion of their own',
   ],
-  fixed: [
-    '“Taxes & charges” no longer shows up many times in the category list',
-    'A personal room’s monthly budget can be typed on the numpad in Settings',
-    'Search no longer greys out other items — it shows only the matches',
-  ],
+  fixed: [],
 };
 export const CHANGE_COUNT = RELEASE.new.length + RELEASE.improved.length + RELEASE.fixed.length;
 

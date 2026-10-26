@@ -5,6 +5,7 @@ import Sheet from '../../ui/Sheet';
 import Button from '../../ui/Button';
 import { haptic } from '../../../utils/device/haptics';
 import { fmt, shortDay, MONTHS_SHORT, orderSettlements } from '../dashboardData';
+import LastPaidPill from './LastPaidPill';
 
 export function Mono({ m, size, radius, fontSize, className = '' }) {
   return (
@@ -60,7 +61,7 @@ export function NudgeStrip({ members, meId }) {
 }
 
 /** Hero: your all-time position, ring of how much of your share you've paid, everyone's net bars. */
-export function HeroCard({ model, me, onPickIdentity }) {
+export function HeroCard({ model, me, categories, onPickIdentity }) {
   const [ringOn, setRingOn] = useState(false);
   useEffect(() => { const t = setTimeout(() => setRingOn(true), 500); return () => clearTimeout(t); }, []);
 
@@ -112,9 +113,8 @@ export function HeroCard({ model, me, onPickIdentity }) {
   const names = cps.map(c => c.name);
   const nameStr = names.length > 1 ? `${names.slice(0, -1).join(', ')} & ${names[names.length - 1]}` : names[0];
   const label = state === 'neg' ? 'YOU OWE' : state === 'pos' ? "YOU'RE OWED" : 'ALL SQUARE';
-  const lastLine = me.last ? `Last · Paid ₹${fmt(me.last.amount)} for ${me.last.name} · ${shortDay(me.last.date, { upper: false })}` : 'Last · No payments yet';
-  const sub = state === 'neg' ? lastLine
-    : state === 'pos' ? `${nameStr} ${names.length > 1 ? 'owe' : 'owes'} you`
+  // You owe → your last payment as the Last-paid pill (rendered below); otherwise a sentence.
+  const sub = state === 'pos' ? `${nameStr} ${names.length > 1 ? 'owe' : 'owes'} you`
       : 'Nothing to settle right now';
   // Nothing logged yet → empty ring and "—", not "100% you paid".
   const nothing = me.all.share <= 0 && me.all.paid <= 0;
@@ -150,10 +150,12 @@ export function HeroCard({ model, me, onPickIdentity }) {
           <span className="cur" aria-hidden="true">₹</span>
           <DropNumber value={fmt(net)} />
         </p>
-        <div className="dsh-hero__who">
-          {cps.length > 0 && state !== 'neg' && <span style={{ display: 'flex' }}>{cps.map(c => <Mono key={c.id} m={c} />)}</span>}
-          <span>{sub}</span>
-        </div>
+        {state === 'neg' ? <LastPaidPill tx={me.last} categories={categories} /> : (
+          <div className="dsh-hero__who">
+            {cps.length > 0 && <span style={{ display: 'flex' }}>{cps.map(c => <Mono key={c.id} m={c} />)}</span>}
+            <span>{sub}</span>
+          </div>
+        )}
       </div>
       {nets}
     </section>
