@@ -9,7 +9,7 @@ A mobile web app (PWA, installed on an iPhone Home Screen) for tracking and spli
 - No sign-in. The room code is the key. 3 real users, 4 rooms.
 
 ## Where it stands
-- **v3.0.3 is live** (26 Oct 2026). v3.0.0 (9 Oct) brought the full visual redesign (dark + light) and the Aryan AI assistant; v3.0.3 added the Paid/Share month card, search across all months, the settlements deck, an all-months Dashboard graph and a few fixes.
+- **v3.0.4 is live** (26 Oct 2026; adds the You-owe Last-paid pill with a rolling date and animated category icons). v3.0.0 (9 Oct) brought the full visual redesign (dark + light) and the Aryan AI assistant; v3.0.3 added the Paid/Share month card, search across all months, the settlements deck, an all-months Dashboard graph and a few fixes.
 - The redesign is finished. Right now the work is tidying code and docs; there is no active feature in progress.
 - The designer is not a developer. They design on a Claude Design canvas; an AI coding assistant on their Mac turns designs into code.
 
