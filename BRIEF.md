@@ -11,7 +11,7 @@ A mobile web app (PWA, installed on an iPhone Home Screen) for tracking and spli
 ## Where it stands
 - **v3.0.6 is live** (26 Oct 2026; the Last-paid pill with a rolling date shows on every dashboard, plus animated category icons). v3.0.0 (9 Oct) brought the full visual redesign (dark + light) and the Aryan AI assistant; v3.0.3 added the Paid/Share month card, search across all months, the settlements deck, an all-months Dashboard graph and a few fixes.
 - The redesign is finished. Right now the work is tidying code and docs; there is no active feature in progress.
-- The designer is not a developer. They design on a Claude Design canvas; an AI coding assistant on their Mac turns designs into code.
+- The designer is not a developer. They design on a Claude Design canvas; Claude, in the SplitEase project chat, turns designs into code, tests them and ships them.
 
 ## Screens
 Landing · Create room (a chat-style flow) · Join room · Personal setup · Share room · Dashboard · Add Expense (Quick and Items/bill modes) · History · Settings (categories, data export/import, profile sync) · Aryan AI chat.
